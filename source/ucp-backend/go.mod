@@ -13,3 +13,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	tah/core v0.0.0-unpublished
 )
+
+require (
+	github.com/aws/aws-sdk-go v1.44.178 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/mmcloughlin/geohash v0.10.0 // indirect
+)
