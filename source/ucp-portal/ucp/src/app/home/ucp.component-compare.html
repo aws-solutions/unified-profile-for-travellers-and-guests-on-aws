@@ -1,0 +1,48 @@
+<div class="container-fluid">
+    <br />
+    <h3>Compare and Merge profiles (Match score: {{matchScore | number}})</h3>
+    <br />
+
+    <h4>Personal Data </h4>
+    <br />
+    <div [formGroup]="personalData">
+        <div class="row">
+            <div class="col-sm-2 block-title">Profile Data</div>
+            <div class="col-sm-3 block-title">Main Profile</div>
+            <div class="col-sm-3 block-title">Duplicate Profile</div>
+            <div class="col-sm-2 block-title">Status</div>
+            <div class="col-sm-2 block-title">Action</div>
+        </div>
+        <div class="row"
+            *ngFor="let field of ['lastName', 'firstName', 'middleName', 'pronouns', 'title', 'birthDate','gender']">
+            <div class="col-sm-2" style="background-color: #eee;">{{field}}</div>
+            <div class="col-sm-3">{{guest1[field]}}</div>
+            <div class="col-sm-3">{{guest2[field]}}</div>
+            <div class="col-sm-2" *ngIf="guest1[field] === guest2[field]">
+                <div class="compare-status-match"> <i class="fa fa-check"></i> Match</div>
+            </div>
+            <div class="col-sm-2" *ngIf="guest1[field] !== guest2[field]">
+                <div class="compare-status-nomatch"> <i class=" fa fa-times"></i> Mismatch </div>
+            </div>
+            <div class="col-sm-2">
+                <mat-form-field style="max-width:150px;" *ngIf="guest1[field] !== guest2[field]">
+                    <mat-select formControlName="{{field}}">
+                        <mat-option [value]="'add'">
+                            Add to main profile
+                        </mat-option>
+                        <mat-option [value]="'doNothing'">
+                            Do nothing
+                        </mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </div>
+        </div>
+    </div>
+    <br />
+
+
+    <div style=" text-align:center;">
+        <button width="500px" style="padding: 10px;" class="btn btn-primary btn-large" (click)="merge()">MERGE</button>
+    </div>
+
+</div>

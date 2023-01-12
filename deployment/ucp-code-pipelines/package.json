@@ -1,0 +1,28 @@
+{
+  "name": "ucp-code-pipelines",
+  "version": "0.1.0",
+  "bin": {
+    "ucp-code-pipelines": "bin/ucp-code-pipelines.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "cleanup:tsc": "echo 'nothing to cleanup'"
+  },
+  "peerDependencies": {
+    "aws-cdk-lib": "2.54.0",
+    "constructs": "10.0.5"
+  },
+  "devDependencies": {
+    "aws-cdk-lib": "2.54.0",
+    "constructs": "10.0.5",
+    "typescript": "3.9.7"
+  },
+  "dependencies": {
+    "@types/node": "^18.11.18",
+    "aws-cdk": "2.54.0",
+    "cdk-nag": "2.21.19"
+  }
+}

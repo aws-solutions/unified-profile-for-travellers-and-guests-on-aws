@@ -1,0 +1,37 @@
+# Ignore Config used with code.amazon.com
+Config
+
+# Use of opensource-codeofconduct email for amazon is expected
+CODE_OF_CONDUCT.md:4
+CONTRIBUTING.md:51
+
+^dist/
+source/.typescript/node_modules
+source/.typescript/lambda/example-function-js/node_modules
+source/.typescript/lambda/layers/aws-nodesdk-custom-config/node_modules
+source/.typescript/cdk.out
+source/.typescript/lambda/layers/aws-nodesdk-custom-config/coverage
+source/.typescript/package-lock.json
+
+#External Dependencies
+source/aws-ind-connector-ui/node_modules
+source/aws-ind-connector-adapter/src/github.com
+source/aws-ind-connector-firehose-adapter/src/github.com
+source/aws-ind-connector-adapter/src/golang.org
+source/aws-ind-connector-firehose-adapter/src/golang.org
+source/aws-ind-connector-infra/node_modules
+source/aws-ind-connector-infra/custom_resource/node_modules
+deployment/tah-connector-code-pipelines/node_modules
+package-lock.json
+
+#Amazon Internal: Potential confidential designation found  
+source/aws-ind-connector-adapter/src/business-logic/model/hapi/reservation.go
+#Potential AWS Account Id Rule 2    
+source/aws-ind-connector-adapter/src/tah-common/common/clickstream.go     
+source/aws-ind-connector-firehose-adapter/src/tah-common/common/clickstream.go  
+source/example/*
+source/schemas/*
+#fake test data
+source/aws-ind-connector-adapter/e2e/indConnector.postman_collection.json 
+source/aws-ind-connector-adapter/src/business-logic/adapter/hapi/hapiAdapter_test.go
+source/aws-ind-connector-adapter/src/test_assets/hapiResResponse.json
