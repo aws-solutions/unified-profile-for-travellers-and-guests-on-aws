@@ -1,6 +1,6 @@
 module tah/ucp
 
-go 1.16
+go 1.18
 
 replace tah/ucp/src/business-logic/usecase v0.0.0-unpublished => ./src/business-logic/usecase
 
