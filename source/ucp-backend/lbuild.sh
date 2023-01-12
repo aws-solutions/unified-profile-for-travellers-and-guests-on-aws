@@ -27,8 +27,6 @@ if [ $env == $LOCAL_ENV_NAME ]
     go mod tidy
     echo "3.1-Vendoring dependencies (local env only)"
     go mod vendor
-    else
-    sh ./env.sh $env
 fi
 echo "4-Building Executable in Vendor Mode"
 export GOOS=linux
