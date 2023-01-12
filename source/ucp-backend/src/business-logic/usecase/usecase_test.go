@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-var UCP_REGION = os.Getenv("UCP_REGION")
+var UCP_REGION = getRegion()
 
 func TestDomainCreationDeletion(t *testing.T) {
 	log.Printf("Testing domain creation and deletion")
@@ -28,4 +28,15 @@ func TestDomainCreationDeletion(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error deleting UCP domain: %v", err)
 	}
+}
+
+//TODO: moov this somewhere centralized
+func getRegion() string {
+	//getting region for local testing
+	region := os.Getenv("UCP_REGION")
+	if region == "" {
+		//getting region for codeBuild project
+		return os.Getenv("AWS_REGION")
+	}
+	return region
 }
