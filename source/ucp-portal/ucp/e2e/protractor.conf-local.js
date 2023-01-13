@@ -12,10 +12,7 @@ exports.config = {
   getPageTimeout: 10000,
   specs: ['./src/features/**/*.feature'],
   capabilities: {
-    browserName: 'chrome',
-    chromeOptions: {
-      args: ["--headless", "--no-sandbox", "--disable-dev-shm-usage", "--window-size=1843,984"]
-    }
+    browserName: 'chrome'
   },
   directConnect: true,
   baseUrl: 'http://localhost:4200/',

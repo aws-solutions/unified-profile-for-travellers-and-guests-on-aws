@@ -74,7 +74,7 @@ export class UCPCodePipelinesStack extends Stack {
             },
             commands: [
               'echo "CodeBuild is running in $AWS_REGION" && aws configure set region $AWS_REGION',
-              'npm install -g aws-cdk@2.54.0',
+              'npm install -g aws-cdk@2.60.0',
               'npm -g install typescript@4.2.2',
               'cdk --version',
               'gem install cfn-nag',

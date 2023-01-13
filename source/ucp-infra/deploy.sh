@@ -28,7 +28,7 @@ else
     npm run build
 
     echo "1.1-Synthesizing CloudFormation template for environement '$env' "
-    cdk --app bin/ucp-infra.js synth -c envName=$env -c artifactBucket=$bucket > hcm-infra.yml
+    cdk --app bin/ucp-infra.js synth -c envName=$env -c artifactBucket=$bucket
     echo "1.2-Analyzing changes for environment '$env' "
     cdk --app bin/ucp-infra.js diff -c envName=$env -c artifactBucket=$bucket
     echo "1.3-Deploying infrastructure for environement '$env' "

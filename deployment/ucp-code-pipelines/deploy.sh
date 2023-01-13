@@ -33,15 +33,14 @@ else
     echo "1.0-Building stack for environement '$env' "
     npm run build
     #This section allows user to deploy only 1 stack or all stacks
-        echo "1.1-Synthesizing CloudFormation template for environement '$env' "
-        cdk synth -c envName=$env
-        cfn_nag_scan --input-path cdk.out/UCPCodePipelinesStack.template.json
-        echo "1.2-Analyzing changes for environment '$env' "
-        cdk diff -c envName=$env
-        echo "1.3-Deploying infrastructure for environement '$env' "
-        cdk deploy  -c envName=$env --format=json --require-approval never --parameters contactEmail=$email --parameters gitHubUserName=$githubUsername --parameters githubtoken=$token --parameters environment=$solutionEnvName
-
-        rc=$?
+    echo "1.1-Synthesizing CloudFormation template for environement '$env' "
+    cdk synth -c envName=$env
+    cfn_nag_scan --input-path cdk.out/UCPCodePipelinesStack.template.json
+    echo "1.2-Analyzing changes for environment '$env' "
+    cdk diff -c envName=$env
+    echo "1.3-Deploying infrastructure for environement '$env' "
+    cdk deploy  -c envName=$env --format=json --require-approval never --parameters contactEmail=$email --parameters gitHubUserName=$githubUsername --parameters githubtoken=$token --parameters environment=$solutionEnvName
+    rc=$?
     if [ $rc -ne 0 ]; then
       echo "CDK Deploy Failed! Existing Build with status $rc" >&2
       exit $rc
