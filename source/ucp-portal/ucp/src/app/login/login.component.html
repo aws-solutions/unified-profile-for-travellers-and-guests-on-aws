@@ -20,7 +20,7 @@
                     <div class="form-group">
                         <label class="form-label">PASSWORD</label>
                         <input id="pwd" class="form-control" placeholder="Password" [formControl]="password"
-                            type="password">
+                            type="password" (keyup.enter)="signIn()">
                     </div>
                     <br />
                     <div class="form-group" *ngIf="showConfirmPassword">

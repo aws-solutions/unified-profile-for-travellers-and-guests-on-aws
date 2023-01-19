@@ -1,0 +1,24 @@
+<div class="container-fluid">
+    <br />
+    <h1>Link Industry Connector</h1>
+    <div class="link-industry-connector-form">
+        <div class="connector-form-group" [formGroup]="linkConnectorForm">
+            <label class="form-label">API Gateway URL</label>
+            <input class="form-control" type="text" [minLength]="3" formControlName="agwUrl">
+            <label class="form-label">Cognito URL (Token Endpoint)</label>
+            <input class="form-control" type="text" [minLength]="3" formControlName="tokenEndpoint">
+            <label class="form-label">Client ID</label>
+            <input class="form-control" type="text" [minLength]="3" formControlName="clientId">
+            <label class="form-label">Client Secret</label>
+            <input class="form-control" type="text" [minLength]="3" formControlName="clientSecret">
+            <label class="form-label">S3 Bucket ARN</label>
+            <input class="form-control" type="text" [minLength]="3" formControlName="bucketArn">
+        </div>
+    </div>
+    <div mat-dialog-content>
+        <button type="submit" class="btn btn-primary float-right form-button" (click)="link()">
+            <i class="fa fa-check"></i>Link</button>
+        <button type="submit" class="btn btn-secondary float-right form-button" (click)="cancel()">
+            <i class="fa fa-times"></i>Cancel</button>
+    </div>
+</div>
