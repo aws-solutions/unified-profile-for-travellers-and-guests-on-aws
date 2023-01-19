@@ -30,6 +30,7 @@ if [ $env == $LOCAL_ENV_NAME ]
 fi
 echo "4-Building Executable in Vendor Mode"
 export GOOS=linux
+export GOARCH=amd64
 go build -mod=vendor -o main src/main/main.go
 
 echo "5-Unit testing"

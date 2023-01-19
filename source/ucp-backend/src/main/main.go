@@ -7,8 +7,11 @@ import (
 	"errors"
 	"log"
 	"os"
+	appregistry "tah/core/appregistry"
 	core "tah/core/core"
 	customerprofiles "tah/core/customerprofiles"
+	glue "tah/core/glue"
+	iam "tah/core/iam"
 	model "tah/ucp/src/business-logic/model"
 	usecase "tah/ucp/src/business-logic/usecase"
 
@@ -22,6 +25,9 @@ var LAMBDA_REGION = os.Getenv("AWS_REGION")
 var NAMESPACE_NAME = "cloudRackServiceDiscoveryNamespace" + LAMBDA_ENV
 var ATHENA_WORKGROUP = os.Getenv("ATHENA_WORKGROUP")
 var ATHENA_DB = os.Getenv("ATHENA_DB")
+var CONNECTOR_CRAWLER_QUEUE = os.Getenv("CONNECTOR_CRAWLER_QUEUE")
+var CONNECTOR_CRAWLER_DLQ = os.Getenv("CONNECTOR_CRAWLER_DLQ")
+var GLUE_DB = os.Getenv("GLUE_DB")
 var UCP_CONNECT_DOMAIN = ""
 var FN_RETREIVE_UCP_PROFILE = "retreive_ucp_profile"
 var FN_DELETE_UCP_PROFILE = "delete_ucp_profile"
@@ -31,8 +37,15 @@ var FN_LIST_UCP_DOMAINS = "list_ucp_domains"
 var FN_CREATE_UCP_DOMAIN = "create_ucp_domain"
 var FN_DELETE_UCP_DOMAIN = "delete_ucp_domain"
 var FN_MERGE_UCP_PROFILE = "merge_ucp_profile"
+var FN_LIST_CONNECTORS = "list_connectors"
+var FN_LINK_INDUSTRY_CONNECTOR = "link_industry_connector"
+var FN_CREATE_CONNECTOR_CRAWLER = "create_connector_crawler"
 var FN_LIST_UCP_INGESTION_ERROR = "list_ucp_ingestion_errors"
 var CUSTOMER_PROFILE_DOMAIN_HEADER = "customer-profiles-domain"
+
+var appregistryClient = appregistry.Init(LAMBDA_REGION)
+var iamClient = iam.Init()
+var glueClient = glue.Init(LAMBDA_REGION, GLUE_DB)
 
 func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	log.Printf("Received Request %+v with context %+v", req, ctx)
@@ -43,7 +56,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	subFunction := identifyUseCase(resource, method)
 	var err error
 	var ucpRes model.ResWrapper
-	var profiles = customerprofiles.InitWithDomain(req.Headers[CUSTOMER_PROFILE_DOMAIN_HEADER], "eu-central-1")
+	var profiles = customerprofiles.InitWithDomain(req.Headers[CUSTOMER_PROFILE_DOMAIN_HEADER], LAMBDA_REGION)
 
 	if subFunction == FN_RETREIVE_UCP_PROFILE {
 		log.Printf("Selected Use Case %v", subFunction)
@@ -156,6 +169,70 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 			}
 		}
 		return builResponseError(err), nil
+	} else if subFunction == FN_LIST_CONNECTORS {
+		log.Printf("Selected Use Case %v", subFunction)
+		if err == nil {
+			ucpRes, err := usecase.ListIndustryConnectors(appregistryClient)
+			if err != nil {
+				log.Printf("Use Case %s failed with error: %v", subFunction, err)
+				return builResponseError(err), nil
+			}
+			res := events.APIGatewayProxyResponse{
+				StatusCode: 200,
+			}
+			jsonRes, err := json.Marshal(ucpRes)
+			if err != nil {
+				log.Printf("Error while unmarshalling response %v", err)
+				return builResponseError(err), nil
+			}
+			res.Body = string(jsonRes)
+			return res, nil
+		}
+	} else if subFunction == FN_LINK_INDUSTRY_CONNECTOR {
+		log.Printf("Selected Use Case %v", subFunction)
+		if err == nil {
+			data, err := decodeLinkConnectorBody(req)
+			if err != nil {
+				log.Printf("Use Case %s failed with error: %v", subFunction, err)
+				return builResponseError(err), nil
+			}
+			glueRoleArn, bucketPolicy, err := usecase.LinkIndustryConnector(iamClient, data)
+			if err != nil {
+				log.Printf("Use Case %s failed with error: %v", subFunction, err)
+				return builResponseError(err), nil
+			}
+			res := events.APIGatewayProxyResponse{
+				StatusCode: 200,
+			}
+			resData := model.LinkIndustryConnectorRes{
+				GlueRoleArn:  glueRoleArn,
+				BucketPolicy: bucketPolicy,
+			}
+			jsonRes, err := json.Marshal(resData)
+			if err != nil {
+				log.Printf("Error while unmarshalling response %v", err)
+				return builResponseError(err), nil
+			}
+			res.Body = string(jsonRes)
+			return res, nil
+		}
+	} else if subFunction == FN_CREATE_CONNECTOR_CRAWLER {
+		log.Printf("Selected Use Case %v", subFunction)
+		if err == nil {
+			data, err := decodeCreateConnectorCrawlerBody(req)
+			if err != nil {
+				return builResponseError(err), nil
+			}
+			err = usecase.CreateConnectorCrawler(glueClient, data.GlueRoleArn, data.BucketPath, LAMBDA_ENV, CONNECTOR_CRAWLER_QUEUE, CONNECTOR_CRAWLER_DLQ)
+			if err != nil {
+				log.Printf("Use Case %s failed with error: %v", subFunction, err)
+				return builResponseError(err), nil
+			}
+			res := events.APIGatewayProxyResponse{
+				StatusCode: 200,
+			}
+			return res, nil
+		}
 	} else if subFunction == FN_MERGE_UCP_PROFILE {
 		log.Printf("Selected Use Case %v", subFunction)
 		if err == nil {
@@ -201,6 +278,34 @@ func decodeUCPBody(req events.APIGatewayProxyRequest) (model.UCPRequest, error) 
 	return wrapper, nil
 }
 
+func decodeLinkConnectorBody(req events.APIGatewayProxyRequest) (model.LinkIndustryConnectorRq, error) {
+	wrapper := model.LinkIndustryConnectorRq{}
+	decodedBody := []byte(req.Body)
+	if req.IsBase64Encoded {
+		base64Body, _ := base64.StdEncoding.DecodeString(req.Body)
+		decodedBody = base64Body
+	}
+	if err := json.Unmarshal(decodedBody, &wrapper); err != nil {
+		return model.LinkIndustryConnectorRq{}, err
+	}
+	log.Printf("Decoded Body %+v", wrapper)
+	return wrapper, nil
+}
+
+func decodeCreateConnectorCrawlerBody(req events.APIGatewayProxyRequest) (model.CreateConnectorCrawlerRq, error) {
+	wrapper := model.CreateConnectorCrawlerRq{}
+	decodedBody := []byte(req.Body)
+	if req.IsBase64Encoded {
+		base64Body, _ := base64.StdEncoding.DecodeString(req.Body)
+		decodedBody = base64Body
+	}
+	if err := json.Unmarshal(decodedBody, &wrapper); err != nil {
+		return model.CreateConnectorCrawlerRq{}, err
+	}
+	log.Printf("Decoded Body %+v", wrapper)
+	return wrapper, nil
+}
+
 func identifyUseCase(res string, meth string) string {
 	if res == "/ucp/profile/{id}" && meth == "GET" {
 		return FN_RETREIVE_UCP_PROFILE
@@ -222,6 +327,15 @@ func identifyUseCase(res string, meth string) string {
 	}
 	if res == "/ucp/admin" && meth == "GET" {
 		return FN_LIST_UCP_DOMAINS
+	}
+	if res == "/ucp/connector" && meth == "GET" {
+		return FN_LIST_CONNECTORS
+	}
+	if res == "/ucp/connector/link" && meth == "POST" {
+		return FN_LINK_INDUSTRY_CONNECTOR
+	}
+	if res == "/ucp/connector/crawler" && meth == "POST" {
+		return FN_CREATE_CONNECTOR_CRAWLER
 	}
 	if res == "/ucp/merge" && meth == "POST" {
 		return FN_MERGE_UCP_PROFILE
@@ -257,14 +371,14 @@ func builResponseError(err error) events.APIGatewayProxyResponse {
 
 func ValidateUCPSearchRequest(wrapper model.UCPRequest) error {
 	if wrapper.SearchRq.LastName == "" && wrapper.SearchRq.LoyaltyID == "" && wrapper.SearchRq.Phone == "" && wrapper.SearchRq.Email == "" {
-		return errors.New("At least one search creteria within LastName, LoyaltyID, Phone and Email must be provided")
+		return errors.New("at least one search creteria within LastName, LoyaltyID, Phone and Email must be provided")
 	}
 	return nil
 }
 
 func ValidateUCPRetreiveRequest(wrapper model.UCPRequest) error {
 	if wrapper.ID == "" {
-		return errors.New("Profile ID is required to retreive profile")
+		return errors.New("profile ID is required to retreive profile")
 	}
 	return nil
 }
