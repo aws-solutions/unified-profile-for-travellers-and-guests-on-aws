@@ -198,7 +198,7 @@ export class UCPCodePipelinesStack extends Stack {
             },
             commands: [
               'echo "CodeBuild is running in $AWS_REGION" && aws configure set region $AWS_REGION',
-              'cd source/ucp-portal',
+              'cd source/ucp-portal/ucp',
               'npm install -g @angular/cli',
               'npm install --legacy-peer-deps'
             ]
@@ -229,7 +229,7 @@ export class UCPCodePipelinesStack extends Stack {
               nodejs: NODEJS_VERSION
             },
             commands: [
-              'cd source/ucp-portal',
+              'cd source/ucp-portal/ucp',
               'cd e2e',
               'echo "5-Install Angular"',
               'npm install -g @angular/cli',
