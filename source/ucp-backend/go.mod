@@ -6,11 +6,12 @@ replace tah/ucp/src/business-logic/usecase v0.0.0-unpublished => ./src/business-
 
 replace tah/ucp/src/business-logic/model v0.0.0-unpublished => ./src/business-logic/model
 
+// Note - ./src/tah-core must be copied from your local S3 bucket
+// Use lbuild-local.sh to copy or as an example for commands to use
 replace tah/core v0.0.0-unpublished => ./src/tah-core
 
 require (
 	github.com/aws/aws-lambda-go v1.37.0
-	github.com/pkg/errors v0.9.1
 	tah/core v0.0.0-unpublished
 )
 

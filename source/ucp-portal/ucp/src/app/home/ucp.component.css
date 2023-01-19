@@ -115,7 +115,7 @@ table {
 }
 
 .integration-list {
-  margin: 5px;
+  margin-top: 16px;
 }
 
 .integration-status-active {
@@ -160,4 +160,12 @@ table {
 
 .panel-title {
   font-size: larger;
+}
+
+.connector-form-group .form-control {
+  margin-bottom: 12px;
+}
+
+.connector-form-group .form-label {
+  margin-bottom: 4px;
 }

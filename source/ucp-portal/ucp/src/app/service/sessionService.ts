@@ -44,6 +44,18 @@ export class SessionService {
         return <string>this.localStorageService.get("customer-profile-domain");
     }
 
+    setConnectorData(domain: string, agwUrl: string, tokenEndpoint: string, clientId: string, clientSecret: string, bucketArn: string) {
+        this.localStorageService.set("connector-data-" + domain, {
+            agwUrl: agwUrl,
+            tokenEndpoint: tokenEndpoint,
+            clientId: clientId,
+            clientSecret: clientSecret,
+            bucketArn: bucketArn,
+        });
+    }
 
+    getConnectorData(domain: string): any {
+        return <object>this.localStorageService.get("connector-data-" + domain);
+    }
 }
 

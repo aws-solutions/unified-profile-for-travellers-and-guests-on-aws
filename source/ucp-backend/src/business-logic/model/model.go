@@ -12,6 +12,24 @@ type SearchRq struct {
 	LoyaltyID string
 }
 
+type LinkIndustryConnectorRq struct {
+	AgwUrl        string
+	TokenEndpoint string
+	ClientId      string
+	ClientSecret  string
+	BucketArn     string
+}
+
+type LinkIndustryConnectorRes struct {
+	GlueRoleArn  string
+	BucketPolicy string
+}
+
+type CreateConnectorCrawlerRq struct {
+	GlueRoleArn string
+	BucketPath  string
+}
+
 type UCPRequest struct {
 	ID       string
 	SearchRq SearchRq

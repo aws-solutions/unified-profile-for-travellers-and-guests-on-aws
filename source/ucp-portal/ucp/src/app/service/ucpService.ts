@@ -42,5 +42,22 @@ export class UcpService {
     public mergeProfile(id: string, id2: string) {
         return this.service.post({}, { mergeRq: { p1: id, p2: id2 } }, <RestOptions>{ subEndpoint: "merge" });
     }
-
+    public listApplications() {
+        return this.service.query({}, <RestOptions>{ subEndpoint: "connector" });
+    }
+    public linkIndustryConnector(agwUrl: string, tokenEndpoint: string, clientId: string, clientSecret: string, bucketArn: string) {
+        return this.service.post({}, {
+            AgwUrl: agwUrl,
+            TokenEndpoint: tokenEndpoint,
+            ClientId: clientId,
+            ClientSecret: clientSecret,
+            BucketArn: bucketArn,
+        }, <RestOptions>{ subEndpoint: "connector/link" });
+    }
+    public createConnectorCrawler(glueRoleArn: string, bucketPath: string) {
+        return this.service.post({}, {
+            GlueRoleArn: glueRoleArn,
+            BucketPath: bucketPath,
+        }, <RestOptions>{ subEndpoint: "connector/crawler" });
+    }
 }

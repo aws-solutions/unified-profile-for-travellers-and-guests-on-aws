@@ -9,13 +9,15 @@ import { aws_dynamodb as dynamodb } from 'aws-cdk-lib';
 import { aws_apigateway as apigateway } from 'aws-cdk-lib';
 import { aws_iam as iam } from 'aws-cdk-lib';
 import { aws_sqs as sqs } from 'aws-cdk-lib';
+import {aws_kms as kms} from 'aws-cdk-lib'
 import { aws_cognito as cognito } from 'aws-cdk-lib';
 import { CorsHttpMethod, HttpApi, HttpMethod, HttpRoute, HttpStage, PayloadFormatVersion } from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpUserPoolAuthorizer } from '@aws-cdk/aws-apigatewayv2-authorizers-alpha';
 import { HttpLambdaIntegration, } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import { Database } from '@aws-cdk/aws-glue-alpha';
 import { CfnCrawler, CfnJob, CfnTrigger, CfnWorkflow } from 'aws-cdk-lib/aws-glue';
-import { IBucket } from 'aws-cdk-lib/aws-s3';
+import { BucketEncryption, IBucket } from 'aws-cdk-lib/aws-s3';
+import { Queue } from 'aws-cdk-lib/aws-sqs';
 
 
 /////////////////////////////////////////////////////////////////////
@@ -83,6 +85,12 @@ export class UCPInfraStack extends Stack {
     })
 
     /**************
+     * SQS Queues
+     ********************/
+    const connectorCrawlerQueue = new Queue(this, "ucp-connector-crawler-queue-" + envName)
+    const connectorCrawlerDlq = new Queue(this, "ucp-connector-crawler-dlq-" + envName)
+
+    /**************
      * Glue Database
      ********************/
     const glueDb = new Database(this, "ucp-data-glue-database-" + envName, {
@@ -94,18 +102,22 @@ export class UCPInfraStack extends Stack {
     });
 
     /***************************
-   * Data Buckets for teporary processinng
+   * Data Buckets for temporary processing
    *****************************/
     //temp bucket for Amazon connect profile identity resolution matches
     const idResolution = new s3.Bucket(this, "ucp-connect-id-resolution-temp-" + envName, {
       removalPolicy: RemovalPolicy.DESTROY,
     })
 
-    //Sourrce bvucket for travel business objects
+    //Source bucket for travel business objects
     let bookingBucketRaw = this.addBucketToDatalake("ucp-data-booking", envName, datalakeAdminRole);
     let clickStreamBucketRaw = this.addBucketToDatalake("ucp-data-clickstream", envName, datalakeAdminRole);
     let loyaltyBucketRaw = this.addBucketToDatalake("ucp-data-loyalty", envName, datalakeAdminRole);
 
+    let airBookingRaw = this.addBucketToDatalake("ucp-data-airbooking", envName, datalakeAdminRole);
+    let hotelStayRevenueRaw = this.addBucketToDatalake("ucp-data-hotelstayrevenue", envName, datalakeAdminRole);
+    let guestProfileRaw = this.addBucketToDatalake("ucp-data-guestprofile", envName, datalakeAdminRole);
+    let passengerProfileRaw = this.addBucketToDatalake("ucp-data-passengerprofile", envName, datalakeAdminRole)
     //Target Bucket for Amazon connect profile import
     let connectProfileImportBucket = this.addBucketToDatalake("ucp-amazon-connect-profile-import", envName, datalakeAdminRole);
     //Target Bucket for Amazon connect profile export
@@ -216,6 +228,9 @@ export class UCPInfraStack extends Stack {
         LAMBDA_ENV: envName,
         ATHENA_WORKGROUP: "",
         ATHENA_DB: "",
+        CONNECTOR_CRAWLER_QUEUE: connectorCrawlerQueue.queueArn,
+        CONNECTOR_CRAWLER_DLQ: connectorCrawlerDlq.queueArn,
+        GLUE_DB: glueDb.databaseName,
         UCP_GUEST360_TABLE_NAME: "",
         UCP_GUEST360_TABLE_PK: "",
         UCP_GUEST360_ATHENA_TABLE: "",
@@ -224,7 +239,19 @@ export class UCPInfraStack extends Stack {
 
     ucpBackEndLambda.addToRolePolicy(new iam.PolicyStatement({
       resources: ["*"],
-      actions: ['profile:SearchProfiles',
+      actions: ['glue:CreateCrawler',
+      'glue:DeleteCrawler',
+        // TODO: remove iam actions and set up permission boundary instead
+        'iam:AttachRolePolicy',
+        'iam:CreatePolicy',
+        'iam:CreateRole',
+        'iam:DeletePolicy',
+        'iam:DeleteRole',
+        'iam:DetachRolePolicy',
+        'iam:GetPolicy',
+        'iam:ListAttachedRolePolicies',
+        'iam:PassRole',
+        'profile:SearchProfiles',
         'profile:GetDomain',
         'profile:CreateDomain',
         'profile:ListDomains',
@@ -238,6 +265,7 @@ export class UCPInfraStack extends Stack {
         'profile:ListProfileObjectTypes',
         'profile:GetProfileObjectType',
         'appflow:DescribeFlow',
+        'servicecatalog:ListApplications',
         'sqs:CreateQueue',
         'sqs:ReceiveMessage',
         'sqs:SetQueueAttributes',
@@ -314,6 +342,7 @@ export class UCPInfraStack extends Stack {
     const ucpEndpointProfile = "profile"
     const ucpEndpointMerge = "merge"
     const ucpEndpointAdmin = "admin"
+    const ucpEndpointIndustryConnector = "connector"
     const ucpEndpointErrors = "error"
     const stageName = "api"
     //partner api enpoint
@@ -377,6 +406,36 @@ export class UCPInfraStack extends Stack {
       allRoutes.push(route)
     });
     apiV2.addRoutes({
+      path: '/' + ucpEndpointName + "/" + ucpEndpointIndustryConnector,
+      authorizer: authorizer,
+      methods: [HttpMethod.GET],
+      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationIndustryConnector', ucpBackEndLambda, {
+        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
+      })
+    }).forEach(route => {
+      allRoutes.push(route)
+    });
+    apiV2.addRoutes({
+      path: '/' + ucpEndpointName + '/' + ucpEndpointIndustryConnector + '/link',
+      authorizer: authorizer,
+      methods: [HttpMethod.POST],
+      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationLinkIndustryConnector', ucpBackEndLambda, {
+        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
+      })
+    }).forEach(route => {
+      allRoutes.push(route)
+    });
+    apiV2.addRoutes({
+      path: '/' + ucpEndpointName + '/' + ucpEndpointIndustryConnector + '/crawler',
+      authorizer: authorizer,
+      methods: [HttpMethod.POST],
+      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationCreateConnectorCrawler', ucpBackEndLambda, {
+        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
+      })
+    }).forEach(route => {
+      allRoutes.push(route)
+    });
+    apiV2.addRoutes({
       path: '/' + ucpEndpointName + "/" + ucpEndpointErrors,
       authorizer: authorizer,
       methods: [HttpMethod.GET],
@@ -408,6 +467,16 @@ export class UCPInfraStack extends Stack {
       value: apiV2.apiId || ""
     });
   }
+  /////////////////////////
+  //KMS Key
+  ///////////////////////////
+  kmsKey = new kms.Key(this, "new_kms_key", {
+    removalPolicy: RemovalPolicy.DESTROY, 
+    pendingWindow: Duration.days(20),
+    alias: 'alias/mykey',
+    description: 'KMS key for encrypting business object S3 buckets', 
+    enableKeyRotation: true,
+  });
 
 
   /*******************
@@ -627,7 +696,8 @@ export class UCPInfraStack extends Stack {
   addBucketToDatalake(prefix: string, envName: string, dataLakeAdminRole: iam.Role): s3.Bucket {
     const bucket = new s3.Bucket(this, prefix + "-" + envName, {
       removalPolicy: RemovalPolicy.DESTROY,
-      bucketName: prefix + "-" + envName
+      encryption: BucketEncryption.KMS,
+      encryptionKey: this.kmsKey,
     })
     Tags.of(bucket).add('cloudrack-data-zone', 'bronze');
 
