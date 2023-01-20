@@ -119,8 +119,8 @@ export class UCPInfraStack extends Stack {
     this.buildBusinessObjectPipeline("hotel-stay", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
 
     //Target Bucket for Amazon connect profile export
-    let connectProfileExportBucket = new tah_s3.Bucket(this, "aucp-mazon-connect-profile-export", accessLogBucket);
-    let amperityImpoprtBucket = new tah_s3.Bucket(this, "ucp-amperity-impotr", accessLogBucket);
+    let connectProfileExportBucket = new tah_s3.Bucket(this, "ucp-mazon-connect-profile-export", accessLogBucket);
+    let amperityImportBucket = new tah_s3.Bucket(this, "ucp-amperity-import", accessLogBucket);
     let amperityExportBucket = new tah_s3.Bucket(this, "ucp-amperity-export", accessLogBucket);
 
     /*****************************
@@ -132,14 +132,14 @@ export class UCPInfraStack extends Stack {
 
     //Amperity
     amperityUser.addToPolicy(new iam.PolicyStatement({
-      resources: ["arn:aws:s3:::" + amperityImpoprtBucket.bucketName + "*"],
+      resources: ["arn:aws:s3:::" + amperityImportBucket.bucketName + "*"],
       actions: ["s3:*"]
     }))
 
     //Amperity job
     let amperityImportJob = this.job("ucp-amperity-import", envName, artifactBucket, "connectProfileToAmperity", glueDb, datalakeAdminRole, new Map([
       ["SOURCE_TABLE", connectProfileExportBucket.toAthenaTable()],
-      ["DEST_BUCKET", amperityImpoprtBucket.bucketName]
+      ["DEST_BUCKET", amperityImportBucket.bucketName]
     ]))
     let amperityExportJob = this.job("ucp-amperity-export", envName, artifactBucket, "amperityToMatches", glueDb, datalakeAdminRole, new Map([
       ["SOURCE_TABLE", amperityExportBucket.toAthenaTable()],
@@ -427,7 +427,7 @@ export class UCPInfraStack extends Stack {
   buildBusinessObjectPipeline(businessObjectName: string, envName: string, dataLakeAdminRole: iam.Role, glueDb: Database, artifactBucketName: string, accessLogBucket: s3.Bucket, connectProfileImportBucket: s3.Bucket) {
     //0-create bucket
     let bucketRaw = new tah_s3.Bucket(this, "ucp" + businessObjectName, accessLogBucket);
-    //1-Buucket permission
+    //1-Bucket permission
     bucketRaw.grantReadWrite(dataLakeAdminRole)
     //2-Creating workflow to visualize
     let workflow = new CfnWorkflow(this, businessObjectName, {

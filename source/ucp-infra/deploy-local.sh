@@ -11,7 +11,7 @@ rm -r tah-cdk-common
 aws s3api get-object --bucket $artifactBucket --key $envName/$tahCdkCommonVersion/tah-cdk-common.zip tah-cdk-common.zip
 rc=$?
 if [ $rc -ne 0 ]; then
-    echo "Could not find tah-cdk-common with version $tahCdkCommonVersion rc" >&2
+    echo "Could not find tah-cdk-common with version $tahCdkCommonVersion $rc" >&2
     exit $rc
 fi
 unzip tah-cdk-common.zip -d ./tah-cdk-common
