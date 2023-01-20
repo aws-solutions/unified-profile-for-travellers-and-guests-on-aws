@@ -117,7 +117,7 @@ export class UCPInfraStack extends Stack {
     let airBookingRaw = this.addBucketToDatalake("ucp-data-airbooking", envName, datalakeAdminRole);
     let hotelStayRevenueRaw = this.addBucketToDatalake("ucp-data-hotelstayrevenue", envName, datalakeAdminRole);
     let guestProfileRaw = this.addBucketToDatalake("ucp-data-guestprofile", envName, datalakeAdminRole);
-    let passengerProfileRaw = this.addBucketToDatalake("ucp-data-passengerprofile", envName, datalakeAdminRole)
+    let passengerProfileRaw = this.addBucketToDatalake("ucp-data-passengerprofile", envName, datalakeAdminRole);
     //Target Bucket for Amazon connect profile import
     let connectProfileImportBucket = this.addBucketToDatalake("ucp-amazon-connect-profile-import", envName, datalakeAdminRole);
     //Target Bucket for Amazon connect profile export
@@ -234,14 +234,32 @@ export class UCPInfraStack extends Stack {
         UCP_GUEST360_TABLE_NAME: "",
         UCP_GUEST360_TABLE_PK: "",
         UCP_GUEST360_ATHENA_TABLE: "",
+        S3_Booking_Name: bookingBucketRaw.bucketName, 
+        S3_Clickstream_Name: clickStreamBucketRaw.bucketName,
+        S3_AirBooking_Name: airBookingRaw.bucketName,
+        S3_HotelStayRevenue_Name: hotelStayRevenueRaw.bucketName,
+        S3_GuestProfile_Name: guestProfileRaw.bucketName,
+        S3_PassengerProfile_Name: passengerProfileRaw.bucketName,
+        KMS: this.kmsKey.keyArn,
       }
     });
 
     ucpBackEndLambda.addToRolePolicy(new iam.PolicyStatement({
       resources: ["*"],
-      actions: ['glue:CreateCrawler',
-      'glue:DeleteCrawler',
+      actions: [
+        'appflow:DescribeFlow',
+        'appflow:CreateFlow',
+        'appflow:DeleteFlow',
+        'glue:CreateCrawler',
+        'glue:DeleteCrawler',
         // TODO: remove iam actions and set up permission boundary instead
+        'kms:GenerateDataKey',
+        'kms:Decrypt',
+        'kms:CreateGrant',
+        'kms:ListGrants',
+        'kms:ListAliases',
+        'kms:DescribeKey',
+        'kms:ListKeys',
         'iam:AttachRolePolicy',
         'iam:CreatePolicy',
         'iam:CreateRole',
@@ -258,6 +276,7 @@ export class UCPInfraStack extends Stack {
         'profile:ListIntegrations',
         'profile:DeleteDomain',
         'profile:DeleteProfile',
+        'profile:PutIntegration',
         'profile:PutProfileObjectType',
         'profile:DeleteProfileObjectType',
         'profile:GetMatches',
@@ -266,6 +285,11 @@ export class UCPInfraStack extends Stack {
         'profile:GetProfileObjectType',
         'appflow:DescribeFlow',
         'servicecatalog:ListApplications',
+        's3:ListBucket',
+        's3:ListAllMyBuckets',
+        's3:GetBucketLocation',
+        's3:GetBucketPolicy',
+        's3:PutBucketPolicy',
         'sqs:CreateQueue',
         'sqs:ReceiveMessage',
         'sqs:SetQueueAttributes',
@@ -700,6 +724,12 @@ export class UCPInfraStack extends Stack {
       encryptionKey: this.kmsKey,
     })
     Tags.of(bucket).add('cloudrack-data-zone', 'bronze');
+
+    bucket.addToResourcePolicy(new iam.PolicyStatement({
+      resources: [bucket.arnForObjects("*"), bucket.bucketArn],
+      actions: ["s3:PutObject", "s3:ListBucket", "s3:GetObject", "s3:GetBucketLocation", "s3:GetBucketPolicy"],
+      principals: [new iam.ServicePrincipal("appflow.amazonaws.com")]
+    }))
 
     dataLakeAdminRole.addToPolicy(new iam.PolicyStatement({
       resources: ["arn:aws:s3:::" + bucket.bucketName + "*"],

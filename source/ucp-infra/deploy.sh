@@ -55,7 +55,14 @@ else
     ucpApiId=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='ucpApiId'].OutputValue" --output text)
     httpApiUrl=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='httpApiUrl'].OutputValue" --output text)
     ucpPortalUrl=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='ucpPortalUrl'].OutputValue" --output text)
-  
+    S3_Booking_Name=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.S3_Booking_Name" --output text)
+    S3_Clickstream_Name=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.S3_Clickstream_Name" --output text)
+    S3_AirBooking_Name=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.S3_AirBooking_Name" --output text)
+    S3_HotelStayRevenue_Name=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.S3_HotelStayRevenue_Name" --output text)
+    S3_GuestProfile_Name=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.S3_GuestProfile_Name" --output text)
+    S3_PassengerProfile_Name=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.S3_PassengerProfile_Name" --output text)
+    KMS=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.KMS" --output text)
+
     echo "3.2 Creating admin User and getting refresh token"
     RANDOM=$$
     time=$(date +"%Y-%m-%d-%H-%M-%S")
@@ -103,7 +110,7 @@ else
     
    # echo "Sending stack outputs to email: $email"
     #aws ses send-email --from "$email" --destination "ToAddresses=$email" --message "Subject={Data=Your IOT Connectiviity Quickstart deployment Output,Charset=utf8},Body={Text={Data=$summary,Charset=utf8},Html={Data=$summary,Charset=utf8}}"
- 
+
  echo "{"\
          "\"env\" : \"$env\","\
          "\"ucpApiUrl\" : \"$httpApiUrl\","\
@@ -115,7 +122,14 @@ else
          "\"password\" : \"$password\","\
          "\"tokenEnpoint\" : \"$tokenEnpoint\","\
          "\"cloudfrontDomainName\" : \"$cloudfrontDomainName\","\
-         "\"region\":\"$OUTRegion\""\
+         "\"region\":\"$OUTRegion\","\
+         "\"S3_Booking_Name\":\"$S3_Booking_Name\","\
+         "\"S3_Clickstream_Name\":\"$S3_Clickstream_Name\","\
+         "\"S3_AirBooking_Name\":\"$S3_AirBooking_Name\","\
+         "\"S3_HotelStayRevenue_Name\":\"$S3_HotelStayRevenue_Name\","\
+         "\"S3_GuestProfile_Name\":\"$S3_GuestProfile_Name\","\
+         "\"S3_PassengerProfile_Name\":\"$S3_PassengerProfile_Name\","\
+         "\"KMS\":\"$KMS\""\
          "}">infra-config-$env.json
     cat infra-config-$env.json
 aws s3 cp infra-config-$env.json s3://$bucket/config/ucp-config-$env.json

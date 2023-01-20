@@ -12,6 +12,8 @@ aws s3api get-object --bucket $artifactBucket --key $envName/$tahCoreVersion/tah
       echo "Could not find tah-core with version $tahCoreVersion rc" >&2
       exit $rc
     fi
+aws s3 cp s3://$artifactBucket/config/ucp-config-$envName.json ucp-config.json
+
 unzip tah-core.zip -d src/tah-core/
 rm -rf tah-core.zip
 
