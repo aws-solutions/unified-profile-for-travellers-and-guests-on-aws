@@ -47,7 +47,7 @@ export class UCPCodePipelinesStack extends Stack {
       description: "Your github Personal access tokens allowing access to the forked repository (see pre-deployment steps)"
     });
 
-    const accessLogging = new tah_s3.AccessLogBucket(this, "aws-tah-industry-connector-pipeline-access-logging")
+    const accessLogging = new tah_s3.AccessLogBucket(this, "ucp-pipeline-access-logging")
     const artifactBucket = new tah_s3.Bucket(this, "ucpArtifacts", accessLogging)
     const pipelineArtifactBucket = new tah_s3.Bucket(this, "ucpPipelineArtifacts", accessLogging)
     tah_core.Output.add(this, "accessLogging", accessLogging.bucketName)
