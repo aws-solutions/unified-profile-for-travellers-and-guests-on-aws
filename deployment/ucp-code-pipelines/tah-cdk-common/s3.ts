@@ -1,4 +1,4 @@
-import { RemovalPolicy } from 'aws-cdk-lib';
+import { RemovalPolicy, Fn, Token } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { aws_s3 as s3 } from 'aws-cdk-lib';
 import { NagSuppressions } from 'cdk-nag';
@@ -17,6 +17,10 @@ export class Bucket extends s3.Bucket {
         })
     }
 
+    //this function returns the name of the Athena table created by the Gule Crawler for this bucket
+    toAthenaTable(): string {
+        return Fn.join("_", Fn.split('-', this.bucketName))
+    }
 }
 
 //bucket to store access logs created
