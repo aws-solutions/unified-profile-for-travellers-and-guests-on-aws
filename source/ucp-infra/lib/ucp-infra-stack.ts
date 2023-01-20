@@ -5,11 +5,8 @@ import { Stack, CfnOutput, RemovalPolicy, StackProps, Duration, Tags, Fn } from 
 import { Construct } from 'constructs';
 import { aws_lambda as lambda } from 'aws-cdk-lib';
 import { aws_s3 as s3 } from 'aws-cdk-lib';
-import { aws_dynamodb as dynamodb } from 'aws-cdk-lib';
-import { aws_apigateway as apigateway } from 'aws-cdk-lib';
 import { aws_iam as iam } from 'aws-cdk-lib';
-import { aws_sqs as sqs } from 'aws-cdk-lib';
-import {aws_kms as kms} from 'aws-cdk-lib'
+import { aws_kms as kms } from 'aws-cdk-lib'
 import { aws_cognito as cognito } from 'aws-cdk-lib';
 import { CorsHttpMethod, HttpApi, HttpMethod, HttpRoute, HttpStage, PayloadFormatVersion } from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpUserPoolAuthorizer } from '@aws-cdk/aws-apigatewayv2-authorizers-alpha';
@@ -18,6 +15,8 @@ import { Database } from '@aws-cdk/aws-glue-alpha';
 import { CfnCrawler, CfnJob, CfnTrigger, CfnWorkflow } from 'aws-cdk-lib/aws-glue';
 import { BucketEncryption, IBucket } from 'aws-cdk-lib/aws-s3';
 import { Queue } from 'aws-cdk-lib/aws-sqs';
+import * as tah_s3 from '../tah-cdk-common/s3';
+import * as tah_glue from '../tah-cdk-common/glue';
 
 
 /////////////////////////////////////////////////////////////////////
@@ -73,6 +72,8 @@ export class UCPInfraStack extends Stack {
       resources: [datalakeAdminRole.roleArn],
       actions: ["iam:PassRole"]
     }))
+    const accessLogBucket = new tah_s3.AccessLogBucket(this, "ucp-access-logging")
+
 
 
     /*************************
@@ -104,110 +105,50 @@ export class UCPInfraStack extends Stack {
     /***************************
    * Data Buckets for temporary processing
    *****************************/
+    //Target Bucket for Amazon connect profile import
+    const connectProfileImportBucket = new tah_s3.Bucket(this, "connectProfileImportBucket", accessLogBucket)
     //temp bucket for Amazon connect profile identity resolution matches
-    const idResolution = new s3.Bucket(this, "ucp-connect-id-resolution-temp-" + envName, {
-      removalPolicy: RemovalPolicy.DESTROY,
-    })
+    const idResolution = new tah_s3.Bucket(this, "ucp-connect-id-resolution-temp", accessLogBucket)
 
     //Source bucket for travel business objects
-    let bookingBucketRaw = this.addBucketToDatalake("ucp-data-booking", envName, datalakeAdminRole);
-    let clickStreamBucketRaw = this.addBucketToDatalake("ucp-data-clickstream", envName, datalakeAdminRole);
-    let loyaltyBucketRaw = this.addBucketToDatalake("ucp-data-loyalty", envName, datalakeAdminRole);
+    this.buildBusinessObjectPipeline("hotel-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    this.buildBusinessObjectPipeline("air-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    this.buildBusinessObjectPipeline("guest-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    this.buildBusinessObjectPipeline("pax-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    this.buildBusinessObjectPipeline("clickstream", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    this.buildBusinessObjectPipeline("hotel-stay", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
 
-    let airBookingRaw = this.addBucketToDatalake("ucp-data-airbooking", envName, datalakeAdminRole);
-    let hotelStayRevenueRaw = this.addBucketToDatalake("ucp-data-hotelstayrevenue", envName, datalakeAdminRole);
-    let guestProfileRaw = this.addBucketToDatalake("ucp-data-guestprofile", envName, datalakeAdminRole);
-    let passengerProfileRaw = this.addBucketToDatalake("ucp-data-passengerprofile", envName, datalakeAdminRole)
-    //Target Bucket for Amazon connect profile import
-    let connectProfileImportBucket = this.addBucketToDatalake("ucp-amazon-connect-profile-import", envName, datalakeAdminRole);
     //Target Bucket for Amazon connect profile export
-    let connectProfileExportBucket = this.addBucketToDatalake("aucp-mazon-connect-profile-export", envName, datalakeAdminRole);
-    let amperityExportBucket = this.addBucketToDatalake("ucp-amperity-export", envName, datalakeAdminRole);
-
-
-    /**********************
-     * ATHENA TABLES
-     ************************/
-    const bookingAthenaTable = Fn.join("_", Fn.split('-', bookingBucketRaw.bucketName))
-    const loyaltyAthenaTable = Fn.join("_", Fn.split('-', loyaltyBucketRaw.bucketName))
-    const clickStreamAthenaTable = Fn.join("_", Fn.split('-', clickStreamBucketRaw.bucketName))
-    const ucpProfileAthenaTable = Fn.join("_", Fn.split('-', connectProfileExportBucket.bucketName))
+    let connectProfileExportBucket = new tah_s3.Bucket(this, "ucp-mazon-connect-profile-export", accessLogBucket);
+    let amperityImportBucket = new tah_s3.Bucket(this, "ucp-amperity-import", accessLogBucket);
+    let amperityExportBucket = new tah_s3.Bucket(this, "ucp-amperity-export", accessLogBucket);
 
     /*****************************
-     * Bucket special permissions for partners
+     * Bucket Permission
      **************************/
+    connectProfileImportBucket.grantReadWrite(datalakeAdminRole)
+    connectProfileExportBucket.grantReadWrite(datalakeAdminRole)
+    amperityExportBucket.grantReadWrite(datalakeAdminRole)
+
     //Amperity
     amperityUser.addToPolicy(new iam.PolicyStatement({
-      resources: ["arn:aws:s3:::" + connectProfileExportBucket.bucketName + "*"],
+      resources: ["arn:aws:s3:::" + amperityImportBucket.bucketName + "*"],
       actions: ["s3:*"]
     }))
 
-    /*********
-     * Creating workflows to visualize
-     ****************/
-    let bookingWorflow = new CfnWorkflow(this, "ucp-workflow-booking", {
-      name: "ucp-workflow-booking-" + envName
-    })
-
-    let clickstreamWorkflow = new CfnWorkflow(this, "ucp-workflow-clickstream", {
-      name: "ucp-workflow-clickstream-" + envName
-    })
-
-    let loyaltyWorkflow = new CfnWorkflow(this, "ucp-workflow-loyalty", {
-      name: "ucp-workflow-loyalty-" + envName
-    })
-
-
-    /*******************
-     * 0-Raw Data Crawlers
-     ******************/
-    let bookingCrawler = this.crawler("ucp-data-booking", envName, glueDb, bookingBucketRaw, datalakeAdminRole)
-    let clickStreamCrawler = this.crawler("ucp-data-clickstream", envName, glueDb, clickStreamBucketRaw, datalakeAdminRole)
-    let loyaltyCrawler = this.crawler("ucp-data-loyalty", envName, glueDb, loyaltyBucketRaw, datalakeAdminRole)
-
-    /*******************
-     * 1-Raw Data Crawler Triggers
-     ******************/
-    let bookingCrawlerTrigger = this.scheduledCrawlerTrigger("ucp-data-booking", envName, bookingCrawler, "cron(0 * * * ? *)", bookingWorflow)
-    this.crawlerOnDemandTrigger("ucp-data-booking", envName, bookingCrawler)
-    let clickStreamCrawlerTrigger = this.scheduledCrawlerTrigger("ucp-data-clickstream", envName, clickStreamCrawler, "cron(0 * * * ? *)", clickstreamWorkflow)
-    this.crawlerOnDemandTrigger("ucp-data-clickstream", envName, clickStreamCrawler)
-    let loyaltyCrawlerTrigger = this.scheduledCrawlerTrigger("ucp-data-loyalty", envName, loyaltyCrawler, "cron(0 * * * ? *)", loyaltyWorkflow)
-    this.crawlerOnDemandTrigger("ucp-data-loyalty", envName, loyaltyCrawler)
-
-    /**********************
-     * 2- Jobs
-     *****************************/
-    //booking pre-processing (flattening)
-    let bookingJob = this.job("ucp-data-booking", envName, artifactBucket, "bookingToUcp", glueDb, datalakeAdminRole, new Map([
-      ["SOURCE_TABLE", bookingAthenaTable],
-      ["DEST_BUCKET", connectProfileImportBucket.bucketName]
-    ]))
-    //clickstream processing
-    let clickStreamJob = this.job("ucp-data-clicktream", envName, artifactBucket, "clickstreamToUcp", glueDb, datalakeAdminRole, new Map([
-      ["SOURCE_TABLE", clickStreamAthenaTable],
-      ["DEST_BUCKET", connectProfileImportBucket.bucketName]
-    ]))
-    let loyaltyJob = this.job("ucp-data-loyalty", envName, artifactBucket, "loyaltyToUcp", glueDb, datalakeAdminRole, new Map([
-      ["SOURCE_TABLE", loyaltyAthenaTable],
-      ["DEST_BUCKET", connectProfileImportBucket.bucketName]
-    ]))
     //Amperity job
     let amperityImportJob = this.job("ucp-amperity-import", envName, artifactBucket, "connectProfileToAmperity", glueDb, datalakeAdminRole, new Map([
-      ["SOURCE_TABLE", ucpProfileAthenaTable],
-      ["DEST_BUCKET", amperityExportBucket.bucketName]
+      ["SOURCE_TABLE", connectProfileExportBucket.toAthenaTable()],
+      ["DEST_BUCKET", amperityImportBucket.bucketName]
     ]))
     let amperityExportJob = this.job("ucp-amperity-export", envName, artifactBucket, "amperityToMatches", glueDb, datalakeAdminRole, new Map([
-      ["SOURCE_TABLE", ucpProfileAthenaTable],
-      ["DEST_BUCKET", amperityExportBucket.bucketName]
+      ["SOURCE_TABLE", amperityExportBucket.toAthenaTable()],
+      ["DEST_DYNAMO_TABLE", "to_be_added"]
     ]))
 
     /*******************
    * 3- Job Triggers
    ******************/
-    let bookingJobTrigger = this.jobTriggerFromCrawler("ucp-data-booking", envName, [bookingCrawler], bookingJob, bookingWorflow)
-    let clickStreamJobTrigger = this.jobTriggerFromCrawler("ucp-data-clickstream", envName, [clickStreamCrawler], clickStreamJob, clickstreamWorkflow)
-    let loyaltyJobTrigger = this.jobTriggerFromCrawler("ucp-data-loyalty", envName, [loyaltyCrawler], loyaltyJob, loyaltyWorkflow)
     this.jobOnDemandTrigger("ucp-amperity-data-import", envName, [amperityImportJob])
     this.jobOnDemandTrigger("ucp-amperity-data-export", envName, [amperityExportJob])
 
@@ -240,7 +181,7 @@ export class UCPInfraStack extends Stack {
     ucpBackEndLambda.addToRolePolicy(new iam.PolicyStatement({
       resources: ["*"],
       actions: ['glue:CreateCrawler',
-      'glue:DeleteCrawler',
+        'glue:DeleteCrawler',
         // TODO: remove iam actions and set up permission boundary instead
         'iam:AttachRolePolicy',
         'iam:CreatePolicy',
@@ -471,18 +412,40 @@ export class UCPInfraStack extends Stack {
   //KMS Key
   ///////////////////////////
   kmsKey = new kms.Key(this, "new_kms_key", {
-    removalPolicy: RemovalPolicy.DESTROY, 
+    removalPolicy: RemovalPolicy.DESTROY,
     pendingWindow: Duration.days(20),
     alias: 'alias/mykey',
-    description: 'KMS key for encrypting business object S3 buckets', 
+    description: 'KMS key for encrypting business object S3 buckets',
     enableKeyRotation: true,
   });
 
 
   /*******************
  * HELPER FUNCTIONS
- * TODO: to move as constructs
  ******************/
+
+  buildBusinessObjectPipeline(businessObjectName: string, envName: string, dataLakeAdminRole: iam.Role, glueDb: Database, artifactBucketName: string, accessLogBucket: s3.Bucket, connectProfileImportBucket: s3.Bucket) {
+    //0-create bucket
+    let bucketRaw = new tah_s3.Bucket(this, "ucp" + businessObjectName, accessLogBucket);
+    //1-Bucket permission
+    bucketRaw.grantReadWrite(dataLakeAdminRole)
+    //2-Creating workflow to visualize
+    let workflow = new CfnWorkflow(this, businessObjectName, {
+      name: "ucp" + businessObjectName + envName
+    })
+    //3-Raw Data Crawlers
+    let crawler = new tah_glue.S3Crawler(this, "ucp" + businessObjectName + envName, glueDb, bucketRaw, dataLakeAdminRole)
+    //4-Raw Data Crawler Triggers
+    this.scheduledCrawlerTrigger("ucp" + businessObjectName, envName, crawler, "cron(0 * * * ? *)", workflow)
+    this.crawlerOnDemandTrigger("ucp" + businessObjectName, envName, crawler)
+    //5- Jobs
+    let job = this.job(businessObjectName, envName, artifactBucketName, businessObjectName + "ToUcp", glueDb, dataLakeAdminRole, new Map([
+      ["SOURCE_TABLE", bucketRaw.toAthenaTable()],
+      ["DEST_BUCKET", connectProfileImportBucket.bucketName]
+    ]))
+    //6- Job Triggers
+    let jobTrigger = this.jobTriggerFromCrawler("ucp" + businessObjectName, envName, [crawler], job, workflow)
+  }
 
   job(prefix: string, envName: string, artifactBucket: string, scriptName: string, glueDb: Database, dataLakeAdminRole: iam.Role, envVar: Map<string, string>): CfnJob {
     let job = new CfnJob(this, prefix + "Job" + envName, {
@@ -510,21 +473,7 @@ export class UCPInfraStack extends Stack {
     return job
   }
 
-  crawler(prefix: string, envName: string, glueDb: Database, bucket: IBucket, dataLakeAdminRole: iam.Role): CfnCrawler {
-    return new CfnCrawler(this, prefix + "-crawler-" + envName, {
-      role: dataLakeAdminRole.roleArn,
-      targets: {
-        s3Targets: [{ path: "s3://" + bucket.bucketName }]
-      },
-      configuration: `{
-        "Version": 1.0,
-        "Grouping": {
-           "TableGroupingPolicy": "CombineCompatibleSchemas" }
-     }`,
-      databaseName: glueDb.databaseName,
-      name: prefix + "-crawler-" + envName
-    })
-  }
+
 
 
   jobTriggerFromCrawler(prefix: string, envName: string, crawlers: Array<CfnCrawler>, job: CfnJob, workflow?: CfnWorkflow): CfnTrigger {
@@ -690,21 +639,6 @@ export class UCPInfraStack extends Stack {
         ]
       })
     }
-    return bucket
-  }
-
-  addBucketToDatalake(prefix: string, envName: string, dataLakeAdminRole: iam.Role): s3.Bucket {
-    const bucket = new s3.Bucket(this, prefix + "-" + envName, {
-      removalPolicy: RemovalPolicy.DESTROY,
-      encryption: BucketEncryption.KMS,
-      encryptionKey: this.kmsKey,
-    })
-    Tags.of(bucket).add('cloudrack-data-zone', 'bronze');
-
-    dataLakeAdminRole.addToPolicy(new iam.PolicyStatement({
-      resources: ["arn:aws:s3:::" + bucket.bucketName + "*"],
-      actions: ["s3:GetObject", "s3:PutObject"]
-    }))
     return bucket
   }
 

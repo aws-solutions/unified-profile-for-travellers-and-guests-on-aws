@@ -4,7 +4,7 @@ export class Utils {
      * This function decode a masked string (initially base64 encoded) and split it into comma separated items to return
      * an arry of strings
      * @param str string
-     * @returns arrayt of string
+     * @returns array of string
      */
     static unmaskList(str: string): Array<string> {
         const serializedList = Utils.decode(str)
