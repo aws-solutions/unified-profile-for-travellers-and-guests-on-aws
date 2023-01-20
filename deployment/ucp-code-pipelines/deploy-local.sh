@@ -4,6 +4,7 @@ token=$(jq -r .token ../env.json)
 githubUsername=$(jq -r .githubUsername ../env.json)
 solutionEnvName=$(jq -r .solutionEnvName ../env.json)
 artifactBucket=$(jq -r .artifactBucket ../env.json)
+buildFromUpstream=$(jq -r .buildFromUpstream ../env.json)
 
 echo "Getting tah dependencies version"
 tahCdkCommonVersion=$(jq -r '."tah-cdk-common"' ../../tah.json)
@@ -21,4 +22,4 @@ unzip tah-cdk-common.zip -d ./tah-cdk-common
 rm tah-cdk-common.zip
 
 echo "Deploying infrastrure"
-sh deploy.sh $envName $email $token $solutionEnvName $githubUsername
+sh deploy.sh $envName $email $token $solutionEnvName $githubUsername $buildFromUpstream

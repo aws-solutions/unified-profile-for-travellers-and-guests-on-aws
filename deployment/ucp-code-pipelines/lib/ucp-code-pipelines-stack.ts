@@ -292,7 +292,7 @@ export class UCPCodePipelinesStack extends Stack {
           repo: gitHubRepo,
           oauthToken: SecretValue.unsafePlainText(githubtoken.valueAsString),
           branch: branch.valueAsString,
-          owner: gitHubUserName.valueAsString,
+          owner: owner,
           output: sourceOutput,
         }),
       ],
