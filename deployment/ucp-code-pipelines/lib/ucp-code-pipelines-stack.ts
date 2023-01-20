@@ -281,8 +281,9 @@ export class UCPCodePipelinesStack extends Stack {
 
     let stages: codepipeline.StageProps[] = []
     const buildFromUpstreamCondition = new CfnCondition(this, "buildFromUpstreamCondition", { expression: Fn.conditionEquals(buildFromUpstream.valueAsString, "true") });
+    const branchEmptyCondition = new CfnCondition(this, "branchCondition", { expression: Fn.conditionEquals(branch.valueAsString, "") });
     let owner = Fn.conditionIf(buildFromUpstreamCondition.logicalId, "aws-solutions", gitHubUserName.valueAsString).toString();
-
+    let branchName = Fn.conditionIf(branchEmptyCondition.logicalId, "main", branch.valueAsString).toString();
     //Source  stage
     stages.push({
       stageName: 'Source',
@@ -291,7 +292,7 @@ export class UCPCodePipelinesStack extends Stack {
           actionName: 'GitHub_Source',
           repo: gitHubRepo,
           oauthToken: SecretValue.unsafePlainText(githubtoken.valueAsString),
-          branch: branch.valueAsString,
+          branch: branchName,
           owner: owner,
           output: sourceOutput,
         }),
