@@ -55,13 +55,8 @@ else
     ucpApiId=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='ucpApiId'].OutputValue" --output text)
     httpApiUrl=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='httpApiUrl'].OutputValue" --output text)
     ucpPortalUrl=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='ucpPortalUrl'].OutputValue" --output text)
-    S3_Booking_Name=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.S3_Booking_Name" --output text)
-    S3_Clickstream_Name=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.S3_Clickstream_Name" --output text)
-    S3_AirBooking_Name=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.S3_AirBooking_Name" --output text)
-    S3_HotelStayRevenue_Name=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.S3_HotelStayRevenue_Name" --output text)
-    S3_GuestProfile_Name=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.S3_GuestProfile_Name" --output text)
-    S3_PassengerProfile_Name=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.S3_PassengerProfile_Name" --output text)
-    KMS=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.KMS" --output text)
+    connectProfileExportBucket=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.CONNECT_PROFILE_EXPORT_BUCKET" --output text)
+    kmsKeyProfileDomain=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.KMS_KEY_PROFILE_DOMAIN" --output text)
 
     echo "3.2 Creating admin User and getting refresh token"
     RANDOM=$$
@@ -123,13 +118,8 @@ else
          "\"tokenEnpoint\" : \"$tokenEnpoint\","\
          "\"cloudfrontDomainName\" : \"$cloudfrontDomainName\","\
          "\"region\":\"$OUTRegion\","\
-         "\"S3_Booking_Name\":\"$S3_Booking_Name\","\
-         "\"S3_Clickstream_Name\":\"$S3_Clickstream_Name\","\
-         "\"S3_AirBooking_Name\":\"$S3_AirBooking_Name\","\
-         "\"S3_HotelStayRevenue_Name\":\"$S3_HotelStayRevenue_Name\","\
-         "\"S3_GuestProfile_Name\":\"$S3_GuestProfile_Name\","\
-         "\"S3_PassengerProfile_Name\":\"$S3_PassengerProfile_Name\","\
-         "\"KMS\":\"$KMS\""\
+         "\"connectProfileExportDomain\":\"$connectProfileExportDomain\","\
+         "\"kmsKeyProfileDomain\":\"$kmsKeyProfileDomain\""\
          "}">infra-config-$env.json
     cat infra-config-$env.json
 aws s3 cp infra-config-$env.json s3://$bucket/config/ucp-config-$env.json

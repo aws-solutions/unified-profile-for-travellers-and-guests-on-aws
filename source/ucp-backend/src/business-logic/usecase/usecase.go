@@ -12,13 +12,8 @@ import (
 
 var AVAIL_DB_TIMEFORMAT string = "20060102"
 
-var S3_Booking_Name string = os.Getenv("S3_Booking_Name")
-var S3_Clickstream_Name string = os.Getenv("S3_Clickstream_Name")
-var S3_AirBooking_Name string = os.Getenv("S3_AirBooking_Name")
-var S3_HotelStayRevenue_Name string = os.Getenv("S3_HotelStayRevenue_Name")
-var S3_GuestProfile_Name string = os.Getenv("S3_GuestProfile_Name")
-var S3_PassengerProfile_Name string = os.Getenv("S3_PassengerProfile_Name")
-var KMS_ARN string = os.Getenv("KMS")
+var CONNECT_PROFILE_EXPORT_BUCKET = os.Getenv("CONNECT_PROFILE_EXPORT_BUCKET")
+var KMS_KEY_PROFILE_DOMAIN string = os.Getenv("KMS_KEY_PROFILE_DOMAIN")
 
 // Key Names for Business Objects
 const HOTEL_BOOKING string = "hotel_booking"
@@ -318,7 +313,7 @@ func ListUcpDomains(rq model.UCPRequest, profilesSvc customerprofiles.CustomerPr
 }
 
 func CreateUcpDomain(rq model.UCPRequest, profilesSvc customerprofiles.CustomerProfileConfig) (model.ResWrapper, error) {
-	err := profilesSvc.CreateDomain(rq.Domain.Name, true, KMS_ARN)
+	err := profilesSvc.CreateDomain(rq.Domain.Name, true, KMS_KEY_PROFILE_DOMAIN)
 	if err != nil {
 		return model.ResWrapper{}, err
 	}
@@ -330,15 +325,6 @@ func CreateUcpDomain(rq model.UCPRequest, profilesSvc customerprofiles.CustomerP
 		AIR_BOOKING:        buildAirBookingMapping,
 		GUEST_PROFILE:      buildGuestProfileMapping,
 		PASSENGER_PROFILE:  buildPassengerProfileMapping,
-	}
-
-	businessS3Map := map[string]string{
-		HOTEL_BOOKING:      S3_Booking_Name,
-		HOTEL_STAY_REVENUE: S3_HotelStayRevenue_Name,
-		CLICKSTREAM:        S3_Clickstream_Name,
-		AIR_BOOKING:        S3_AirBooking_Name,
-		GUEST_PROFILE:      S3_GuestProfile_Name,
-		PASSENGER_PROFILE:  S3_PassengerProfile_Name,
 	}
 
 	for keyBusiness := range businessMap {
@@ -353,14 +339,14 @@ func CreateUcpDomain(rq model.UCPRequest, profilesSvc customerprofiles.CustomerP
 			return model.ResWrapper{}, err
 		}
 
-		integrationInput, err3 := profilesSvc.CreatePutIntegrationInput(keyBusiness, businessS3Map[keyBusiness])
+		integrationInput, err3 := profilesSvc.CreatePutIntegrationInput(keyBusiness, CONNECT_PROFILE_EXPORT_BUCKET)
 		if err3 != nil {
 			log.Printf("Error creating integration input %s", err3)
 		}
 		js, _ := json.Marshal(integrationInput)
 		log.Println(string(js))
 
-		_, err4 := profilesSvc.PutIntegration(keyBusiness, businessS3Map[keyBusiness])
+		_, err4 := profilesSvc.PutIntegration(keyBusiness, CONNECT_PROFILE_EXPORT_BUCKET)
 		if err4 != nil {
 			log.Printf("Error creating integration %s", err4)
 			return model.ResWrapper{}, err4

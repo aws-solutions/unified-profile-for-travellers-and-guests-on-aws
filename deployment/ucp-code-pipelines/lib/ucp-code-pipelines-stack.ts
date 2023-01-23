@@ -1,4 +1,4 @@
-import { Stack, StackProps, SecretValue, CfnParameter } from 'aws-cdk-lib';
+import { Stack, StackProps, SecretValue, CfnParameter, CfnCondition, Fn } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
@@ -46,8 +46,22 @@ export class UCPCodePipelinesStack extends Stack {
       noEcho: true,
       description: "Your github Personal access tokens allowing access to the forked repository (see pre-deployment steps)"
     });
+    const buildFromUpstream = new CfnParameter(this, "buildFromUpstream", {
+      type: "String",
+      allowedValues: [
+        "true",
+        "false"
+      ],
+      default: "false",
+      description: "If set to true, the solution will build from the upstream repository instead of your fork (AWS Internal)"
+    });
+    const branch = new CfnParameter(this, "branch", {
+      type: "String",
+      default: "main",
+      description: "The git branch to build from"
+    });
 
-    const accessLogging = new tah_s3.AccessLogBucket(this, "aws-tah-industry-connector-pipeline-access-logging")
+    const accessLogging = new tah_s3.AccessLogBucket(this, "ucp-pipeline-access-logging")
     const artifactBucket = new tah_s3.Bucket(this, "ucpArtifacts", accessLogging)
     const pipelineArtifactBucket = new tah_s3.Bucket(this, "ucpPipelineArtifacts", accessLogging)
     tah_core.Output.add(this, "accessLogging", accessLogging.bucketName)
@@ -266,12 +280,9 @@ export class UCPCodePipelinesStack extends Stack {
 
 
     let stages: codepipeline.StageProps[] = []
-    let branchName = "main"
-    //we isoluate productino to a dedicated branch to ensure a proper productino deployment process
-    //requireing a pull request formo main to production branch
-    if (envNameVal.valueAsString === 'prod') {
-      branchName = "production"
-    }
+    const buildFromUpstreamCondition = new CfnCondition(this, "buildFromUpstreamCondition", { expression: Fn.conditionEquals(buildFromUpstream.valueAsString, "true") });
+    let owner = Fn.conditionIf(buildFromUpstreamCondition.logicalId, "aws-solutions", gitHubUserName.valueAsString).toString();
+
     //Source  stage
     stages.push({
       stageName: 'Source',
@@ -280,7 +291,7 @@ export class UCPCodePipelinesStack extends Stack {
           actionName: 'GitHub_Source',
           repo: gitHubRepo,
           oauthToken: SecretValue.unsafePlainText(githubtoken.valueAsString),
-          branch: branchName,
+          branch: branch.valueAsString,
           owner: gitHubUserName.valueAsString,
           output: sourceOutput,
         }),
