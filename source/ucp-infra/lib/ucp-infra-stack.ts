@@ -1,22 +1,24 @@
 // Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 
-import { Stack, CfnOutput, RemovalPolicy, StackProps, Duration, Tags, Fn } from 'aws-cdk-lib';
+import { Stack, CfnOutput, RemovalPolicy, StackProps, Duration, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { aws_lambda as lambda } from 'aws-cdk-lib';
-import { aws_s3 as s3 } from 'aws-cdk-lib';
-import { aws_iam as iam } from 'aws-cdk-lib';
-import { aws_kms as kms } from 'aws-cdk-lib'
-import { aws_cognito as cognito } from 'aws-cdk-lib';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as kms from 'aws-cdk-lib/aws-kms';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+
 import { CorsHttpMethod, HttpApi, HttpMethod, HttpRoute, HttpStage, PayloadFormatVersion } from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpUserPoolAuthorizer } from '@aws-cdk/aws-apigatewayv2-authorizers-alpha';
 import { HttpLambdaIntegration, } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import { Database } from '@aws-cdk/aws-glue-alpha';
 import { CfnCrawler, CfnJob, CfnTrigger, CfnWorkflow } from 'aws-cdk-lib/aws-glue';
-import { BucketEncryption, IBucket } from 'aws-cdk-lib/aws-s3';
 import { Queue } from 'aws-cdk-lib/aws-sqs';
 import * as tah_s3 from '../tah-cdk-common/s3';
 import * as tah_glue from '../tah-cdk-common/glue';
+import * as tah_core from '../tah-cdk-common/core';
 
 
 /////////////////////////////////////////////////////////////////////
@@ -160,6 +162,26 @@ export class UCPInfraStack extends Stack {
     this.jobOnDemandTrigger("ucp-amperity-data-export", envName, [amperityExportJob])
 
 
+
+    /////////////////////////
+    //Appflow and Amazon Connect Customer profile
+    ///////////////////////////
+    /*******
+     * KMS Key
+     */
+    //TODO: to rename the key into something moroe explicit
+    const kmsKeyProfileDomain = new kms.Key(this, "new_kms_key", {
+      removalPolicy: RemovalPolicy.DESTROY,
+      pendingWindow: Duration.days(20),
+      alias: 'alias/mykey',
+      description: 'KMS key for encrypting business object S3 buckets',
+      enableKeyRotation: true,
+    });
+
+    //Customer Profile Outputs for Domain Testing
+    new CfnOutput(this, "connectProfileExportBucket", { value: connectProfileExportBucket.bucketName })
+    new CfnOutput(this, "kmsKeyProfileDomain", { value: kmsKeyProfileDomain.keyArn })
+
     //////////////////////////
     //LAMBDA FUNCTION
     /////////////////////////
@@ -183,7 +205,7 @@ export class UCPInfraStack extends Stack {
         UCP_GUEST360_TABLE_PK: "",
         UCP_GUEST360_ATHENA_TABLE: "",
         CONNECT_PROFILE_EXPORT_BUCKET: connectProfileExportBucket.bucketName,
-        KMS_KEY_PROFILE_DOMAIN: this.kmsKeyProfileDomain.keyArn,
+        KMS_KEY_PROFILE_DOMAIN: kmsKeyProfileDomain.keyArn,
       }
     });
 
@@ -433,22 +455,116 @@ export class UCPInfraStack extends Stack {
     new CfnOutput(this, 'ucpApiId', {
       value: apiV2.apiId || ""
     });
+
+    /////////////////////////////////
+    // WEBSITE, CDN, DNS
+    /////////////////////////////////
+
+    /*********************************
+    * S3 Bucket for static content
+    ******************************/
+
+    const websiteStaticContentBucket = new tah_s3.Bucket(this, "ucp-connector-fe-" + envName, accessLogBucket)
+    const cloudfrontLogBucket = new tah_s3.Bucket(this, "ucp-connector-fe-logs-" + envName, accessLogBucket)
+
+    tah_core.Output.add(this, "websiteBucket", websiteStaticContentBucket.bucketName)
+
+    /*************************
+     * CloudFront Distribution
+     ****************************/
+
+
+    const oai = new cloudfront.OriginAccessIdentity(this, 'websiteDistributionOAI' + envName, {
+      comment: "Origin access identity for website in " + envName
+    })
+
+    let distributionConfig: cloudfront.CloudFrontWebDistributionProps = {
+      originConfigs: [
+        {
+          s3OriginSource: {
+            s3BucketSource: websiteStaticContentBucket,
+            originAccessIdentity: oai
+          },
+          behaviors: [
+            {
+              isDefaultBehavior: true,
+              forwardedValues: {
+                "queryString": true,
+                "cookies": {
+                  "forward": "none"
+                }
+              }
+
+            }]
+        }
+      ],
+      loggingConfig: {
+        bucket: cloudfrontLogBucket,
+        includeCookies: false,
+        prefix: 'prefix',
+      },
+      viewerCertificate: cloudfront.ViewerCertificate.fromCloudFrontDefaultCertificate(),
+      errorConfigurations: [
+        {
+          "errorCachingMinTtl": 300,
+          "errorCode": 403,
+          "responseCode": 200,
+          "responsePagePath": "/index.html"
+        },
+        {
+          "errorCachingMinTtl": 300,
+          "errorCode": 404,
+          "responseCode": 200,
+          "responsePagePath": "/index.html"
+        }
+      ]
+    }
+
+
+
+
+    const websiteDistribution = new cloudfront.CloudFrontWebDistribution(this, 'ucpWebsiteDistribution' + envName, distributionConfig);
+
+    //We create adedicated response ehader policy to include the AWS recommanded HTTP Headers
+    const responseHeaderPolicy = new cloudfront.ResponseHeadersPolicy(this, 'ResponseHeadersPolicy', {
+      customHeadersBehavior: {
+        customHeaders: [
+          { header: 'Cache-Control', value: 'no-store, no-cache', override: true },
+          { header: 'Pragma', value: 'no-cache', override: false },
+        ],
+      },
+      securityHeadersBehavior: {
+        contentTypeOptions: { override: true },
+        frameOptions: { frameOption: cloudfront.HeadersFrameOption.DENY, override: true },
+        contentSecurityPolicy: { contentSecurityPolicy: "default-src 'none'; img-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; object-src 'none'; connect-src *.amazonaws.com", override: true },
+        strictTransportSecurity: { accessControlMaxAge: Duration.seconds(600), includeSubdomains: true, override: true },
+      },
+    });
+    //adding the response policy ID to cloudfront distributiono using an escape hatch
+    const cfnDistribution = websiteDistribution.node.defaultChild as cloudfront.CfnDistribution;
+    cfnDistribution.addPropertyOverride(
+      'DistributionConfig.DefaultCacheBehavior.ResponseHeadersPolicyId',
+      responseHeaderPolicy.responseHeadersPolicyId
+    );
+
+    websiteStaticContentBucket.addToResourcePolicy(new iam.PolicyStatement({
+      actions: ['s3:GetObject'],
+      effect: iam.Effect.ALLOW,
+      resources: [websiteStaticContentBucket.arnForObjects("*")],
+      principals: [new iam.CanonicalUserPrincipal(oai.cloudFrontOriginAccessIdentityS3CanonicalUserId)],
+    }));
+
+
+    tah_core.Output.add(this, "accessLogging", accessLogBucket.bucketName)
+    tah_core.Output.add(this, "websiteDistributionId", websiteDistribution.distributionId)
+    tah_core.Output.add(this, "websiteDomainName", websiteDistribution.distributionDomainName)
+
   }
-  /////////////////////////
-  //KMS Key
-  ///////////////////////////
-  kmsKeyProfileDomain = new kms.Key(this, "new_kms_key", {
-    removalPolicy: RemovalPolicy.DESTROY,
-    pendingWindow: Duration.days(20),
-    alias: 'alias/mykey',
-    description: 'KMS key for encrypting business object S3 buckets',
-    enableKeyRotation: true,
-  });
 
 
   /*******************
- * HELPER FUNCTIONS
- ******************/
+  * HELPER FUNCTIONS
+  ******************/
 
   buildBusinessObjectPipeline(businessObjectName: string, envName: string, dataLakeAdminRole: iam.Role, glueDb: Database, artifactBucketName: string, accessLogBucket: s3.Bucket, connectProfileImportBucket: s3.Bucket) {
     //0-create bucket
@@ -635,7 +751,7 @@ export class UCPInfraStack extends Stack {
     return bucket
   }
 
-  addExistingBucketToDatalake(bucketName: string, envName: string, glueDb: Database, dataLakeAdminRole: iam.Role, crawlerConfig?: any): IBucket {
+  addExistingBucketToDatalake(bucketName: string, envName: string, glueDb: Database, dataLakeAdminRole: iam.Role, crawlerConfig?: any): s3.IBucket {
     const bucket = s3.Bucket.fromBucketName(this, bucketName, bucketName);
     dataLakeAdminRole.addToPolicy(new iam.PolicyStatement({
       resources: ["arn:aws:s3:::" + bucket.bucketName + "*"],

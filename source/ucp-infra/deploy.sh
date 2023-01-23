@@ -54,10 +54,12 @@ else
     cognitoDomain=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='cognitoDomain'].OutputValue" --output text)
     ucpApiId=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='ucpApiId'].OutputValue" --output text)
     httpApiUrl=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='httpApiUrl'].OutputValue" --output text)
-    ucpPortalUrl=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='ucpPortalUrl'].OutputValue" --output text)
-    connectProfileExportBucket=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.CONNECT_PROFILE_EXPORT_BUCKET" --output text)
-    kmsKeyProfileDomain=$(aws lambda get-function-configuration --function-name ucpBackEnddev --query "Environment.Variables.KMS_KEY_PROFILE_DOMAIN" --output text)
-
+    websiteDistributionId=$(aws cloudformation describe-stacks --stack-name AwsIndustryConnectorInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteDistributionId'].OutputValue" --output text)
+    cloudfrontDomainName=$(aws cloudformation describe-stacks --stack-name AwsIndustryConnectorInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteDomainName'].OutputValue" --output text)
+    websiteBucket=$(aws cloudformation describe-stacks --stack-name AwsIndustryConnectorInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteBucket'].OutputValue" --output text)
+    connectProfileExportBucket=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileExportBucket'].OutputValue" --output text)
+    kmsKeyProfileDomain=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='kmsKeyProfileDomain'].OutputValue" --output text)
+   
     echo "3.2 Creating admin User and getting refresh token"
     RANDOM=$$
     time=$(date +"%Y-%m-%d-%H-%M-%S")
@@ -99,13 +101,19 @@ else
     | Password                |  '$password'</br>
     --------------------------------------------------------------------------------------------</br>
     | UCP Portal URL          |  '$ucpPortalUrl'</br>
+    --------------------------------------------------------------------------------------------</br>
+    | Cloufront Distribution  |  '$websiteDistributionId'</br>
+    --------------------------------------------------------------------------------------------</br>
+    | Portal URL              |  '$cloudfrontDomainName'</br>
+    --------------------------------------------------------------------------------------------</br>
+    | Website Bucket          |  '$websiteBucket'</br>
     --------------------------------------------------------------------------------------------</br>'
 
     echo "$summary"
     
    # echo "Sending stack outputs to email: $email"
-    #aws ses send-email --from "$email" --destination "ToAddresses=$email" --message "Subject={Data=Your IOT Connectiviity Quickstart deployment Output,Charset=utf8},Body={Text={Data=$summary,Charset=utf8},Html={Data=$summary,Charset=utf8}}"
-
+   #aws ses send-email --from "$email" --destination "ToAddresses=$email" --message "Subject={Data=Your IOT Connectiviity Quickstart deployment Output,Charset=utf8},Body={Text={Data=$summary,Charset=utf8},Html={Data=$summary,Charset=utf8}}"
+ 
  echo "{"\
          "\"env\" : \"$env\","\
          "\"ucpApiUrl\" : \"$httpApiUrl\","\
@@ -116,10 +124,12 @@ else
          "\"cognitoDomain\" : \"$cognitoDomain\","\
          "\"password\" : \"$password\","\
          "\"tokenEnpoint\" : \"$tokenEnpoint\","\
+         "\"contentBucket\" : \"$websiteBucket\","\
          "\"cloudfrontDomainName\" : \"$cloudfrontDomainName\","\
-         "\"region\":\"$OUTRegion\","\
-         "\"connectProfileExportDomain\":\"$connectProfileExportDomain\","\
-         "\"kmsKeyProfileDomain\":\"$kmsKeyProfileDomain\""\
+         "\"websiteDistributionId\" : \"$websiteDistributionId\","\
+         "\"connectProfileExportBucket\":\"$connectProfileExportBucket\","\
+         "\"kmsKeyProfileDomain\":\"$kmsKeyProfileDomain\","\
+         "\"region\":\"$OUTRegion\""\
          "}">infra-config-$env.json
     cat infra-config-$env.json
 aws s3 cp infra-config-$env.json s3://$bucket/config/ucp-config-$env.json

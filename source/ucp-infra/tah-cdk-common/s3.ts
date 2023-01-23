@@ -21,8 +21,6 @@ export class Bucket extends s3.Bucket {
     toAthenaTable(): string {
         return Fn.join("_", Fn.split('-', this.bucketName))
     }
-
-
 }
 
 //bucket to store access logs created
