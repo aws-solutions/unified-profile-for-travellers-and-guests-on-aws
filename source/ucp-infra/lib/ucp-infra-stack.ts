@@ -204,7 +204,7 @@ export class UCPInfraStack extends Stack {
         UCP_GUEST360_TABLE_NAME: "",
         UCP_GUEST360_TABLE_PK: "",
         UCP_GUEST360_ATHENA_TABLE: "",
-        CONNECT_PROFILE_EXPORT_BUCKET: connectProfileExportBucket.bucketName,
+        CONNECT_PROFILE_SOURCE_BUCKET: connectProfileImportBucket.bucketName,
         KMS_KEY_PROFILE_DOMAIN: kmsKeyProfileDomain.keyArn,
       }
     });
