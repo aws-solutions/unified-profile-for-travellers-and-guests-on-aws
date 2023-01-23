@@ -54,9 +54,9 @@ else
     cognitoDomain=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='cognitoDomain'].OutputValue" --output text)
     ucpApiId=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='ucpApiId'].OutputValue" --output text)
     httpApiUrl=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='httpApiUrl'].OutputValue" --output text)
-    websiteDistributionId=$(aws cloudformation describe-stacks --stack-name AwsIndustryConnectorInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteDistributionId'].OutputValue" --output text)
-    cloudfrontDomainName=$(aws cloudformation describe-stacks --stack-name AwsIndustryConnectorInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteDomainName'].OutputValue" --output text)
-    websiteBucket=$(aws cloudformation describe-stacks --stack-name AwsIndustryConnectorInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteBucket'].OutputValue" --output text)
+    websiteDistributionId=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteDistributionId'].OutputValue" --output text)
+    cloudfrontDomainName=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteDomainName'].OutputValue" --output text)
+    websiteBucket=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteBucket'].OutputValue" --output text)
     connectProfileExportBucket=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileExportBucket'].OutputValue" --output text)
     kmsKeyProfileDomain=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='kmsKeyProfileDomain'].OutputValue" --output text)
    
@@ -134,4 +134,4 @@ else
     cat infra-config-$env.json
 aws s3 cp infra-config-$env.json s3://$bucket/config/ucp-config-$env.json
 
-fi
+fi  
