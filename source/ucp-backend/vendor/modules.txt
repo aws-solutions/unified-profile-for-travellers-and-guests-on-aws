@@ -59,6 +59,9 @@ github.com/jmespath/go-jmespath
 # github.com/mmcloughlin/geohash v0.10.0
 ## explicit
 github.com/mmcloughlin/geohash
+# github.com/pkg/errors v0.9.1
+## explicit
+github.com/pkg/errors
 # tah/core v0.0.0-unpublished => ./src/tah-core
 ## explicit; go 1.18
 tah/core/appflow

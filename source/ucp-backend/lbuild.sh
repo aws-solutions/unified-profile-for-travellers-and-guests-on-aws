@@ -37,7 +37,7 @@ echo "5-Unit testing"
 if [ $env == $LOCAL_ENV_NAME ]; then
   export GOOS=darwin
 fi
-sh ./test.sh
+sh ./test.sh $env $bucket
 rc=$?
 if [ $rc -ne 0 ]; then
   echo "Existing Build with status $rc" >&2
