@@ -3,7 +3,6 @@ package usecase
 import (
 	"encoding/json"
 	"log"
-	"os"
 	"strconv"
 	customerprofiles "tah/core/customerprofiles"
 	model "tah/ucp/src/business-logic/model"
@@ -11,9 +10,6 @@ import (
 )
 
 var AVAIL_DB_TIMEFORMAT string = "20060102"
-
-var CONNECT_PROFILE_EXPORT_BUCKET = os.Getenv("CONNECT_PROFILE_EXPORT_BUCKET")
-var KMS_KEY_PROFILE_DOMAIN string = os.Getenv("KMS_KEY_PROFILE_DOMAIN")
 
 // Key Names for Business Objects
 const HOTEL_BOOKING string = "hotel_booking"
@@ -312,7 +308,7 @@ func ListUcpDomains(rq model.UCPRequest, profilesSvc customerprofiles.CustomerPr
 	return model.ResWrapper{UCPConfig: model.UCPConfig{Domains: domains}}, err
 }
 
-func CreateUcpDomain(rq model.UCPRequest, profilesSvc customerprofiles.CustomerProfileConfig) (model.ResWrapper, error) {
+func CreateUcpDomain(rq model.UCPRequest, profilesSvc customerprofiles.CustomerProfileConfig, KMS_KEY_PROFILE_DOMAIN string, CONNECT_PROFILE_SOURCE_BUCKET string) (model.ResWrapper, error) {
 	err := profilesSvc.CreateDomain(rq.Domain.Name, true, KMS_KEY_PROFILE_DOMAIN)
 	if err != nil {
 		return model.ResWrapper{}, err
@@ -339,14 +335,14 @@ func CreateUcpDomain(rq model.UCPRequest, profilesSvc customerprofiles.CustomerP
 			return model.ResWrapper{}, err
 		}
 
-		integrationInput, err3 := profilesSvc.CreatePutIntegrationInput(keyBusiness, CONNECT_PROFILE_EXPORT_BUCKET)
+		integrationInput, err3 := profilesSvc.CreatePutIntegrationInput(keyBusiness, CONNECT_PROFILE_SOURCE_BUCKET)
 		if err3 != nil {
 			log.Printf("Error creating integration input %s", err3)
 		}
 		js, _ := json.Marshal(integrationInput)
 		log.Println(string(js))
 
-		_, err4 := profilesSvc.PutIntegration(keyBusiness, CONNECT_PROFILE_EXPORT_BUCKET)
+		_, err4 := profilesSvc.PutIntegration(keyBusiness, CONNECT_PROFILE_SOURCE_BUCKET)
 		if err4 != nil {
 			log.Printf("Error creating integration %s", err4)
 			return model.ResWrapper{}, err4

@@ -10,6 +10,10 @@ import (
 
 var UCP_REGION = getRegion()
 
+//check test.sh script for definition oof these environement variables
+var KMS_KEY_PROFILE_DOMAIN = os.Getenv("KMS_KEY_PROFILE_DOMAIN")
+var CONNECT_PROFILE_SOURCE_BUCKET = os.Getenv("CONNECT_PROFILE_SOURCE_BUCKET")
+
 func TestDomainCreationDeletion(t *testing.T) {
 	log.Printf("Testing domain creation and deletion")
 	testDomain := "ucp-component-test-domain"
@@ -18,7 +22,7 @@ func TestDomainCreationDeletion(t *testing.T) {
 		Domain: model.Domain{Name: testDomain},
 	}
 	log.Printf("Testing domain creation")
-	_, err := CreateUcpDomain(req, profileClient)
+	_, err := CreateUcpDomain(req, profileClient, KMS_KEY_PROFILE_DOMAIN, CONNECT_PROFILE_SOURCE_BUCKET)
 	if err != nil {
 		t.Errorf("Error creating UCP domain: %v", err)
 	}
