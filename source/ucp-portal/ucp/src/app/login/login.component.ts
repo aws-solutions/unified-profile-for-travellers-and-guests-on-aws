@@ -60,6 +60,7 @@ export class LoginComponent implements OnInit {
         console.log(userAttributes)
         console.log(requiredAttributes)
         delete userAttributes.email_verified;
+        delete userAttributes.email;
         this.sessionUserAttributes = userAttributes;
       },
       onFailure: (err) => {
