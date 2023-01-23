@@ -1,17 +1,29 @@
 package usecase
 
 import (
+	"encoding/json"
+	"log"
+	"os"
 	"strconv"
 	customerprofiles "tah/core/customerprofiles"
 	model "tah/ucp/src/business-logic/model"
 	"time"
-
-	"log"
 )
 
 var AVAIL_DB_TIMEFORMAT string = "20060102"
 
-//To be used while creating customer profile mappings for custom attributes
+var CONNECT_PROFILE_EXPORT_BUCKET = os.Getenv("CONNECT_PROFILE_EXPORT_BUCKET")
+var KMS_KEY_PROFILE_DOMAIN string = os.Getenv("KMS_KEY_PROFILE_DOMAIN")
+
+// Key Names for Business Objects
+const HOTEL_BOOKING string = "hotel_booking"
+const HOTEL_STAY_REVENUE string = "hotel_stay_revenue"
+const CLICKSTREAM string = "clickstream"
+const AIR_BOOKING string = "air_booking"
+const GUEST_PROFILE string = "guest_profile"
+const PASSENGER_PROFILE string = "passenger_profile"
+
+// To be used while creating customer profile mappings for custom attributes
 var ATTRIBUTE_KEY_HOTEL_BOOKING_HOTEL_CODE string = "hotelCode"
 var ATTRIBUTE_KEY_HOTEL_BOOKING_PRODUCTS string = "products"
 var ATTRIBUTE_KEY_HOTEL_BOOKING_N_NIGHTS string = "nNights"
@@ -301,36 +313,44 @@ func ListUcpDomains(rq model.UCPRequest, profilesSvc customerprofiles.CustomerPr
 }
 
 func CreateUcpDomain(rq model.UCPRequest, profilesSvc customerprofiles.CustomerProfileConfig) (model.ResWrapper, error) {
-	err := profilesSvc.CreateDomain(rq.Domain.Name, true)
+	err := profilesSvc.CreateDomain(rq.Domain.Name, true, KMS_KEY_PROFILE_DOMAIN)
 	if err != nil {
 		return model.ResWrapper{}, err
 	}
-	err = profilesSvc.CreateMapping("booking", "Primary Mapping for the booking object", buildBookingMapping())
-	if err != nil {
-		log.Printf("[CreateUcpDomain] Error creating Mapping: %s. deleting domain", err)
-		err2 := profilesSvc.DeleteDomain()
-		if err2 != nil {
-			log.Printf("[CreateUcpDomain][warning] Error cleaning up domain after failed mapping creation %v", err2)
-		}
-		return model.ResWrapper{}, err
+
+	businessMap := map[string]func() []customerprofiles.FieldMapping{
+		HOTEL_BOOKING:      buildBookingMapping,
+		HOTEL_STAY_REVENUE: buildHotelStayMapping,
+		CLICKSTREAM:        buildClickstreamMapping,
+		AIR_BOOKING:        buildAirBookingMapping,
+		GUEST_PROFILE:      buildGuestProfileMapping,
+		PASSENGER_PROFILE:  buildPassengerProfileMapping,
 	}
-	err = profilesSvc.CreateMapping("loyalty", "Primary Mapping for the loyalty profile object", buildLoyaltyMapping())
-	if err != nil {
-		log.Printf("[CreateUcpDomain] Error creating Mapping: %s. deleting domain", err)
-		err2 := profilesSvc.DeleteDomain()
-		if err2 != nil {
-			log.Printf("[CreateUcpDomain][warning] Error cleaning up domain after failed mapping creation %v", err2)
+
+	for keyBusiness := range businessMap {
+		err = profilesSvc.CreateMapping(keyBusiness,
+			"Primary Mapping for the "+keyBusiness+" object", businessMap[keyBusiness]())
+		if err != nil {
+			log.Printf("[CreateUcpDomain] Error creating Mapping: %s. deleting domain", err)
+			err2 := profilesSvc.DeleteDomain()
+			if err2 != nil {
+				log.Printf("[CreateUcpDomain][warning] Error cleaning up domain after failed mapping creation %v", err2)
+			}
+			return model.ResWrapper{}, err
 		}
-		return model.ResWrapper{}, err
-	}
-	err = profilesSvc.CreateMapping("clickstream", "Primary Mapping for the clickstream object", buildClickstreamMapping())
-	if err != nil {
-		log.Printf("[CreateUcpDomain] Error creating Mapping: %s. deleting domain", err)
-		err2 := profilesSvc.DeleteDomain()
-		if err2 != nil {
-			log.Printf("[CreateUcpDomain][warning] Error cleaning up domain after failed mapping creation: %v", err2)
+
+		integrationInput, err3 := profilesSvc.CreatePutIntegrationInput(keyBusiness, CONNECT_PROFILE_EXPORT_BUCKET)
+		if err3 != nil {
+			log.Printf("Error creating integration input %s", err3)
 		}
-		return model.ResWrapper{}, err
+		js, _ := json.Marshal(integrationInput)
+		log.Println(string(js))
+
+		_, err4 := profilesSvc.PutIntegration(keyBusiness, CONNECT_PROFILE_EXPORT_BUCKET)
+		if err4 != nil {
+			log.Printf("Error creating integration %s", err4)
+			return model.ResWrapper{}, err4
+		}
 	}
 	return model.ResWrapper{}, err
 }
@@ -671,6 +691,398 @@ func buildLoyaltyMapping() []customerprofiles.FieldMapping {
 			Type:   "STRING",
 			Source: "_source.phone",
 			Target: "_order.Attributes.phone",
+		},
+	}
+}
+
+func buildAirBookingMapping() []customerprofiles.FieldMapping {
+	return []customerprofiles.FieldMapping{
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.creationChannelId",
+			Target: "_order.Name",
+		},
+		customerprofiles.FieldMapping{
+			Type:    "STRING",
+			Source:  "_source.id",
+			Target:  "_order.Attributes.confirmationNumber",
+			Indexes: []string{"UNIQUE", "ORDER"},
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.nGuests",
+			Target: "_order.Attributes.nGuests",
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.lastName",
+			Target:      "_profile.LastName",
+			Searcheable: true,
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.hotel_name",
+			Target: "_order.Attributes.hotelName",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.city",
+			Target: "_profile.Address.City",
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.firstName",
+			Target:      "_profile.FirstName",
+			Searcheable: true,
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.total_price",
+			Target: "_order.TotalPrice",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.startDate",
+			Target: "_order.Attributes.startDate",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.country",
+			Target: "_profile.Address.Country",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.hotel_code",
+			Target: "_order.Attributes.hotelCode",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.nNight",
+			Target: "_order.Attributes.nNights",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.products",
+			Target: "_order.Attributes.products",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.status",
+			Target: "_order.Status",
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.email",
+			Target:      "_profile.PersonalEmailAddress",
+			Searcheable: true,
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.loyaltyId",
+			Target:      "_profile.AccountNumber",
+			Searcheable: true,
+			//TODO: this index should go on a dedicated customer ID field
+			Indexes: []string{"PROFILE"},
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.phone",
+			Target:      "_profile.PhoneNumber",
+			Searcheable: true,
+		},
+	}
+}
+
+func buildGuestProfileMapping() []customerprofiles.FieldMapping {
+	return []customerprofiles.FieldMapping{
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.creationChannelId",
+			Target: "_order.Name",
+		},
+		customerprofiles.FieldMapping{
+			Type:    "STRING",
+			Source:  "_source.id",
+			Target:  "_order.Attributes.confirmationNumber",
+			Indexes: []string{"UNIQUE", "ORDER"},
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.nGuests",
+			Target: "_order.Attributes.nGuests",
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.lastName",
+			Target:      "_profile.LastName",
+			Searcheable: true,
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.hotel_name",
+			Target: "_order.Attributes.hotelName",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.city",
+			Target: "_profile.Address.City",
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.firstName",
+			Target:      "_profile.FirstName",
+			Searcheable: true,
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.total_price",
+			Target: "_order.TotalPrice",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.startDate",
+			Target: "_order.Attributes.startDate",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.country",
+			Target: "_profile.Address.Country",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.hotel_code",
+			Target: "_order.Attributes.hotelCode",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.nNight",
+			Target: "_order.Attributes.nNights",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.products",
+			Target: "_order.Attributes.products",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.status",
+			Target: "_order.Status",
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.email",
+			Target:      "_profile.PersonalEmailAddress",
+			Searcheable: true,
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.loyaltyId",
+			Target:      "_profile.AccountNumber",
+			Searcheable: true,
+			//TODO: this index should go on a dedicated customer ID field
+			Indexes: []string{"PROFILE"},
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.phone",
+			Target:      "_profile.PhoneNumber",
+			Searcheable: true,
+		},
+	}
+}
+
+func buildPassengerProfileMapping() []customerprofiles.FieldMapping {
+	return []customerprofiles.FieldMapping{
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.creationChannelId",
+			Target: "_order.Name",
+		},
+		customerprofiles.FieldMapping{
+			Type:    "STRING",
+			Source:  "_source.id",
+			Target:  "_order.Attributes.confirmationNumber",
+			Indexes: []string{"UNIQUE", "ORDER"},
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.nGuests",
+			Target: "_order.Attributes.nGuests",
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.lastName",
+			Target:      "_profile.LastName",
+			Searcheable: true,
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.hotel_name",
+			Target: "_order.Attributes.hotelName",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.city",
+			Target: "_profile.Address.City",
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.firstName",
+			Target:      "_profile.FirstName",
+			Searcheable: true,
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.total_price",
+			Target: "_order.TotalPrice",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.startDate",
+			Target: "_order.Attributes.startDate",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.country",
+			Target: "_profile.Address.Country",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.hotel_code",
+			Target: "_order.Attributes.hotelCode",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.nNight",
+			Target: "_order.Attributes.nNights",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.products",
+			Target: "_order.Attributes.products",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.status",
+			Target: "_order.Status",
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.email",
+			Target:      "_profile.PersonalEmailAddress",
+			Searcheable: true,
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.loyaltyId",
+			Target:      "_profile.AccountNumber",
+			Searcheable: true,
+			//TODO: this index should go on a dedicated customer ID field
+			Indexes: []string{"PROFILE"},
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.phone",
+			Target:      "_profile.PhoneNumber",
+			Searcheable: true,
+		},
+	}
+}
+
+func buildHotelStayMapping() []customerprofiles.FieldMapping {
+	return []customerprofiles.FieldMapping{
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.creationChannelId",
+			Target: "_order.Name",
+		},
+		customerprofiles.FieldMapping{
+			Type:    "STRING",
+			Source:  "_source.id",
+			Target:  "_order.Attributes.confirmationNumber",
+			Indexes: []string{"UNIQUE", "ORDER"},
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.nGuests",
+			Target: "_order.Attributes.nGuests",
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.lastName",
+			Target:      "_profile.LastName",
+			Searcheable: true,
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.hotel_name",
+			Target: "_order.Attributes.hotelName",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.city",
+			Target: "_profile.Address.City",
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.firstName",
+			Target:      "_profile.FirstName",
+			Searcheable: true,
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.total_price",
+			Target: "_order.TotalPrice",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.startDate",
+			Target: "_order.Attributes.startDate",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.country",
+			Target: "_profile.Address.Country",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.hotel_code",
+			Target: "_order.Attributes.hotelCode",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.nNight",
+			Target: "_order.Attributes.nNights",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.products",
+			Target: "_order.Attributes.products",
+		},
+		customerprofiles.FieldMapping{
+			Type:   "STRING",
+			Source: "_source.status",
+			Target: "_order.Status",
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.email",
+			Target:      "_profile.PersonalEmailAddress",
+			Searcheable: true,
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.loyaltyId",
+			Target:      "_profile.AccountNumber",
+			Searcheable: true,
+			//TODO: this index should go on a dedicated customer ID field
+			Indexes: []string{"PROFILE"},
+		},
+		customerprofiles.FieldMapping{
+			Type:        "STRING",
+			Source:      "_source.phone",
+			Target:      "_profile.PhoneNumber",
+			Searcheable: true,
 		},
 	}
 }

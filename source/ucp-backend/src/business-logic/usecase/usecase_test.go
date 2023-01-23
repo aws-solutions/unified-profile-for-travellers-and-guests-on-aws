@@ -30,7 +30,7 @@ func TestDomainCreationDeletion(t *testing.T) {
 	}
 }
 
-//TODO: moov this somewhere centralized
+// TODO: moov this somewhere centralized
 func getRegion() string {
 	//getting region for local testing
 	region := os.Getenv("UCP_REGION")

@@ -57,6 +57,8 @@ else
     websiteDistributionId=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteDistributionId'].OutputValue" --output text)
     cloudfrontDomainName=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteDomainName'].OutputValue" --output text)
     websiteBucket=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteBucket'].OutputValue" --output text)
+    connectProfileExportBucket=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileExportBucket'].OutputValue" --output text)
+    kmsKeyProfileDomain=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='kmsKeyProfileDomain'].OutputValue" --output text)
    
     echo "3.2 Creating admin User and getting refresh token"
     RANDOM=$$
@@ -125,6 +127,8 @@ else
          "\"contentBucket\" : \"$websiteBucket\","\
          "\"cloudfrontDomainName\" : \"$cloudfrontDomainName\","\
          "\"websiteDistributionId\" : \"$websiteDistributionId\","\
+         "\"connectProfileExportBucket\":\"$connectProfileExportBucket\","\
+         "\"kmsKeyProfileDomain\":\"$kmsKeyProfileDomain\","\
          "\"region\":\"$OUTRegion\""\
          "}">infra-config-$env.json
     cat infra-config-$env.json

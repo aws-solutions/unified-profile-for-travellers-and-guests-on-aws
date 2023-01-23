@@ -17,6 +17,17 @@ import (
 	customerProfileSdk "github.com/aws/aws-sdk-go/service/customerprofiles"
 )
 
+const S3 = "S3"
+const ScheduleExpressionOneHour = "rate(1hours)"
+const DataPullModeIncremental = "Incremental"
+const TriggerTypeScheduled = "Scheduled"
+const IntegrationFlowDefinition = "Integration_Flowdefinition_"
+const FlowdefinitionFor = "Flowdefinition for "
+const Projection = "Projection"
+const Map = "Map"
+const Filter = "Filter"
+const NoOperation = "NO_OP"
+
 var OBJECT_TYPE_NAME_ORDER = "_order"
 var PROFILE_ID_KEY = "_profileId"
 
@@ -48,12 +59,13 @@ type Profile struct {
 }
 
 type Domain struct {
-	Name            string
-	NObjects        int64
-	NProfiles       int64
-	MatchingEnabled bool
-	Created         time.Time
-	LastUpdated     time.Time
+	Name                 string
+	NObjects             int64
+	NProfiles            int64
+	MatchingEnabled      bool
+	DefaultEncryptionKey string
+	Created              time.Time
+	LastUpdated          time.Time
 }
 
 type ProfileObject struct {
@@ -159,51 +171,51 @@ type Task struct {
 // Note: Only using S3 for this, but these other fields
 // are present in the API so I am including them here
 type ConnectorOperator struct {
-	Marketo    string `json:"marketo"`
-	S3         string `json:"s3"`
-	Salesforce string `json:"salesforce"`
-	ServiceNow string `json:"servicenow"`
-	Zendesk    string `json:"zendesk"`
+	Marketo    string `json:"Marketo"`
+	S3         string `json:"S3"`
+	Salesforce string `json:"Salesforce"`
+	ServiceNow string `json:"Servicenow"`
+	Zendesk    string `json:"Zendesk"`
 }
 
 // Source Flows
 type SourceFlowConfig struct {
-	ConnectorType             string
-	SourceConnectorProperties SourceConnectorProperties
+	ConnectorType             string                    `json:"conntectortype"`
+	SourceConnectorProperties SourceConnectorProperties `json:"sourceconnectorproperties"`
 }
 
 type SourceConnectorProperties struct {
-	S3 S3SourceProperties
+	S3 S3SourceProperties `json:"s3sourceproperties"`
 }
 
 type S3SourceProperties struct {
-	BucketName   string
-	BucketPrefix string
+	BucketName   string `json:"bucketname"`
+	BucketPrefix string `json:"bucketprefix"`
 }
 
 // Trigger Flows
 type TriggerConfig struct {
-	TriggerProperties TriggerProperties
-	TriggerType       string
+	TriggerProperties TriggerProperties `json:"triggerproperties"`
+	TriggerType       string            `json:"triggertype"`
 }
 
 type TriggerProperties struct {
-	Scheduled ScheduledTriggerProperties
+	Scheduled ScheduledTriggerProperties `json:"scheduled"`
 }
 
 type ScheduledTriggerProperties struct {
-	ScheduleExpression string
-	DataPullMode       string
-	ScheduleStartTime  time.Time
+	ScheduleExpression string    `json:"scheduleexpression"`
+	DataPullMode       string    `json:"datapullmode"`
+	ScheduleStartTime  time.Time `json:"schedulestarttime"`
 }
 
 type FlowDefinition struct {
-	FlowName         string
-	Description      string
-	KmsArn           string
-	SourceFlowConfig SourceFlowConfig
-	TriggerConfig    TriggerConfig
-	Tasks            []Task
+	FlowName         string           `json:"flowname"`
+	Description      string           `json:"description"`
+	KmsArn           string           `json:"kmsarn"`
+	SourceFlowConfig SourceFlowConfig `json:"sourceflowconfig"`
+	TriggerConfig    TriggerConfig    `json:"triggerconfig"`
+	Tasks            []Task           `json:"tasks"`
 }
 
 func InitWithDomain(domainName string, region string) CustomerProfileConfig {
@@ -250,7 +262,7 @@ func (c CustomerProfileConfig) ListDomains() ([]Domain, error) {
 
 }
 
-func (c *CustomerProfileConfig) CreateDomain(name string, idResolutionOn bool) error {
+func (c *CustomerProfileConfig) CreateDomain(name string, idResolutionOn bool, kmsArn string) error {
 	sqsSvc := sqs.Init(c.Region)
 	log.Printf("[core][customerProfiles] Creating new customer profile domain")
 	log.Printf("[core][customerProfiles] 1-Creating SQS Queue")
@@ -273,6 +285,7 @@ func (c *CustomerProfileConfig) CreateDomain(name string, idResolutionOn bool) e
 		},
 		DeadLetterQueueUrl:    aws.String(queueUrl),
 		DefaultExpirationDays: aws.Int64(300),
+		DefaultEncryptionKey:  &kmsArn,
 	}
 	_, err = c.Client.CreateDomain(input)
 	if err == nil {
@@ -283,7 +296,7 @@ func (c *CustomerProfileConfig) CreateDomain(name string, idResolutionOn bool) e
 
 func (c *CustomerProfileConfig) DeleteDomain() error {
 	if c.DomainName == "" {
-		return errors.New("Customer Profile Client not configured with domain name. Use DeleteDomainByName or assign domain name")
+		return errors.New("customer rrofile client not configured with domain name. use deletedomainbyname or assign domain name")
 	}
 	err := c.DeleteDomainByName(c.DomainName)
 	if err == nil {
@@ -387,22 +400,6 @@ func (c *CustomerProfileConfig) CreateMapping(name string, description string, f
 	return err
 }
 
-func (c *CustomerProfileConfig) WaitForMappingCreation(name string) error {
-	maxTries := 10
-	try := 0
-	for try < maxTries {
-		mapping, err := c.GetMapping(name)
-		if err == nil && mapping.Name == name {
-			log.Printf("[core][customerProfiles][WaitForMappingCreation] Mapping creation successful")
-			return nil
-		}
-		log.Printf("[core][customerProfiles][WaitForMappingCreation] Mapping not ready waiting 5 s")
-		time.Sleep(5000)
-		try += 1
-	}
-	return errors.New("Mapping creation seem to have failed")
-}
-
 func (c *CustomerProfileConfig) DeleteMapping(name string) error {
 	input := &customerProfileSdk.DeleteProfileObjectTypeInput{
 		DomainName:     aws.String(c.DomainName),
@@ -471,7 +468,8 @@ func (c CustomerProfileConfig) GetDomain() (Domain, error) {
 		return Domain{}, err
 	}
 	dom := Domain{
-		Name: *out.DomainName,
+		Name:                 *out.DomainName,
+		DefaultEncryptionKey: *out.DefaultEncryptionKey,
 	}
 	if out.Matching != nil {
 		dom.MatchingEnabled = toBool(out.Matching.Enabled)
@@ -495,7 +493,7 @@ func (c CustomerProfileConfig) GetMatchesById(profileID string) ([]Match, error)
 	log.Printf("[core][customerProfiles][GetMatchesById] Found index: %v", index)
 	log.Printf("[core][customerProfiles][GetMatchesById] 2-getting matches for ID %v from index", profileID)
 	if matches, ok := index[profileID]; ok {
-		log.Printf("[core][customerProfiles][GetMatchesById] found matches %v", matches)
+		log.Printf("[core][customerProfiles][GetMatchesById] found matches")
 		return matches, nil
 	}
 	return []Match{}, nil
@@ -611,7 +609,7 @@ func (c CustomerProfileConfig) GetSourceTargetNames(objectname string) ([]string
 func (c CustomerProfileConfig) GenerateTaskList(objectname string) ([]Task, error) {
 	taskSlice := make([]Task, 0)
 	conOpProj := ConnectorOperator{
-		S3: "Projection",
+		S3: Projection,
 	}
 	sourceNames, targetNames, err := c.GetSourceTargetNames(objectname)
 	if err != nil {
@@ -620,18 +618,18 @@ func (c CustomerProfileConfig) GenerateTaskList(objectname string) ([]Task, erro
 	}
 	//Filter Task
 	filTask := Task{
-		TaskType:          "Filter",
+		TaskType:          Filter,
 		SourceFields:      sourceNames,
 		ConnectorOperator: conOpProj,
 	}
 	taskSlice = append(taskSlice, filTask)
 	conOpMap := ConnectorOperator{
-		S3: "NO_OP",
+		S3: NoOperation,
 	}
 	//Mapping Tasks
 	for i, source := range sourceNames {
 		mapTask := Task{
-			TaskType:          "Map",
+			TaskType:          Map,
 			SourceFields:      []string{source},
 			ConnectorOperator: conOpMap,
 			DestinationField:  targetNames[i],
@@ -641,40 +639,113 @@ func (c CustomerProfileConfig) GenerateTaskList(objectname string) ([]Task, erro
 	return taskSlice, err
 }
 
-func (c CustomerProfileConfig) GenerateFlowDefinition(objectname string, bucketname string, kmsarn string) (FlowDefinition, error) {
+func (c CustomerProfileConfig) ConvertTaskList(tasks []Task) []*customerProfileSdk.Task {
+	newTaskSlice := make([]*customerProfileSdk.Task, 0)
+
+	for _, t := range tasks {
+		conOpt := customerProfileSdk.ConnectorOperator{
+			S3: &t.ConnectorOperator.S3,
+		}
+		newSourceSlice := make([]*string, 0)
+		for _, sourceName := range t.SourceFields {
+			stcopy := strings.Clone(sourceName)
+			newSourceSlice = append(newSourceSlice, &stcopy)
+		}
+
+		taskType := strings.Clone(t.TaskType)
+		destinationField := strings.Clone(t.DestinationField)
+
+		newTask := &customerProfileSdk.Task{
+			TaskType:          &taskType,
+			SourceFields:      newSourceSlice,
+			ConnectorOperator: &conOpt,
+			DestinationField:  &destinationField,
+		}
+
+		newTaskSlice = append(newTaskSlice, newTask)
+	}
+	return newTaskSlice
+}
+
+func (c CustomerProfileConfig) GenerateFlowDefinition(objectname string, bucketname string, kmsarn string) (customerProfileSdk.FlowDefinition, error) {
 	taskList, err := c.GenerateTaskList(objectname)
+	newTaskList := c.ConvertTaskList(taskList)
 	if err != nil {
 		log.Printf("Error generating flow definition for %s", objectname)
-		return FlowDefinition{}, err
+		return customerProfileSdk.FlowDefinition{}, err
 	}
-	sourceConfig := SourceFlowConfig{
-		ConnectorType: "S3",
-		SourceConnectorProperties: SourceConnectorProperties{
-			S3: S3SourceProperties{
-				BucketName:   bucketname,
-				BucketPrefix: objectname,
+	S3 := S3
+	ScheduleExpression := ScheduleExpressionOneHour
+	DataPull := DataPullModeIncremental
+	ScheduleStartTime := time.Now()
+	TriggerType := TriggerTypeScheduled
+	FlowName := IntegrationFlowDefinition + objectname + "_" + c.DomainName
+	Description := FlowdefinitionFor + objectname
+
+	sourceConfig := &customerProfileSdk.SourceFlowConfig{
+		ConnectorType: &S3,
+		SourceConnectorProperties: &customerProfileSdk.SourceConnectorProperties{
+			S3: &customerProfileSdk.S3SourceProperties{
+				BucketName:   &bucketname,
+				BucketPrefix: &objectname,
 			},
 		},
 	}
-	trigConfig := TriggerConfig{
-		TriggerProperties: TriggerProperties{
-			Scheduled: ScheduledTriggerProperties{
-				ScheduleExpression: "rate(1hours)",
-				DataPullMode:       "Incremental",
-				ScheduleStartTime:  time.Now(),
+	trigConfig := &customerProfileSdk.TriggerConfig{
+		TriggerProperties: &customerProfileSdk.TriggerProperties{
+			Scheduled: &customerProfileSdk.ScheduledTriggerProperties{
+				ScheduleExpression: &ScheduleExpression,
+				DataPullMode:       &DataPull,
+				ScheduleStartTime:  &ScheduleStartTime,
 			},
 		},
-		TriggerType: "Scheduled",
+		TriggerType: &TriggerType,
 	}
-	flowDef := FlowDefinition{
-		FlowName:         "Customer_Profile_Integration_Flowdefinition_" + objectname,
-		Description:      "Customer Profile FlowDefinition for " + objectname,
-		KmsArn:           kmsarn,
+	flowDef := customerProfileSdk.FlowDefinition{
+		FlowName:         &FlowName,
+		Description:      &Description,
+		KmsArn:           &kmsarn,
 		TriggerConfig:    trigConfig,
 		SourceFlowConfig: sourceConfig,
-		Tasks:            taskList,
+		Tasks:            newTaskList,
 	}
 	return flowDef, nil
+}
+
+func (c CustomerProfileConfig) CreatePutIntegrationInput(objectname string, bucketname string) (customerProfileSdk.PutIntegrationInput, error) {
+	dom, _ := c.GetDomain()
+	flowDef, _ := c.GenerateFlowDefinition(objectname, bucketname, dom.DefaultEncryptionKey)
+
+	configPutIntegrationInput := &customerProfileSdk.PutIntegrationInput{
+		DomainName:     &c.DomainName,
+		FlowDefinition: &flowDef,
+		ObjectTypeName: &objectname,
+	}
+
+	return *configPutIntegrationInput, nil
+}
+
+func (c CustomerProfileConfig) PutIntegration(objectname string, bucketname string) (customerProfileSdk.PutIntegrationOutput, error) {
+	configPutIntegration, _ := c.CreatePutIntegrationInput(objectname, bucketname)
+
+	OutIntegration, err := c.Client.PutIntegration(&configPutIntegration)
+	if err != nil {
+		log.Printf("Error putting integration %s", err)
+	}
+
+	return *OutIntegration, err
+}
+
+func (c CustomerProfileConfig) DeleteIntegration(uri string) (customerProfileSdk.DeleteIntegrationOutput, error) {
+	OutIntegration, err := c.Client.DeleteIntegration(&customerProfileSdk.DeleteIntegrationInput{
+		DomainName: &c.DomainName,
+		Uri:        &uri,
+	})
+	if err != nil {
+		log.Printf("Error deleting integration %s", err)
+	}
+
+	return *OutIntegration, err
 }
 
 func getFlowNameFromUri(uri string) string {
@@ -778,7 +849,7 @@ func (c CustomerProfileConfig) SearchMultipleProfiles(key string, values []strin
 
 func (c CustomerProfileConfig) SearchProfiles(key string, values []string) ([]Profile, error) {
 	if len(values) > 1 {
-		return []Profile{}, errors.New("Service only support one vaule for now")
+		return []Profile{}, errors.New("service only suppors one value for now")
 	}
 	log.Printf("[core][customerProfiles] Search profile for %v in %v", key, values)
 	input := &customerProfileSdk.SearchProfilesInput{
