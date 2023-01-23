@@ -15,8 +15,8 @@ cp src/app/app.constants-env.ts src/app/app.constants.ts
 cat src/app/app.constants.ts
 echo "1-Get infra config for env $env"
 aws s3 cp s3://$bucket/config/ucp-config-$env.json src/app/ucp-config.json
-contentBucket=$(jq -r .websiteBucket src/app/ind-connector-config.json)
-distributionId=$(jq -r .websiteDistributionId src/app/ind-connector-config.json)
+contentBucket=$(jq -r .websiteBucket src/app/ucp-config.json)
+distributionId=$(jq -r .websiteDistributionId src/app/ucp-config.json)
 
 echo "2-Build application package for env $env"
 rm -rf dist
