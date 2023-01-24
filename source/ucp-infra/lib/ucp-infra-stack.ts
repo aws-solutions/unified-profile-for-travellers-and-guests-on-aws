@@ -139,6 +139,12 @@ export class UCPInfraStack extends Stack {
       principals: [new iam.ServicePrincipal("appflow.amazonaws.com")]
     }))
 
+    connectProfileImportBucket.addToResourcePolicy(new iam.PolicyStatement({
+      resources: [connectProfileImportBucket.arnForObjects("*"), connectProfileImportBucket.bucketArn],
+      actions: ["s3:PutObject", "s3:ListBucket", "s3:GetObject", "s3:GetBucketLocation", "s3:GetBucketPolicy"],
+      principals: [new iam.ServicePrincipal("appflow.amazonaws.com")]
+    }))
+
     //Amperity
     amperityUser.addToPolicy(new iam.PolicyStatement({
       resources: ["arn:aws:s3:::" + amperityImportBucket.bucketName + "*"],
