@@ -335,6 +335,7 @@ func CreateUcpDomain(rq model.UCPRequest, profilesSvc customerprofiles.CustomerP
 			return model.ResWrapper{}, err
 		}
 
+		//TODO: looks like this should be removed
 		integrationInput, err3 := profilesSvc.CreatePutIntegrationInput(keyBusiness, CONNECT_PROFILE_SOURCE_BUCKET)
 		if err3 != nil {
 			log.Printf("Error creating integration input %s", err3)
