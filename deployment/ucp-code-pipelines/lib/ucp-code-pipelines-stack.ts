@@ -114,7 +114,7 @@ export class UCPCodePipelinesStack extends Stack {
       },
     });
 
-    const lambdaBuild = new codebuild.PipelineProject(this, 'lambdaBuilProject' + envNameVal.valueAsString, {
+    const lambdaBuild = new codebuild.PipelineProject(this, 'lambdaBuilProject' + envName, {
       projectName: "ucp-lambda-" + envNameVal.valueAsString,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
