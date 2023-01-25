@@ -30,7 +30,6 @@ export class UCPCodePipelinesStack extends Stack {
     });
     const envNameVal = new CfnParameter(this, "environment", {
       type: "String",
-      allowedValues: ["dev", "int", "staging", "prod"],
       default: "int",
       description: "Your environment name. Change to a unique name only if deploy the stack multiple times in the same region and account."
     });
