@@ -194,7 +194,7 @@ export class UCPCodePipelinesStack extends Stack {
     });
 
     const feProject = new codebuild.PipelineProject(this, "adminPortal" + envName, {
-      projectName: "ucp-admin-portal",
+      projectName: "ucp-admin-portal" + envName,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
       buildSpec: codebuild.BuildSpec.fromObject({
