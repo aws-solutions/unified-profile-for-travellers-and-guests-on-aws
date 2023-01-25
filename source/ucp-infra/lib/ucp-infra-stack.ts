@@ -176,10 +176,10 @@ export class UCPInfraStack extends Stack {
      * KMS Key
      */
     //TODO: to rename the key into something moroe explicit
-    const kmsKeyProfileDomain = new kms.Key(this, "new_kms_key", {
+    const kmsKeyProfileDomain = new kms.Key(this, "ucpDomainKey", {
       removalPolicy: RemovalPolicy.DESTROY,
       pendingWindow: Duration.days(20),
-      alias: 'alias/mykey',
+      alias: 'alias/ucpDomainKey' + envName,
       description: 'KMS key for encrypting business object S3 buckets',
       enableKeyRotation: true,
     });
