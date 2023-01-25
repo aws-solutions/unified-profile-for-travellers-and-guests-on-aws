@@ -73,7 +73,7 @@ export class UCPCodePipelinesStack extends Stack {
       enableKeyRotation: true,
     });
 
-    const infraBuild = new codebuild.PipelineProject(this, 'infraBuilProject', {
+    const infraBuild = new codebuild.PipelineProject(this, 'infraBuilProject' + envNameVal.valueAsString, {
       projectName: "code-build-ucp-infra-" + envNameVal.valueAsString,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
@@ -114,7 +114,7 @@ export class UCPCodePipelinesStack extends Stack {
       },
     });
 
-    const lambdaBuild = new codebuild.PipelineProject(this, 'lambdaBuilProject', {
+    const lambdaBuild = new codebuild.PipelineProject(this, 'lambdaBuilProject' + envNameVal.valueAsString, {
       projectName: "ucp-lambda-" + envNameVal.valueAsString,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
@@ -139,7 +139,7 @@ export class UCPCodePipelinesStack extends Stack {
         buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
       },
     });
-    const firehoselambdaBuild = new codebuild.PipelineProject(this, 'streamLambdaBuilProject', {
+    const firehoselambdaBuild = new codebuild.PipelineProject(this, 'streamLambdaBuilProject' + envNameVal.valueAsString, {
       projectName: "ucp-stream-lambda-" + envNameVal.valueAsString,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
@@ -169,7 +169,7 @@ export class UCPCodePipelinesStack extends Stack {
 
 
 
-    const onboardingTest = new codebuild.PipelineProject(this, 'testProject', {
+    const onboardingTest = new codebuild.PipelineProject(this, 'testProject' + envNameVal.valueAsString, {
       projectName: "ucp-test-" + envNameVal.valueAsString,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
@@ -198,7 +198,7 @@ export class UCPCodePipelinesStack extends Stack {
       },
     });
 
-    const feProject = new codebuild.PipelineProject(this, "adminPortal", {
+    const feProject = new codebuild.PipelineProject(this, "adminPortal" + envNameVal.valueAsString, {
       projectName: "ucp-admin-portal",
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
