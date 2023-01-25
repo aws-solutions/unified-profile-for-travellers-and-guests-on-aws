@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"strings"
 	appregistry "tah/core/appregistry"
 	core "tah/core/core"
 	customerprofiles "tah/core/customerprofiles"
@@ -21,6 +22,7 @@ import (
 
 var LAMBDA_ENV = os.Getenv("LAMBDA_ENV")
 var S3_MULTIMEDIA = os.Getenv("S3_MULTIMEDIA")
+var LAMBDA_ACCOUNT_ID = os.Getenv("LAMBDA_ACCOUNT_ID")
 var LAMBDA_REGION = os.Getenv("AWS_REGION")
 var NAMESPACE_NAME = "cloudRackServiceDiscoveryNamespace" + LAMBDA_ENV
 var ATHENA_WORKGROUP = os.Getenv("ATHENA_WORKGROUP")
@@ -28,6 +30,7 @@ var ATHENA_DB = os.Getenv("ATHENA_DB")
 var CONNECTOR_CRAWLER_QUEUE = os.Getenv("CONNECTOR_CRAWLER_QUEUE")
 var CONNECTOR_CRAWLER_DLQ = os.Getenv("CONNECTOR_CRAWLER_DLQ")
 var GLUE_DB = os.Getenv("GLUE_DB")
+var CLICKSTREAM_JOB_NAME = os.Getenv("CLICKSTREAM_JOB_NAME")
 var UCP_CONNECT_DOMAIN = ""
 var FN_RETREIVE_UCP_PROFILE = "retreive_ucp_profile"
 var FN_DELETE_UCP_PROFILE = "delete_ucp_profile"
@@ -196,7 +199,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 				log.Printf("Use Case %s failed with error: %v", subFunction, err)
 				return builResponseError(err), nil
 			}
-			glueRoleArn, bucketPolicy, err := usecase.LinkIndustryConnector(iamClient, data)
+			glueRoleArn, bucketPolicy, err := usecase.LinkIndustryConnector(iamClient, data, LAMBDA_ACCOUNT_ID, LAMBDA_REGION)
 			if err != nil {
 				log.Printf("Use Case %s failed with error: %v", subFunction, err)
 				return builResponseError(err), nil
@@ -223,7 +226,14 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 			if err != nil {
 				return builResponseError(err), nil
 			}
-			err = usecase.CreateConnectorCrawler(glueClient, data.GlueRoleArn, data.BucketPath, LAMBDA_ENV, CONNECTOR_CRAWLER_QUEUE, CONNECTOR_CRAWLER_DLQ)
+			split := strings.Split(data.BucketPath, ":")
+			bucketName := split[len(split)-1]
+			err = usecase.CreateConnectorCrawler(glueClient, data.GlueRoleArn, bucketName, LAMBDA_ENV, CONNECTOR_CRAWLER_QUEUE, CONNECTOR_CRAWLER_DLQ)
+			if err != nil {
+				log.Printf("Use Case %s failed with error: %v", subFunction, err)
+				return builResponseError(err), nil
+			}
+			err = usecase.CreateConnectorJobTrigger(glueClient, "clickstream", "ucp-connector-crawler-"+LAMBDA_ENV, CLICKSTREAM_JOB_NAME)
 			if err != nil {
 				log.Printf("Use Case %s failed with error: %v", subFunction, err)
 				return builResponseError(err), nil

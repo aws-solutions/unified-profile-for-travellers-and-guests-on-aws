@@ -185,9 +185,11 @@ export class UCPInfraStack extends Stack {
       tracing: lambda.Tracing.ACTIVE,
       timeout: Duration.seconds(60),
       environment: {
+        LAMBDA_ACCOUNT_ID: account ?? "",
         LAMBDA_ENV: envName,
         ATHENA_WORKGROUP: "",
         ATHENA_DB: "",
+        CLICKSTREAM_JOB_NAME: "clickstreamJob" + envName,
         CONNECTOR_CRAWLER_QUEUE: connectorCrawlerQueue.queueArn,
         CONNECTOR_CRAWLER_DLQ: connectorCrawlerDlq.queueArn,
         GLUE_DB: glueDb.databaseName,
@@ -201,6 +203,7 @@ export class UCPInfraStack extends Stack {
       resources: ["*"],
       actions: ['glue:CreateCrawler',
         'glue:DeleteCrawler',
+        'glue:CreateTrigger',
         // TODO: remove iam actions and set up permission boundary instead
         'iam:AttachRolePolicy',
         'iam:CreatePolicy',
