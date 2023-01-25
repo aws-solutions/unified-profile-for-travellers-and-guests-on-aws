@@ -14,6 +14,6 @@ Feature: Login
   Scenario: Login with temporary password
     Given I am on the login page
     When I enter my credentials and validate
-    Then I should form change to set new password
+    Then I should see the form to set a new password
     When I type in a new password and confirm
     Then I am redirected to the login page
