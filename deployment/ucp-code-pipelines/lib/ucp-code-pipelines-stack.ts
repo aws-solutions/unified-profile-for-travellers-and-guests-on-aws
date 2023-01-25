@@ -19,7 +19,7 @@ export class UCPCodePipelinesStack extends Stack {
 
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-
+    const envName = this.node.tryGetContext("envName");
     const gitHubRepo = "unified-profile-for-travellers-and-guests-on-aws"
 
     //CloudFormatiion Input Parmetters to be provided by end user:
@@ -30,7 +30,7 @@ export class UCPCodePipelinesStack extends Stack {
     });
     const envNameVal = new CfnParameter(this, "environment", {
       type: "String",
-      default: "int",
+      default: envName,
       description: "Your environment name. Change to a unique name only if deploy the stack multiple times in the same region and account."
     });
     const gitHubUserName = new CfnParameter(this, "gitHubUserName", {
@@ -73,7 +73,7 @@ export class UCPCodePipelinesStack extends Stack {
       enableKeyRotation: true,
     });
 
-    const infraBuild = new codebuild.PipelineProject(this, 'infraBuilProject' + envNameVal.valueAsString, {
+    const infraBuild = new codebuild.PipelineProject(this, 'infraBuilProject' + envName, {
       projectName: "code-build-ucp-infra-" + envNameVal.valueAsString,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
@@ -139,7 +139,7 @@ export class UCPCodePipelinesStack extends Stack {
         buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
       },
     });
-    const firehoselambdaBuild = new codebuild.PipelineProject(this, 'streamLambdaBuilProject' + envNameVal.valueAsString, {
+    const firehoselambdaBuild = new codebuild.PipelineProject(this, 'streamLambdaBuilProject' + envName, {
       projectName: "ucp-stream-lambda-" + envNameVal.valueAsString,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
@@ -169,7 +169,7 @@ export class UCPCodePipelinesStack extends Stack {
 
 
 
-    const onboardingTest = new codebuild.PipelineProject(this, 'testProject' + envNameVal.valueAsString, {
+    const onboardingTest = new codebuild.PipelineProject(this, 'testProject' + envName, {
       projectName: "ucp-test-" + envNameVal.valueAsString,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
@@ -198,7 +198,7 @@ export class UCPCodePipelinesStack extends Stack {
       },
     });
 
-    const feProject = new codebuild.PipelineProject(this, "adminPortal" + envNameVal.valueAsString, {
+    const feProject = new codebuild.PipelineProject(this, "adminPortal" + envName, {
       projectName: "ucp-admin-portal",
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
@@ -230,7 +230,7 @@ export class UCPCodePipelinesStack extends Stack {
       },
     })
 
-    const feTest = new codebuild.PipelineProject(this, 'feTestProject', {
+    const feTest = new codebuild.PipelineProject(this, 'feTestProject' + envName, {
       projectName: "ucp-fe-test-" + envNameVal.valueAsString,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
@@ -362,7 +362,7 @@ export class UCPCodePipelinesStack extends Stack {
 
 
 
-    let pipeline = new codepipeline.Pipeline(this, 'ucpPipeline', {
+    let pipeline = new codepipeline.Pipeline(this, 'ucpPipeline' + envName, {
       pipelineName: "ucp-" + envNameVal.valueAsString,
       stages: stages,
       crossAccountKeys: false,
