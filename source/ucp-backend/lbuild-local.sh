@@ -12,6 +12,7 @@ aws s3api get-object --bucket $artifactBucket --key $envName/$tahCoreVersion/tah
       echo "Could not find tah-core with version $tahCoreVersion rc" >&2
       exit $rc
     fi
+
 unzip tah-core.zip -d src/tah-core/
 rm -rf tah-core.zip
 

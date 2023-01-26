@@ -31,6 +31,8 @@ var CONNECTOR_CRAWLER_QUEUE = os.Getenv("CONNECTOR_CRAWLER_QUEUE")
 var CONNECTOR_CRAWLER_DLQ = os.Getenv("CONNECTOR_CRAWLER_DLQ")
 var GLUE_DB = os.Getenv("GLUE_DB")
 var CLICKSTREAM_JOB_NAME = os.Getenv("CLICKSTREAM_JOB_NAME")
+var CONNECT_PROFILE_SOURCE_BUCKET = os.Getenv("CONNECT_PROFILE_SOURCE_BUCKET")
+var KMS_KEY_PROFILE_DOMAIN = os.Getenv("KMS_KEY_PROFILE_DOMAIN")
 var UCP_CONNECT_DOMAIN = ""
 var FN_RETREIVE_UCP_PROFILE = "retreive_ucp_profile"
 var FN_DELETE_UCP_PROFILE = "delete_ucp_profile"
@@ -148,7 +150,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 			rq, err = decodeUCPBody(req)
 			log.Printf("Create Domain request: %+v", rq)
 			if err == nil {
-				ucpRes, err = usecase.CreateUcpDomain(rq, profiles)
+				ucpRes, err = usecase.CreateUcpDomain(rq, profiles, KMS_KEY_PROFILE_DOMAIN, CONNECT_PROFILE_SOURCE_BUCKET)
 				if err == nil {
 					log.Printf("Use Case %s failed with error: %v", subFunction, err)
 					return builUCPResponse(ucpRes), nil

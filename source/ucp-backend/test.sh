@@ -1,6 +1,10 @@
+env=$1
+bucket=$2
+
 export UCP_REGION=$(aws configure get region)
 echo "Running solution functional tests in region $UCP_REGION"
 echo ""
+
 go test -v -failfast src/business-logic/usecase/*
 rc=$?
 if [ $rc -ne 0 ]; then

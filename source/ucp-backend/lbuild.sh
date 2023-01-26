@@ -32,12 +32,16 @@ echo "4-Building Executable in Vendor Mode"
 export GOOS=linux
 export GOARCH=amd64
 go build -mod=vendor -o main src/main/main.go
-
+rc=$?
+if [ $rc -ne 0 ]; then
+  echo "Existing Build with status $rc" >&2
+  exit $rc
+fi
 echo "5-Unit testing"
 if [ $env == $LOCAL_ENV_NAME ]; then
   export GOOS=darwin
 fi
-sh ./test.sh
+sh ./test.sh $env $bucket
 rc=$?
 if [ $rc -ne 0 ]; then
   echo "Existing Build with status $rc" >&2

@@ -132,6 +132,19 @@ export class UCPInfraStack extends Stack {
     connectProfileExportBucket.grantReadWrite(datalakeAdminRole)
     amperityExportBucket.grantReadWrite(datalakeAdminRole)
 
+    //Special Permissions for Integration Business Objects
+    connectProfileExportBucket.addToResourcePolicy(new iam.PolicyStatement({
+      resources: [connectProfileExportBucket.arnForObjects("*"), connectProfileExportBucket.bucketArn],
+      actions: ["s3:PutObject", "s3:ListBucket", "s3:GetObject", "s3:GetBucketLocation", "s3:GetBucketPolicy"],
+      principals: [new iam.ServicePrincipal("appflow.amazonaws.com")]
+    }))
+
+    connectProfileImportBucket.addToResourcePolicy(new iam.PolicyStatement({
+      resources: [connectProfileImportBucket.arnForObjects("*"), connectProfileImportBucket.bucketArn],
+      actions: ["s3:PutObject", "s3:ListBucket", "s3:GetObject", "s3:GetBucketLocation", "s3:GetBucketPolicy"],
+      principals: [new iam.ServicePrincipal("appflow.amazonaws.com")]
+    }))
+
     //Amperity
     amperityUser.addToPolicy(new iam.PolicyStatement({
       resources: ["arn:aws:s3:::" + amperityImportBucket.bucketName + "*"],
@@ -163,7 +176,7 @@ export class UCPInfraStack extends Stack {
      * KMS Key
      */
     //TODO: to rename the key into something moroe explicit
-    const kmsKey = new kms.Key(this, "new_kms_key", {
+    const kmsKeyProfileDomain = new kms.Key(this, "new_kms_key", {
       removalPolicy: RemovalPolicy.DESTROY,
       pendingWindow: Duration.days(20),
       alias: 'alias/mykey',
@@ -171,6 +184,9 @@ export class UCPInfraStack extends Stack {
       enableKeyRotation: true,
     });
 
+    //Customer Profile Outputs for Domain Testing
+    new CfnOutput(this, "connectProfileExportBucket", { value: connectProfileExportBucket.bucketName })
+    new CfnOutput(this, "kmsKeyProfileDomain", { value: kmsKeyProfileDomain.keyArn })
 
     //////////////////////////
     //LAMBDA FUNCTION
@@ -196,15 +212,28 @@ export class UCPInfraStack extends Stack {
         UCP_GUEST360_TABLE_NAME: "",
         UCP_GUEST360_TABLE_PK: "",
         UCP_GUEST360_ATHENA_TABLE: "",
+        CONNECT_PROFILE_SOURCE_BUCKET: connectProfileImportBucket.bucketName,
+        KMS_KEY_PROFILE_DOMAIN: kmsKeyProfileDomain.keyArn,
       }
     });
 
     ucpBackEndLambda.addToRolePolicy(new iam.PolicyStatement({
       resources: ["*"],
-      actions: ['glue:CreateCrawler',
+      actions: [
+        'appflow:DescribeFlow',
+        'appflow:CreateFlow',
+        'appflow:DeleteFlow',
+        'glue:CreateCrawler',
         'glue:DeleteCrawler',
         'glue:CreateTrigger',
         // TODO: remove iam actions and set up permission boundary instead
+        'kms:GenerateDataKey',
+        'kms:Decrypt',
+        'kms:CreateGrant',
+        'kms:ListGrants',
+        'kms:ListAliases',
+        'kms:DescribeKey',
+        'kms:ListKeys',
         'iam:AttachRolePolicy',
         'iam:CreatePolicy',
         'iam:CreateRole',
@@ -221,6 +250,7 @@ export class UCPInfraStack extends Stack {
         'profile:ListIntegrations',
         'profile:DeleteDomain',
         'profile:DeleteProfile',
+        'profile:PutIntegration',
         'profile:PutProfileObjectType',
         'profile:DeleteProfileObjectType',
         'profile:GetMatches',
@@ -229,6 +259,11 @@ export class UCPInfraStack extends Stack {
         'profile:GetProfileObjectType',
         'appflow:DescribeFlow',
         'servicecatalog:ListApplications',
+        's3:ListBucket',
+        's3:ListAllMyBuckets',
+        's3:GetBucketLocation',
+        's3:GetBucketPolicy',
+        's3:PutBucketPolicy',
         'sqs:CreateQueue',
         'sqs:ReceiveMessage',
         'sqs:SetQueueAttributes',
