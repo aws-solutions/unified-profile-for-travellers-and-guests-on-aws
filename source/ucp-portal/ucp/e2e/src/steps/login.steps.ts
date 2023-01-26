@@ -23,10 +23,27 @@ Then(/^I should see the title$/, async () => {
     expect(await loginPage.getTitleText()).to.equal('Unified customer profile for travellers and guests');
 })
 
+When(/^I enter my temporary password and validate$/, async () => {
+    await loginPage.enterLogin()
+    await loginPage.enterPassword()
+    await loginPage.clickLogin('login-btn')
+    await loginPage.waitForFormUpdate('update-btn')
+});
+Then(/^I should see the form to set a new password$/, async () => {
+    expect(await loginPage.getButtonText('update-btn')).to.equal('Update Password');
+});
+When(/^I type in a new password and confirm$/, async () => {
+    await loginPage.enterPassword()
+    await loginPage.confirmPassword()
+    await loginPage.clickLogin('update-btn')
+})
+Then(/^I am redirected to the login page$/, async () => {
+    expect(await loginPage.getTitleText()).to.equal('Unified customer profile for travellers and guests');
+})
 When(/^I enter my credentials and validate$/, async () => {
     await loginPage.enterLogin()
     await loginPage.enterPassword()
-    await loginPage.clickLogin()
+    await loginPage.clickLogin('login-btn')
     await loginPage.waitForLogin()
 });
 Then(/^I should be redirected to the home screen$/, async () => {
