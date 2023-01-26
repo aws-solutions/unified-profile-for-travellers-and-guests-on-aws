@@ -44,7 +44,6 @@ export class UCPInfraStack extends Stack {
       throw new Error('No bucket name provided for stack');
     }
 
-
     /*************
      * Datalake admin Role
      */
