@@ -1,4 +1,5 @@
-import { browser, by, element } from 'protractor';
+import { setDefaultTimeout } from '@cucumber/cucumber';
+import { browser, by, element, ExpectedConditions } from 'protractor';
 import creds = require('../creds.json')
 
 export class LoginPage {
@@ -10,6 +11,11 @@ export class LoginPage {
     getTitleText() {
         console.log("Get login page title")
         return element(by.css('app-root h2')).getText() as Promise<string>;
+    }
+
+    getButtonText(btn_id: string) {
+        console.log("Get login page title")
+        return element(by.id(btn_id)).getText() as Promise<string>;
     }
 
     enterLogin() {
@@ -24,9 +30,15 @@ export class LoginPage {
         return element(by.id('pwd')).sendKeys(pwd) as Promise<void>;
     }
 
-    async clickLogin() {
-        console.log("Click on login button")
-        let button = element(by.id('login-btn'));
+    confirmPassword() {
+        let pwd = (<any>creds).pwd
+        console.log("Confirm password ", pwd)
+        return element(by.id('pwd-retype')).sendKeys(pwd) as Promise<void>;
+    }
+
+    async clickLogin(btn_id: string) {
+        console.log("Click on "+btn_id+" button")
+        let button = element(by.id(btn_id));
         await browser.executeScript("arguments[0].scrollIntoView();", button.getWebElement());
         return button.click()
     }
@@ -38,6 +50,11 @@ export class LoginPage {
             console.log("Current URL:", newUrl)
             return (newUrl === 'http://localhost:4200/home');
         }, 10000) as Promise<boolean>;
+    }
+
+    waitForFormUpdate(form_element: string) {
+        console.log("Waiting for form update")
+        return browser.wait(ExpectedConditions.visibilityOf(element(by.id(form_element))), 5000)
     }
 
 

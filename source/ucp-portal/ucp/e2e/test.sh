@@ -25,7 +25,7 @@ password="testPassword1\$$RANDOM"
 echo "{\"email\" : \"$username\", \"pwd\" : \"$password\"}" > src/creds.json
 echo "1. Create user $username for testing"
 aws cognito-idp admin-create-user --user-pool-id $userPoolId --username $username --message-action "SUPPRESS"
-aws cognito-idp admin-set-user-password --user-pool-id $userPoolId --username $username --password $password --permanent 
+aws cognito-idp admin-set-user-password --user-pool-id $userPoolId --username $username --password $password --no-permanent
 
 echo "3-Run protractor tests $env"
 ng e2e
