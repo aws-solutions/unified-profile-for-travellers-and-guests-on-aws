@@ -7,7 +7,8 @@ import { AwsSolutionsChecks } from 'cdk-nag';
 
 
 const app = new App();
-let stack = new UCPCodePipelinesStack(app, 'UCPCodePipelinesStack', {
+const envName = app.node.tryGetContext("envName");
+let stack = new UCPCodePipelinesStack(app, 'UCPCodePipelinesStack' + envName, {
     description: "Deploys the travel and hospitality connector solution pipeline to run the CDK deployment (SO0230)",
 });
 
