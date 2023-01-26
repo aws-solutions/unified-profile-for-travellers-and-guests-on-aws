@@ -164,8 +164,6 @@ export class UCPInfraStack extends Stack {
     this.jobOnDemandTrigger("ucp-amperity-data-import", envName, [amperityImportJob])
     this.jobOnDemandTrigger("ucp-amperity-data-export", envName, [amperityExportJob])
 
-
-
     /////////////////////////
     //Appflow and Amazon Connect Customer profile
     ///////////////////////////
