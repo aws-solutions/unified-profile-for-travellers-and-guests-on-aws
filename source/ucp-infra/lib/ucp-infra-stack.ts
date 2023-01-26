@@ -75,8 +75,6 @@ export class UCPInfraStack extends Stack {
     }))
     const accessLogBucket = new tah_s3.AccessLogBucket(this, "ucp-access-logging")
 
-
-
     /*************************
      * Datalake 3rd party users
      ********************/
