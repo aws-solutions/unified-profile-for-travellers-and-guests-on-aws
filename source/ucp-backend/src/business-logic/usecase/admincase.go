@@ -45,8 +45,8 @@ func ListIndustryConnectors(cfg appregistry.Config) ([]appregistry.ApplicationSu
 	return connectors, nil
 }
 
-func LinkIndustryConnector(iamClient iam.Config, connectorData model.LinkIndustryConnectorRq) (string, string, error) {
-	glueRoleArn, _, err := GenerateGlueServiceRole(iamClient, connectorData.BucketArn)
+func LinkIndustryConnector(iamClient iam.Config, connectorData model.LinkIndustryConnectorRq, accountId, region string) (string, string, error) {
+	glueRoleArn, _, err := GenerateGlueServiceRole(iamClient, connectorData.BucketArn, accountId, region)
 	if err != nil {
 		log.Printf("[LinkIndustryConnector] Error generating glue service role: %v", err)
 		return "", "", err
@@ -59,7 +59,7 @@ func LinkIndustryConnector(iamClient iam.Config, connectorData model.LinkIndustr
 	return glueRoleArn, bucketPolicy, nil
 }
 
-func GenerateGlueServiceRole(cfg iam.Config, arn string) (string, string, error) {
+func GenerateGlueServiceRole(cfg iam.Config, bucketArn, accountId, region string) (string, string, error) {
 	roleName := "CrawlConnectorServiceRole"
 	err := cfg.DeleteRoleIfExists(roleName)
 	if err != nil {
@@ -73,7 +73,7 @@ func GenerateGlueServiceRole(cfg iam.Config, arn string) (string, string, error)
 			"s3:GetObject",
 			"s3:DeleteObject",
 		},
-		Resource: arn + "/*",
+		Resource: bucketArn + "/*",
 	}
 	statement2 := iam.StatementEntry{
 		Effect: "Allow",
@@ -82,11 +82,32 @@ func GenerateGlueServiceRole(cfg iam.Config, arn string) (string, string, error)
 		},
 		Resource: "*",
 	}
+	statement3 := iam.StatementEntry{
+		Effect: "Allow",
+		Action: []string{
+			"glue:GetConnection",
+			"glue:GetDatabase",
+			"glue:GetTable",
+			"glue:CreateTable",
+			"glue:BatchGetPartition",
+			"glue:BatchCreatePartition",
+		},
+		Resource: "arn:aws:glue:" + region + ":" + accountId + ":*",
+	}
+	statement4 := iam.StatementEntry{
+		Effect: "Allow",
+		Action: []string{
+			"logs:PutLogEvents",
+		},
+		Resource: "arn:aws:logs:" + region + ":" + accountId + ":log-group:/aws-glue/*",
+	}
 	policyDoc := iam.PolicyDocument{
 		Version: "2012-10-17",
 		Statement: []iam.StatementEntry{
 			statement1,
 			statement2,
+			statement3,
+			statement4,
 		},
 	}
 	roleArn, policyArn, err := cfg.CreateRoleWithPolicy(roleName, "glue.amazonaws.com", policyDoc)
@@ -122,18 +143,26 @@ func GenerateConnectorBucketPolicy(bucketArn, glueRoleArn string) (string, error
 	return string(out), nil
 }
 
-func CreateConnectorCrawler(glueClient glue.Config, glueRoleArn, bucketPath, env, queueArn, dlqArn string) error {
+func CreateConnectorCrawler(glueClient glue.Config, glueRoleArn, bucketName, env, queueArn, dlqArn string) error {
 	cronSchedule := "cron(0 * * * ? *)"
 	s3Targets := []glue.S3Target{
 		{
-			ConnectionName: "IndustryConnectorCrawler",
-			Path:           bucketPath,
-			SampleSize:     10,
+			Path:       "s3://" + bucketName,
+			SampleSize: 10,
 		},
 	}
-	err := glueClient.CreateS3Crawler("ucp-connector-crawler-"+env, glueRoleArn, cronSchedule, queueArn, dlqArn, s3Targets)
+	crawlerName := "ucp-connector-crawler-" + env
+	err := glueClient.CreateS3Crawler(crawlerName, glueRoleArn, cronSchedule, queueArn, dlqArn, s3Targets)
 	if err != nil {
 		log.Printf("[CreateConnectorCrawler] Error creating crawler: %v", err)
+	}
+	return err
+}
+
+func CreateConnectorJobTrigger(glueClient glue.Config, businessObject, crawlerName, jobName string) error {
+	err := glueClient.CreateCrawlerSucceededTrigger("ucp-crawl-success-trigger-"+businessObject, crawlerName, jobName)
+	if err != nil {
+		log.Printf("[CreateConnectorCrawler] Error creating trigger for %v: %v", businessObject, err)
 	}
 	return err
 }
