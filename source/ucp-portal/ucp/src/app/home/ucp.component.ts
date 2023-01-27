@@ -498,20 +498,33 @@ export class LinkConnectorComponent {
   data: any;
   domain: string;
   linkConnectorForm = new FormGroup({
-    agwUrl: new FormControl(),
-    tokenEndpoint: new FormControl(),
-    clientId: new FormControl(),
-    clientSecret: new FormControl(),
-    bucketArn: new FormControl(),
+    agwUrl: new FormControl('', Validators.required),
+    tokenEndpoint: new FormControl('', Validators.required),
+    clientId: new FormControl('', Validators.required),
+    clientSecret: new FormControl('', Validators.required),
+    bucketArn: new FormControl('', Validators.required),
   });
+  buttonDisabled: boolean;
+
   constructor(public dialogRef: MatDialogRef<LinkConnectorComponent>, private ucpService: UcpService, private session: SessionService, public dialog: MatDialog) {
     this.domain = this.session.getProfileDomain();
     let localData = this.session.getConnectorData(this.domain);
-    this.linkConnectorForm.controls['agwUrl'].setValue(localData?.agwUrl ?? "")
-    this.linkConnectorForm.controls['tokenEndpoint'].setValue(localData?.tokenEndpoint ?? "")
-    this.linkConnectorForm.controls['clientId'].setValue(localData?.clientId ?? "")
-    this.linkConnectorForm.controls['clientSecret'].setValue(localData?.clientSecret ?? "")
-    this.linkConnectorForm.controls['bucketArn'].setValue(localData?.bucketArn ?? "")
+    this.linkConnectorForm.controls['agwUrl'].setValue(localData?.agwUrl ?? "");
+    this.linkConnectorForm.controls['tokenEndpoint'].setValue(localData?.tokenEndpoint ?? "");
+    this.linkConnectorForm.controls['clientId'].setValue(localData?.clientId ?? "");
+    this.linkConnectorForm.controls['clientSecret'].setValue(localData?.clientSecret ?? "");
+    this.linkConnectorForm.controls['bucketArn'].setValue(localData?.bucketArn ?? "");
+    this.buttonDisabled = true;
+  }
+
+  ngOnInit() {
+    this.linkConnectorForm.valueChanges.subscribe(() => {
+      if (this.linkConnectorForm.valid) {
+        this.buttonDisabled = false;
+      } else {
+        this.buttonDisabled = true;
+      }
+    });
   }
 
   public link() {
