@@ -487,6 +487,42 @@ export class UCPSettingsComponent {
       width: '90%',
     });
   }
+  public getColorStatus(status: string) {
+    let statusColor: string;
+
+    switch(status) {
+      case "Active": {
+        statusColor = "darkgreen";
+        break;
+      }
+      case "Deleted": {
+        statusColor = "firebrick";
+        break;
+      }
+      case "Errored": {
+        statusColor = "firebrick";
+        break;
+      }
+      case "Suspended": {
+        statusColor = "firebrick";
+        break;
+      }
+      case "Depreciated": {
+        statusColor = "goldenrod";
+        break;
+      }
+      case "Draft": {
+        statusColor = "goldenrod";
+        break;
+      }
+      default: {
+        statusColor = "gray"
+        break;
+      }
+    }
+    return statusColor
+
+  }
 }
 
 @Component({
