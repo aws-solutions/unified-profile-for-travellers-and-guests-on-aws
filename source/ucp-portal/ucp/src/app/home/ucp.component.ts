@@ -445,7 +445,7 @@ export class UCPSettingsComponent {
       id: "hapi",
       icon: "https://media-exp1.licdn.com/dms/image/C4E0BAQE38nbk86XEOQ/company-logo_200_200/0/1618338688553?e=2147483647&v=beta&t=32RQL7yl3BxcFrkhVLKiJZEgxrApfj4kJsgC2uhm6Vg",
       description: "Hapi is a Cloud Data Hub that exposes event streams and transactional APIs from hotel systems at scale",
-      objectType: "booking",
+      objectType: "hotel booking, air booking, guest profile, passenger profile, hotel stay revenue",
       deploymentStatus: "Not Deployed"
     },
     {
