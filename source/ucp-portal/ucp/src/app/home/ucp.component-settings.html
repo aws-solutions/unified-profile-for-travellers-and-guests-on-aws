@@ -46,11 +46,8 @@
             {{integration.lastRun | date : 'medium' }}
         </div>
         <div class="col-sm-2  align-center">
-            <span *ngIf="integration.lastRunStatus==='Successful'"
-                class="integration-last-run-status-success">{{integration.lastRunStatus}}</span>
-            <span *ngIf="integration.lastRunStatus!=='Successful'"
-                class="integration-last-run-status-failure">{{integration.lastRunStatus}}</span>
-
+            <span class="integration-status" [ngStyle]="{'background-color': getLastRunColorStatus(integration.lastRunStatus)}">
+                {{integration.lastRunStatus ? integration.lastRunStatus : "No Last Run Deployed"}}</span>
         </div>
     </div>
 
