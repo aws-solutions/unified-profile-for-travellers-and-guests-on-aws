@@ -37,9 +37,7 @@
             {{integration.target.split("/")[1]}}
         </div>
         <div class="col-sm-2  align-center">
-            <span *ngIf="integration.status==='Active'" class="integration-status-active">{{integration.status}}</span>
-            <span *ngIf="integration.status!=='Active'"
-                class="integration-status-not-active">{{integration.status}}</span>
+            <span class="integration-status" [ngStyle]="{'background-color': getColorStatus(integration.status)}">{{integration.status}}</span>
         </div>
         <div class="col-sm-3  align-center">
             {{integration.trigger }}
