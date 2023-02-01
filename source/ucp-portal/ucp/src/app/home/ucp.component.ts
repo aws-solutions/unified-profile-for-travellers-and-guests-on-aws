@@ -521,7 +521,32 @@ export class UCPSettingsComponent {
       }
     }
     return statusColor
-
+  }
+  public getLastRunColorStatus(status: string) {
+    let statusColor: string;
+    switch(status) {
+      case "Successful": {
+        statusColor = "darkgreen";
+        break;
+      }
+      case "Error": {
+        statusColor = "darkgreen";
+        break;
+      }
+      case "InProgress": {
+        statusColor = "goldenrod";
+        break;
+      }
+      case "": {
+        statusColor = "goldenrod"
+        break;
+      }
+      default: {
+        statusColor = "gray"
+        break;
+      }
+    }
+    return statusColor
   }
 }
 
