@@ -3,6 +3,10 @@
     <h1>
         <fa-icon [icon]="faCog"></fa-icon>
         Settings
+
+        <div class="float-right">
+            <button class="btn btn-danger" (click)="validate()">Close</button>
+        </div>
     </h1>
     <div class="float-right text-center lead">
         <div class="text-primary">
@@ -87,7 +91,9 @@
         <div class="col-sm-2  align-center "><span>{{conn.objectType}}</span></div>
         <div class="col-sm-1  align-center ">
             <span *ngIf="!shouldShowLinkButton()">
-                <button class="btn btn-link" (click)="openDeployConnectorLink()"><i class="fa fa-external-link"></i>Deploy</button></span>
+                <button class="btn btn-link btn-sm py-0" (click)="openDeployConnectorLink()"><i class="fa fa-external-link"></i>Deploy</button>
+                <button class="btn btn-link btn-sm py-0" (click)="showLinkConnector()"
+                title="Link From Another Solution"><i class="fa fa-external-link"></i>Link</button></span>
             <span *ngIf="shouldShowLinkButton()">
                 <button class="btn btn-link" (click)="showLinkConnector()"><i class="fa fa-external-link"></i>Link</button></span>
         </div>
