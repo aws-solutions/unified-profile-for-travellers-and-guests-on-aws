@@ -15,7 +15,7 @@ const IndustryConnectorPrefix = "travel-and-hospitality-connector"
 
 // https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html
 type RolePrincipal struct {
-	AWS string
+	AWS []string
 }
 
 type Statement struct {
@@ -45,13 +45,13 @@ func ListIndustryConnectors(cfg appregistry.Config) ([]appregistry.ApplicationSu
 	return connectors, nil
 }
 
-func LinkIndustryConnector(iamClient iam.Config, connectorData model.LinkIndustryConnectorRq, accountId, region string) (string, string, error) {
+func LinkIndustryConnector(iamClient iam.Config, connectorData model.LinkIndustryConnectorRq, accountId, region, datalakeAdminRoleArn string) (string, string, error) {
 	glueRoleArn, _, err := GenerateGlueServiceRole(iamClient, connectorData.BucketArn, accountId, region)
 	if err != nil {
 		log.Printf("[LinkIndustryConnector] Error generating glue service role: %v", err)
 		return "", "", err
 	}
-	bucketPolicy, err := GenerateConnectorBucketPolicy(connectorData.BucketArn, glueRoleArn)
+	bucketPolicy, err := GenerateConnectorBucketPolicy(connectorData.BucketArn, glueRoleArn, datalakeAdminRoleArn)
 	if err != nil {
 		log.Printf("[LinkIndustryConnector] Error generating bucket policy for connector: %v", err)
 		return "", "", err
@@ -118,13 +118,16 @@ func GenerateGlueServiceRole(cfg iam.Config, bucketArn, accountId, region string
 	return roleArn, policyArn, nil
 }
 
-func GenerateConnectorBucketPolicy(bucketArn, glueRoleArn string) (string, error) {
+func GenerateConnectorBucketPolicy(bucketArn, glueRoleArn, datalakeAdminRoleArn string) (string, error) {
 	policy := Policy{
 		Version: "2012-10-17",
 		Statement: Statement{
 			Effect: "Allow",
 			Principal: RolePrincipal{
-				AWS: glueRoleArn,
+				AWS: []string{
+					glueRoleArn,
+					datalakeAdminRoleArn,
+				},
 			},
 			Action: []string{
 				"s3:*",
@@ -163,6 +166,16 @@ func CreateConnectorJobTrigger(glueClient glue.Config, businessObject, crawlerNa
 	err := glueClient.CreateCrawlerSucceededTrigger("ucp-crawl-success-trigger-"+businessObject, crawlerName, jobName)
 	if err != nil {
 		log.Printf("[CreateConnectorCrawler] Error creating trigger for %v: %v", businessObject, err)
+	}
+	return err
+}
+
+func AddIndustryConnectorToJob(glueClient glue.Config, jobName, bucketName string) error {
+	key := "--SOURCE_TABLE"
+	val := strings.Replace(bucketName, "-", "_", -1) // translate bucket name to Glue table name
+	err := glueClient.UpdateJobArgument(jobName, key, val)
+	if err != nil {
+		log.Printf("[AddIndustryConnectorToJob] Error setting Connector table name for Glue job %v", err)
 	}
 	return err
 }

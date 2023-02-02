@@ -339,19 +339,35 @@ type JSONObject interface {
 	Decode(dec json.Decoder) (error, JSONObject)
 }
 
-//AWS SDK
+/********************
+* Pointer Converters
+*********************/
 
 func ToMapString(in map[string]*string) map[string]string {
 	out := map[string]string{}
 	for key, val := range in {
-		out[key] = ToString(val)
+		out[key] = PtToString(val)
 	}
 	return out
 }
 
-func ToString(in *string) string {
+func PtToString(in *string) string {
 	if in != nil {
 		return *in
 	}
 	return ""
+}
+
+func PtToInt64(in *int64) int64 {
+	if in != nil {
+		return *in
+	}
+	return 0
+}
+
+func PtToFloat64(in *float64) float64 {
+	if in != nil {
+		return *in
+	}
+	return float64(0.0)
 }

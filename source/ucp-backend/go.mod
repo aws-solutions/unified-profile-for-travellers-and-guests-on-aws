@@ -12,7 +12,6 @@ replace tah/core v0.0.0-unpublished => ./src/tah-core
 
 require (
 	github.com/aws/aws-lambda-go v1.37.0
-	github.com/pkg/errors v0.9.1
 	tah/core v0.0.0-unpublished
 )
 
