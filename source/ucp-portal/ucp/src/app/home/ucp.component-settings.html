@@ -5,15 +5,15 @@
         Settings
 
         <div class="float-right">
-            <button class="btn btn-danger" (click)="validate()">Close</button>
+            <button class="btn btn-danger" (click)="validate()">&#x2715;</button>
         </div>
     </h1>
-    <div class="float-right text-center lead">
-        <div class="text-primary">
-            <b>DOMAIN</b><br>
+    <div class="float-right text-right">
+        <div class="float-right" style="color:#aaa;font-size:small">
+            DOMAIN
         </div>
-        <div class="border border-primary">
-            <b>{{data.selectedDomain}}</b>
+        <div style="font-size:large">
+            {{data.selectedDomain}}
         </div>
     </div>
     <h3>Integrations</h3>
@@ -47,7 +47,7 @@
             {{integration.trigger }}
         </div>
         <div class="col-sm-3  align-center">
-            {{integration.lastRun | date : 'medium' }}
+            {{(integration.lastRun != '0001-01-01T00:00:00Z') ? (integration.lastRun | date: 'medium') : "No Run Yet"}}
         </div>
         <div class="col-sm-2  align-center">
             <span class="integration-status" [ngStyle]="{'background-color': getLastRunColorStatus(integration.lastRunStatus)}">
