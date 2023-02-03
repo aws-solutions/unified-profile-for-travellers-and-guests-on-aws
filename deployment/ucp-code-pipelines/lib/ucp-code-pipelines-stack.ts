@@ -223,7 +223,25 @@ export class UCPCodePipelinesStack extends Stack {
         buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
         computeType: codebuild.ComputeType.MEDIUM
       },
-    })
+    });
+
+    const etlProject = new codebuild.PipelineProject(this, 'etlDeployProject' + envName, {
+      projectName: "ucp-etl-" + envName,
+      role: buildProjectRole,
+      encryptionKey: codeBuildKmsKey,
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          build: {
+            commands: [
+              'cd cd source/ucp-etls',
+              'echo "Deploy ETL code"',
+              'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName,
+            ],
+          },
+        }
+      })
+    });
 
     const feTest = new codebuild.PipelineProject(this, 'feTestProject' + envName, {
       projectName: "ucp-fe-test-" + envName,
@@ -267,6 +285,7 @@ export class UCPCodePipelinesStack extends Stack {
     //Output Artifacts
     const sourceOutput = new codepipeline.Artifact();
     const cdkBuildOutputLambda = new codepipeline.Artifact('CdkBuildOutputLambda');
+    const cdkBuildOutputEtl = new codepipeline.Artifact('CdkBuildOutputEtl');
     const cdkBuildOutputFirehoseLambda = new codepipeline.Artifact('CdkBuildOutputFirehoseLambda');
     const cdkBuildOutputInfra = new codepipeline.Artifact('CdkBuildOutputInfra');
     const cdkBuildOutputTest = new codepipeline.Artifact('CdkBuildOutputTest');
@@ -352,7 +371,13 @@ export class UCPCodePipelinesStack extends Stack {
         runOrder: 2,
         outputs: [feOutput],
       }))
-
+      deployStage.actions.push(new codepipeline_actions.CodeBuildAction({
+        actionName: 'deployEtlCode',
+        project: etlProject,
+        input: sourceOutput,
+        runOrder: 3,
+        outputs: [cdkBuildOutputEtl],
+      }))
     }
     stages.push(deployStage)
 
