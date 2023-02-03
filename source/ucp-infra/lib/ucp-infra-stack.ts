@@ -39,9 +39,11 @@ export class UCPInfraStack extends Stack {
     if (!envName) {
       throw new Error('No environemnt name provided for stack');
     }
-
     if (!artifactBucket) {
       throw new Error('No bucket name provided for stack');
+    }
+    if (!account) {
+      throw new Error('No account ID provided for stack');
     }
 
     /*************
@@ -110,12 +112,12 @@ export class UCPInfraStack extends Stack {
     const idResolution = new tah_s3.Bucket(this, "ucp-connect-id-resolution-temp", accessLogBucket)
 
     //Source bucket for travel business objects
-    this.buildBusinessObjectPipeline("hotel-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    this.buildBusinessObjectPipeline("air-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    this.buildBusinessObjectPipeline("guest-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    this.buildBusinessObjectPipeline("pax-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    this.buildBusinessObjectPipeline("clickstream", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    this.buildBusinessObjectPipeline("hotel-stay", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let hotelBookingOutput = this.buildBusinessObjectPipeline("hotel-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let airBookingOutput = this.buildBusinessObjectPipeline("air-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let guestProfileOutput = this.buildBusinessObjectPipeline("guest-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let paxProfileOutput = this.buildBusinessObjectPipeline("pax-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let clickstreamOutput = this.buildBusinessObjectPipeline("clickstream", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let hotelStayOutput = this.buildBusinessObjectPipeline("hotel-stay", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
 
     //Target Bucket for Amazon connect profile export
     let connectProfileExportBucket = new tah_s3.Bucket(this, "ucp-mazon-connect-profile-export", accessLogBucket);
@@ -196,14 +198,15 @@ export class UCPInfraStack extends Stack {
       tracing: lambda.Tracing.ACTIVE,
       timeout: Duration.seconds(60),
       environment: {
-        LAMBDA_ACCOUNT_ID: account ?? "",
+        LAMBDA_ACCOUNT_ID: account,
         LAMBDA_ENV: envName,
         ATHENA_WORKGROUP: "",
         ATHENA_DB: "",
-        CLICKSTREAM_JOB_NAME: "clickstreamJob" + envName,
+        CLICKSTREAM_JOB_NAME: clickstreamOutput.connectorJobName,
         CONNECTOR_CRAWLER_QUEUE: connectorCrawlerQueue.queueArn,
         CONNECTOR_CRAWLER_DLQ: connectorCrawlerDlq.queueArn,
         GLUE_DB: glueDb.databaseName,
+        DATALAKE_ADMIN_ROLE_ARN: datalakeAdminRole.roleArn,
         UCP_GUEST360_TABLE_NAME: "",
         UCP_GUEST360_TABLE_PK: "",
         UCP_GUEST360_ATHENA_TABLE: "",
@@ -219,8 +222,11 @@ export class UCPInfraStack extends Stack {
         'appflow:CreateFlow',
         'appflow:DeleteFlow',
         'glue:CreateCrawler',
-        'glue:DeleteCrawler',
         'glue:CreateTrigger',
+        'glue:DeleteCrawler',
+        'glue:DeleteTrigger',
+        'glue:GetJob',
+        'glue:UpdateJob',
         // TODO: remove iam actions and set up permission boundary instead
         'kms:GenerateDataKey',
         'kms:Decrypt',
@@ -570,7 +576,7 @@ export class UCPInfraStack extends Stack {
   * HELPER FUNCTIONS
   ******************/
 
-  buildBusinessObjectPipeline(businessObjectName: string, envName: string, dataLakeAdminRole: iam.Role, glueDb: Database, artifactBucketName: string, accessLogBucket: s3.Bucket, connectProfileImportBucket: s3.Bucket) {
+  buildBusinessObjectPipeline(businessObjectName: string, envName: string, dataLakeAdminRole: iam.Role, glueDb: Database, artifactBucketName: string, accessLogBucket: s3.Bucket, connectProfileImportBucket: s3.Bucket): BusinessObjectPipelineOutput {
     //0-create bucket
     let bucketRaw = new tah_s3.Bucket(this, "ucp" + businessObjectName, accessLogBucket);
     //1-Bucket permission
@@ -585,12 +591,25 @@ export class UCPInfraStack extends Stack {
     this.scheduledCrawlerTrigger("ucp" + businessObjectName, envName, crawler, "cron(0 * * * ? *)", workflow)
     this.crawlerOnDemandTrigger("ucp" + businessObjectName, envName, crawler)
     //5- Jobs
-    let job = this.job(businessObjectName, envName, artifactBucketName, businessObjectName + "ToUcp", glueDb, dataLakeAdminRole, new Map([
+    let job = this.job(businessObjectName + "FromCustomer", envName, artifactBucketName, businessObjectName + "ToUcp", glueDb, dataLakeAdminRole, new Map([
       ["SOURCE_TABLE", bucketRaw.toAthenaTable()],
-      ["DEST_BUCKET", connectProfileImportBucket.bucketName]
+      ["DEST_BUCKET", connectProfileImportBucket.bucketName],
+      ["BUSINESS_OBJECT", businessObjectName],
+      ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/" + businessObjectName + "Transform.py"],
+    ]))
+    let industryConnectorJob = this.job(businessObjectName + "FromConnector", envName, artifactBucketName, businessObjectName + "ToUcp", glueDb, dataLakeAdminRole, new Map([
+      // SOURCE_TABLE provided by customer when linking connector
+      ["DEST_BUCKET", connectProfileImportBucket.bucketName],
+      ["BUSINESS_OBJECT", businessObjectName],
+      ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/" + businessObjectName + "Transform.py"],
     ]))
     //6- Job Triggers
     let jobTrigger = this.jobTriggerFromCrawler("ucp" + businessObjectName, envName, [crawler], job, workflow)
+
+    let output: BusinessObjectPipelineOutput = {
+      connectorJobName: industryConnectorJob.name ?? "",
+    }
+    return output;
   }
 
   job(prefix: string, envName: string, artifactBucket: string, scriptName: string, glueDb: Database, dataLakeAdminRole: iam.Role, envVar: Map<string, string>): CfnJob {
@@ -644,7 +663,7 @@ export class UCPInfraStack extends Stack {
       ]
     })
     if (workflow) {
-      trigger.addDependsOn(workflow)
+      trigger.addDependency(workflow)
       trigger.workflowName = workflow.name
     }
     return trigger
@@ -655,13 +674,13 @@ export class UCPInfraStack extends Stack {
     for (let job of jobs) {
       actions.push({ jobName: job.name })
     }
-    let trigger = new CfnTrigger(this, prefix + "crawlerOnDemandTrigger" + envName, {
+    let trigger = new CfnTrigger(this, prefix + "jobOnDemandTrigger" + envName, {
       type: "ON_DEMAND",
       name: prefix + "jobOnDemandTrigger" + envName,
       actions: actions
     })
     if (workflow) {
-      trigger.addDependsOn(workflow)
+      trigger.addDependency(workflow)
       trigger.workflowName = workflow.name
     }
     return trigger
@@ -676,7 +695,7 @@ export class UCPInfraStack extends Stack {
       ]
     })
     if (workflow) {
-      trigger.addDependsOn(workflow)
+      trigger.addDependency(workflow)
       trigger.workflowName = workflow.name
     }
     return trigger
@@ -701,7 +720,7 @@ export class UCPInfraStack extends Stack {
       ]
     })
     if (workflow) {
-      trigger.addDependsOn(workflow)
+      trigger.addDependency(workflow)
       trigger.workflowName = workflow.name
     }
     return trigger
@@ -719,7 +738,7 @@ export class UCPInfraStack extends Stack {
       ]
     })
     if (workflow) {
-      trigger.addDependsOn(workflow)
+      trigger.addDependency(workflow)
       trigger.workflowName = workflow.name
     }
     return trigger
@@ -737,7 +756,7 @@ export class UCPInfraStack extends Stack {
       ]
     })
     if (workflow) {
-      trigger.addDependsOn(workflow)
+      trigger.addDependency(workflow)
       trigger.workflowName = workflow.name
     }
     return trigger

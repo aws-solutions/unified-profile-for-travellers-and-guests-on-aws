@@ -3,6 +3,7 @@ package glue
 import (
 	"fmt"
 	"log"
+	"tah/core/core"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -20,6 +21,15 @@ type S3Target struct {
 	ConnectionName string
 	Path           string
 	SampleSize     int64
+}
+
+type Job struct {
+	Name             string
+	Description      string
+	DefaultArguments map[string]string
+	MaxCapacity      float64
+	NumberOfWorkers  int64
+	WorkerType       string
 }
 
 func Init(region, dbName string) Config {
@@ -129,6 +139,25 @@ func (c Config) CreateSparkETLJob(jobName, scriptLocation, role string) error {
 	return err
 }
 
+func (c Config) GetJob(jobName string) (Job, error) {
+	output, err := c.Client.GetJob(&glue.GetJobInput{
+		JobName: &jobName,
+	})
+	if err != nil {
+		log.Printf("[GetJob] Error getting job: %v", err)
+		return Job{}, err
+	}
+	job := Job{
+		Name:             jobName,
+		Description:      core.PtToString(output.Job.Description),
+		MaxCapacity:      core.PtToFloat64(output.Job.MaxCapacity),
+		NumberOfWorkers:  core.PtToInt64(output.Job.NumberOfWorkers),
+		WorkerType:       core.PtToString(output.Job.WorkerType),
+		DefaultArguments: core.ToMapString(output.Job.DefaultArguments),
+	}
+	return job, nil
+}
+
 func (c Config) DeleteJob(jobName string) error {
 	input := glue.DeleteJobInput{
 		JobName: &jobName,
@@ -141,6 +170,10 @@ func (c Config) DeleteJob(jobName string) error {
 }
 
 func (c Config) CreateCrawlerSucceededTrigger(triggerName, crawlerName, jobName string) error {
+	err := c.DeleteCrawlerIfExists(crawlerName)
+	if err != nil {
+		log.Printf("[CreateTrigger] Error deleting existing trigger: %v", err)
+	}
 	action := glue.Action{
 		JobName: &jobName,
 	}
@@ -170,7 +203,7 @@ func (c Config) CreateCrawlerSucceededTrigger(triggerName, crawlerName, jobName 
 		Type:            &triggerType,
 	}
 
-	_, err := c.Client.CreateTrigger(&input)
+	_, err = c.Client.CreateTrigger(&input)
 	if err != nil {
 		log.Printf("[CreateTrigger] Error: %v", err)
 	}
@@ -186,6 +219,66 @@ func (c Config) DeleteTrigger(triggerName string) error {
 		log.Printf("[DeleteTrigger] Error: %v", err)
 	}
 	return err
+}
+
+func (c Config) DeleteTriggerIfExists(triggerName string) error {
+	err := c.DeleteTrigger(triggerName)
+	if err != nil && !isNoSuchEntityError(err) {
+		return err
+	}
+	return nil
+}
+
+func (c Config) UpdateJobArgument(jobName, updateKey, updateVal string) error {
+	job, err1 := c.Client.GetJob(&glue.GetJobInput{
+		JobName: &jobName,
+	})
+	if err1 != nil {
+		log.Printf("[UpdateJobArgument] Error getting existing job: %v", err1)
+		return err1
+	}
+	// Create new map to update arguments, check for existing args to carry over
+	updatedArgs := make(map[string]*string)
+	if job.Job.DefaultArguments != nil {
+		updatedArgs = job.Job.DefaultArguments
+	}
+	updatedArgs[updateKey] = &updateVal
+	// Create updated input based on original values, adding updated arguments
+	updateInput := glue.UpdateJobInput{
+		JobName: &jobName,
+		JobUpdate: &glue.JobUpdate{
+			CodeGenConfigurationNodes: job.Job.CodeGenConfigurationNodes,
+			Command:                   job.Job.Command,
+			Connections:               job.Job.Connections,
+			DefaultArguments:          updatedArgs,
+			Description:               job.Job.Description,
+			ExecutionClass:            job.Job.ExecutionClass,
+			ExecutionProperty:         job.Job.ExecutionProperty,
+			GlueVersion:               job.Job.GlueVersion,
+			LogUri:                    job.Job.LogUri,
+			MaxRetries:                job.Job.MaxRetries,
+			NonOverridableArguments:   job.Job.NonOverridableArguments,
+			NotificationProperty:      job.Job.NotificationProperty,
+			Role:                      job.Job.Role,
+			SecurityConfiguration:     job.Job.SecurityConfiguration,
+			SourceControlDetails:      job.Job.SourceControlDetails,
+			Timeout:                   job.Job.Timeout,
+		},
+	}
+	// Input requires either MaxCapacity OR NumberOfWorkers and WorkerType
+	// Determine which is set for the job, then add to updateInput accordingly
+	if core.PtToFloat64(job.Job.MaxCapacity) > 0 {
+		updateInput.JobUpdate.MaxCapacity = job.Job.MaxCapacity
+	} else {
+		updateInput.JobUpdate.NumberOfWorkers = job.Job.NumberOfWorkers
+		updateInput.JobUpdate.WorkerType = job.Job.WorkerType
+	}
+	_, err2 := c.Client.UpdateJob(&updateInput)
+	if err2 != nil {
+		log.Printf("[UpdateJobArguments] Error updating job: %v", err2)
+		return err2
+	}
+	return nil
 }
 
 // More information on handling AWS errors: https://pkg.go.dev/github.com/aws/aws-sdk-go/aws/awserr

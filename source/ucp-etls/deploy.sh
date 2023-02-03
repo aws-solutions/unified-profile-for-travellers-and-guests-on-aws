@@ -8,15 +8,21 @@ bucket=$2
 echo "**********************************************"
 echo "*  UCP Glue ETL '$env' "
 echo "***********************************************"
-if [ -z "$env" || -z "$bucket"]
-then
+if [ -z "$env" ] || [ -z "$bucket" ]; then
     echo "Environment Must not be Empty"
     echo "Usage:"
     echo "sh deploy.sh <env> <bucket>"
-else
-    aws s3 cp bookingToUcp.py s3://$bucket/$env/etl/bookingToUcp.py
-    aws s3 cp clickstreamToUcp.py s3://$bucket/$env/etl/clickstreamToUcp.py
-    aws s3 cp loyaltyToUcp.py s3://$bucket/$env/etl/loyaltyToUcp.py
-    aws s3 cp connectProfileToAmperity.py s3://$bucket/$env/etl/connectProfileToAmperity.py
+    exit 1
 fi
 
+echo "Running unit tests"
+python3 -m unittest discover
+if [ $? != 0 ]; then
+    exit 1
+fi
+
+aws s3 cp bookingToUcp.py s3://$bucket/$env/etl/bookingToUcp.py
+aws s3 cp clickstream/clickstreamToUcp.py s3://$bucket/$env/etl/clickstreamToUcp.py
+aws s3 cp clickstream/clickstreamTransform.py s3://$bucket/$env/etl/clickstreamTransform.py
+aws s3 cp loyaltyToUcp.py s3://$bucket/$env/etl/loyaltyToUcp.py
+aws s3 cp connectProfileToAmperity.py s3://$bucket/$env/etl/connectProfileToAmperity.py

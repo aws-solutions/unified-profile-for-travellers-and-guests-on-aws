@@ -33,6 +33,13 @@ const S3_HOST = "https://s3.amazonaws.com"
 const LIST_PART_MAX_PAGE = 1000
 const DEFAULT_BATCH_SIZE = 100
 
+type IS3Config interface {
+	SetTx(tx core.Transaction) error
+	SaveJson(path string, id string, data []byte) error
+	GetBucket() string
+	GetRegion() string
+}
+
 type S3Config struct {
 	Svc       *s3.S3
 	Region    string
@@ -153,6 +160,12 @@ func (s3c *S3Config) SetTx(tx core.Transaction) error {
 func (s3c S3Config) Url() string {
 	return S3_HOST + "/" + s3c.Bucket + "/" + s3c.Path
 }
+func (s3c S3Config) GetBucket() string {
+	return s3c.Bucket
+}
+func (s3c S3Config) GetRegion() string {
+	return s3c.Region
+}
 
 func (s3c S3Config) Key(key string) string {
 	if key == "" {
@@ -204,6 +217,7 @@ func (s3c S3Config) EmptyBucket() error {
 	return nil
 }
 
+//TODO: seem to be a bug when bucket is empty. to check
 func (s3c S3Config) EmptyAndDelete() error {
 	s3c.Tx.Log("Emptying and deleting bucket %s", s3c.Bucket)
 	err := s3c.EmptyBucket()
