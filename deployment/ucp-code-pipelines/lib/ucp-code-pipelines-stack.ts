@@ -234,7 +234,7 @@ export class UCPCodePipelinesStack extends Stack {
         phases: {
           build: {
             commands: [
-              'cd cd source/ucp-etls',
+              'cd source/ucp-etls',
               'echo "Deploy ETL code"',
               'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName,
             ],
