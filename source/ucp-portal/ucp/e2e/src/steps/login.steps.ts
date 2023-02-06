@@ -36,10 +36,10 @@ When(/^I type in a new password and confirm$/, async () => {
     await loginPage.enterPassword()
     await loginPage.confirmPassword()
     await loginPage.clickLogin('update-btn')
-})
+});
 Then(/^I am redirected to the login page$/, async () => {
     expect(await loginPage.getTitleText()).to.equal('Unified customer profile for travellers and guests');
-})
+});
 When(/^I enter my credentials and validate$/, async () => {
     await loginPage.enterLogin()
     await loginPage.enterPassword()
@@ -48,4 +48,61 @@ When(/^I enter my credentials and validate$/, async () => {
 });
 Then(/^I should be redirected to the home screen$/, async () => {
     expect(await homePage.getHeaderText()).to.equal('Unified Customer Profile for Travellers and Guests');
-})
+});
+//Creation of Domain
+Given(/^I am on the home screen$/, async () => {
+    expect(await homePage.getHeaderText()).to.equal('Unified Customer Profile for Travellers and Guests');
+});
+When(/^I click on the New Domain button$/, async () => {
+    await homePage.clickHome('new-domain-button')
+    await homePage.waitForFormUpdate('domain-creation-text-box')
+});
+Then(/^I should see the New Environment screen$/, async () => {
+    expect(await homePage.waitForFormUpdate('domain-creation-text-box')).to.equal(true);
+});
+When(/^I enter the name of my new domain and click create$/, async () => {
+    await homePage.fillTextBox("test-domain-e2e", "domain-creation-text-box")
+    await homePage.clickHome('domain-creation-confirm')
+    console.log("Domain is being created")
+});
+Then(/^I should see the new domain$/, async () => {
+    expect(await homePage.waitForDomainCreation('test-domain-e2e')).to.equal(true);
+});
+Given(/^I have created A new domain$/, async () => {
+    expect(await homePage.waitForFormUpdate('domain-component-name-test-domain-e2e')).to.equal(true)
+});
+When(/^I click on the settings button$/, async () => {
+    await homePage.clickHome('settings-button')
+});
+Then(/^I see the settings window appears with all integrations$/, async () => {
+    expect(await homePage.waitForFormUpdate('business-obj-name-air_booking')).to.equal(true);
+    expect(await homePage.waitForFormUpdate('business-obj-name-passenger_profile')).to.equal(true);
+    expect(await homePage.waitForFormUpdate('business-obj-name-guest_profile')).to.equal(true);
+    expect(await homePage.waitForFormUpdate('business-obj-name-clickstream')).to.equal(true);
+    expect(await homePage.waitForFormUpdate('business-obj-name-hotel_stay_revenue')).to.equal(true);
+    expect(await homePage.waitForFormUpdate('business-obj-name-hotel_booking')).to.equal(true);
+});
+Given(/^I am on the settings window$/, async () => {
+    expect(await homePage.waitForFormUpdateDialog('ucp-settings')).to.equal(true);
+});
+When(/^I click the Close X button$/, async () => {
+    await homePage.clickHome('setting-close-button')
+});
+Then(/^I should no longer see settings window$/, async () => {
+    expect(await homePage.waitForFormUpdateInvisible('business-obj-air_booking')).to.equal(true);
+});
+Given(/^I have selected the new test domain$/, async () => {
+    expect(await homePage.confirmDomainSelected('test-domain-e2e'));
+});
+When(/^I click on the X in the Domain Component$/, async () => {
+    await homePage.clickHome('delete-domain-icon-test-domain-e2e')
+});
+Then(/^I see the Confirm Deletion Screen$/, async () => {
+    expect(await homePage.waitForFormUpdateDialog('delete-confirm')).to.equal(true);
+});
+When(/^I Click Yes$/, async () => {
+    await homePage.clickHome('domain-deletion-confirm')
+});
+Then(/^I see the Domain Component be Deleted$/, async () => {
+    expect(await homePage.waitForFormUpdateInvisible('domain-component-name-test-domain-e2e')).to.equal(true);
+});

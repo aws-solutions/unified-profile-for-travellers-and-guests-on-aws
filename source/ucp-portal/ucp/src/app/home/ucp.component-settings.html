@@ -5,7 +5,7 @@
         Settings
 
         <div class="float-right">
-            <button class="btn btn-danger" (click)="validate()">&#x2715;</button>
+            <button id="setting-close-button" class="btn btn-danger" (click)="validate()">&#x2715;</button>
         </div>
     </h1>
     <div class="float-right text-right">
@@ -37,7 +37,7 @@
         </div>
     </div>
     <div class="row integration-list" *ngFor="let integration of domain.integrations">
-        <div class="col-sm-2  align-center">
+        <div id="business-obj-name-{{integration.target.split('/')[1]}}" class="col-sm-2  align-center">
             {{integration.target.split("/")[1]}}
         </div>
         <div class="col-sm-2  align-center">
