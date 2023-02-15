@@ -81,22 +81,6 @@ def buildObjectRecord(rec):
             return newRec
     return newRec
 
-def getAttr(attributes, name):
-    obj = next(x for x in attributes if x["name"] == name) # loop through each attribute in list once for better performance
-    if obj is None:
-        return ""
-    type = obj["type"]
-    if type == "string":
-        return obj["stringvValue"] # is this a typo?
-    elif type == "strings":
-        return obj["stringValues"]
-    elif type == "number":
-        return obj["numValue"]
-    elif type == "numbers":
-        return obj["numValues"]
-    else:
-        raise Exception("Unknown attribute type")
-
 def getHolder(holder, name):
     return 0
 
@@ -142,6 +126,19 @@ def fillHolderDetails(startingString, dict, element):
     dict[startingString+"jobTitle"] = element["jobTitle"]
     dict[startingString+"parentCompany"] = element["parentCompany"]
     return dict
+
+def fillPaymentInformationDetails(startingString, dict, element):
+    dict[startingString+"paymentType"] = element["paymentType"]
+    dict[startingString+"ccInfo.token"] = element["ccInfo"]["token"]
+    dict[startingString+"ccInfo.cardType"] = element["ccInfo"]["cardType"]
+    dict[startingString+"ccInfo.cardExp"] = element["ccInfo"]["cardExp"]
+    dict[startingString+"ccInfo.cardCvv"] = element["ccInfo"]["cardCvv"]
+    dict[startingString+"ccInfo.expiration"] = element["ccInfo"]["expiration"]
+    dict[startingString+"ccInfo.name"] = element["ccInfo"]["name"]
+    newRec = fillAddressDetails("paymentInformation.address.", newRec, element["address"])
+    dict[startingString+"routingNumber"] = element["routingNumber"]
+    dict[startingString+"accountNumber"] = element["accountNumber"]
+    dict[startingString+"voucherID"] = element["voucherID"]
 
 def generateExternalIdArray(arrayRec, rec):
     arr = rec["externalIds"]
@@ -223,24 +220,26 @@ def generateProductsArray(arrayRec, rec):
         #addOn
         generateAddOnArray(arrayRec, element)
         #holder
+        newRecProducts = fillHolderDetails("segments.products.holder", newRecProducts, element["holder"])
         #additionalGuests
+        newRecProducts = fillHolderDetails("segments.products.holder", newRecProducts, element["additionalGuests"])
         arrayRec.append(newRecProducts)
 
 def generateAttributesArray(arrayRec, rec):
     arr = rec["attributes"]
     for element in arr:
         newRecAttributes = {}
-        newRecAttributes["segments.products.ratePlan.attributes.Code"] = element["Code"]
-        newRecAttributes["segments.products.ratePlan.attributes.Name"] = element["Name"]
-        newRecAttributes["segments.products.ratePlan.attributes.Description"] = element["Description"]
+        newRecAttributes["segments.products.attributes.Code"] = element["Code"]
+        newRecAttributes["segments.products.attributes.Name"] = element["Name"]
+        newRecAttributes["segments.products.attributes.Description"] = element["Description"]
         arrayRec.append(newRecAttributes)
 
 def generateAddOnArray(arrayRec, rec):
     arr = rec["attributes"]
     for element in arr:
         newRecAddOn = {}
-        newRecAddOn["segments.products.ratePlan.addOn.Code"] = element["Code"]
-        newRecAddOn["segments.products.ratePlan.addOn.Name"] = element["Name"]
-        newRecAddOn["segments.products.ratePlan.addOn.Description"] = element["Description"]
+        newRecAddOn["segments.products.addOn.Code"] = element["Code"]
+        newRecAddOn["segments.products.addOn.Name"] = element["Name"]
+        newRecAddOn["segments.products.addOn.Description"] = element["Description"]
         arrayRec.append(newRecAddOn)
 
