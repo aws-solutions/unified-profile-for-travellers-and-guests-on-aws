@@ -31,7 +31,6 @@ var CONNECTOR_CRAWLER_QUEUE = os.Getenv("CONNECTOR_CRAWLER_QUEUE")
 var CONNECTOR_CRAWLER_DLQ = os.Getenv("CONNECTOR_CRAWLER_DLQ")
 var GLUE_DB = os.Getenv("GLUE_DB")
 var DATALAKE_ADMIN_ROLE_ARN = os.Getenv("DATALAKE_ADMIN_ROLE_ARN")
-var CLICKSTREAM_JOB_NAME = os.Getenv("CLICKSTREAM_JOB_NAME")
 var CONNECT_PROFILE_SOURCE_BUCKET = os.Getenv("CONNECT_PROFILE_SOURCE_BUCKET")
 var KMS_KEY_PROFILE_DOMAIN = os.Getenv("KMS_KEY_PROFILE_DOMAIN")
 var UCP_CONNECT_DOMAIN = ""
@@ -236,13 +235,14 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 				log.Printf("Use Case %s failed with error: %v", subFunction, err)
 				return builResponseError(err), nil
 			}
-			err = usecase.CreateConnectorJobTrigger(glueClient, "clickstream", "ucp-connector-crawler-"+LAMBDA_ENV, CLICKSTREAM_JOB_NAME)
+			var jobNames = []string{}
+			crawlerName := "ucp-connector-crawler-" + LAMBDA_ENV
+			jobNames, err = usecase.CreateConnectorJobTrigger(glueClient, LAMBDA_ACCOUNT_ID, LAMBDA_REGION, data.ConnectorId, crawlerName)
 			if err != nil {
 				log.Printf("Use Case %s failed with error: %v", subFunction, err)
 				return builResponseError(err), nil
 			}
-			// TODO: get job name based on request's business object instead of assuming clickstream
-			err = usecase.AddIndustryConnectorToJob(glueClient, CLICKSTREAM_JOB_NAME, bucketName)
+			err = usecase.AddConnectorBucketToJobs(glueClient, bucketName, jobNames)
 			if err != nil {
 				log.Printf("Use Case %s failed with error: %v", subFunction, err)
 			}

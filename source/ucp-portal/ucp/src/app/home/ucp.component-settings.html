@@ -92,10 +92,10 @@
         <div class="col-sm-1  align-center ">
             <span *ngIf="!shouldShowLinkButton()">
                 <button class="btn btn-link btn-sm py-0" (click)="openDeployConnectorLink()"><i class="fa fa-external-link"></i>Deploy</button>
-                <button class="btn btn-link btn-sm py-0" (click)="showLinkConnector()"
+                <button class="btn btn-link btn-sm py-0" (click)="showLinkConnector(conn.id)"
                 title="Link From Another Solution"><i class="fa fa-external-link"></i>Link</button></span>
             <span *ngIf="shouldShowLinkButton()">
-                <button class="btn btn-link" (click)="showLinkConnector()"><i class="fa fa-external-link"></i>Link</button></span>
+                <button class="btn btn-link" (click)="showLinkConnector(conn.id)"><i class="fa fa-external-link"></i>Link</button></span>
         </div>
         <div class="col-sm-2  align-center ">
             <span>Batch: </span>

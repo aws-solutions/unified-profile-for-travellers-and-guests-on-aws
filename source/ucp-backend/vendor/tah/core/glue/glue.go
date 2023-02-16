@@ -23,6 +23,10 @@ type S3Target struct {
 	SampleSize     int64
 }
 
+type Crawler struct {
+	Name string
+}
+
 type Job struct {
 	Name             string
 	Description      string
@@ -34,7 +38,12 @@ type Job struct {
 
 func Init(region, dbName string) Config {
 	mySession := session.Must(session.NewSession())
-	cfg := aws.NewConfig().WithRegion(region)
+	// Set max retries to 0. This disables any default retry functionality provided
+	// by the AWS SDK. https://pkg.go.dev/github.com/aws/aws-sdk-go/aws/request#Retryer
+	// This avoid issues with patterns like DeleteIfExists, where a resource
+	// that does not exist fails, then is created, finally the failed DeleteIfExists
+	// call is retried and unintentionally deletes the new resource
+	cfg := aws.NewConfig().WithRegion(region).WithMaxRetries(0)
 	svc := glue.New(mySession, cfg)
 	return Config{
 		Client: svc,
@@ -88,6 +97,19 @@ func (c Config) CreateS3Crawler(name, role, schedule, queueArn, dlqArn string, s
 		log.Printf("[CreateS3Crawler] Error creating crawler: %v", err2)
 	}
 	return err2
+}
+
+func (c Config) GetCrawler(name string) (Crawler, error) {
+	output, err := c.Client.GetCrawler(&glue.GetCrawlerInput{
+		Name: &name,
+	})
+	if err != nil {
+		return Crawler{}, err
+	}
+	crawler := Crawler{
+		Name: *output.Crawler.Name,
+	}
+	return crawler, nil
 }
 
 func (c Config) DeleteCrawlerIfExists(name string) error {
@@ -169,16 +191,16 @@ func (c Config) DeleteJob(jobName string) error {
 	return err
 }
 
-func (c Config) CreateCrawlerSucceededTrigger(triggerName, crawlerName, jobName string) error {
+func (c Config) CreateCrawlerSucceededTrigger(triggerName, crawlerName string, jobNames []string) error {
 	err := c.DeleteCrawlerIfExists(crawlerName)
 	if err != nil {
 		log.Printf("[CreateTrigger] Error deleting existing trigger: %v", err)
 	}
-	action := glue.Action{
-		JobName: &jobName,
-	}
-	actions := []*glue.Action{
-		&action,
+	actions := []*glue.Action{}
+	for _, jobName := range jobNames {
+		actions = append(actions, &glue.Action{
+			JobName: &jobName,
+		})
 	}
 	crawlState := glue.CrawlStateSucceeded
 	logicalOperator := glue.LogicalOperatorEquals
@@ -206,6 +228,46 @@ func (c Config) CreateCrawlerSucceededTrigger(triggerName, crawlerName, jobName 
 	_, err = c.Client.CreateTrigger(&input)
 	if err != nil {
 		log.Printf("[CreateTrigger] Error: %v", err)
+	}
+	return err
+}
+
+// Replace the Trigger's actions with the provided Glue jobs
+func (c Config) ReplaceTriggerJobs(triggerName string, jobNames []string) error {
+	// Get existing trigger data
+	getTriggerInput := glue.GetTriggerInput{Name: &triggerName}
+	trigger, err := c.Client.GetTrigger(&getTriggerInput)
+	if err != nil {
+		log.Printf("[ReplaceTriggerJobs] Error: %v", err)
+		return err
+	}
+
+	// Create new list of actions
+	var actionInput []*glue.Action
+	for _, v := range jobNames {
+		action := glue.Action{
+			JobName: &v,
+		}
+		actionInput = append(actionInput, &action)
+	}
+
+	// Update trigger with new actions
+	// This updates the previous trigger definition by overwriting it completely
+	// https://docs.aws.amazon.com/sdk-for-go/api/service/glue/#TriggerUpdate
+	triggerUpdate := glue.TriggerUpdate{
+		Actions:                actionInput,
+		Description:            trigger.Trigger.Description,
+		EventBatchingCondition: trigger.Trigger.EventBatchingCondition,
+		Predicate:              trigger.Trigger.Predicate,
+		Schedule:               trigger.Trigger.Schedule,
+	}
+	updateTriggerInput := glue.UpdateTriggerInput{
+		Name:          &triggerName,
+		TriggerUpdate: &triggerUpdate,
+	}
+	_, err = c.Client.UpdateTrigger(&updateTriggerInput)
+	if err != nil {
+		log.Printf("[UpdateTriggerActions] Error: %v", err)
 	}
 	return err
 }
@@ -279,6 +341,51 @@ func (c Config) UpdateJobArgument(jobName, updateKey, updateVal string) error {
 		return err2
 	}
 	return nil
+}
+
+func (c Config) GetTags(arn string) (map[string]string, error) {
+	tags := make(map[string]string)
+	input := glue.GetTagsInput{
+		ResourceArn: &arn,
+	}
+	output, err := c.Client.GetTags(&input)
+	if err != nil {
+		log.Printf("[GetTags] Error: %v", err)
+		return tags, err
+	}
+
+	for k, v := range output.Tags {
+		tags[k] = *v
+	}
+	return tags, nil
+}
+
+func (c Config) TagResource(arn string, tags map[string]string) error {
+	input := glue.TagResourceInput{
+		ResourceArn: &arn,
+		TagsToAdd:   core.ToMapPtString(tags),
+	}
+	_, err := c.Client.TagResource(&input)
+	if err != nil {
+		log.Printf("[TagResource] Error: %v", err)
+	}
+	return err
+}
+
+func (c Config) UntagResource(arn string, tags []string) error {
+	var tagPointers []*string
+	for _, v := range tags {
+		tagPointers = append(tagPointers, &v)
+	}
+	input := glue.UntagResourceInput{
+		ResourceArn:  &arn,
+		TagsToRemove: tagPointers,
+	}
+	_, err := c.Client.UntagResource(&input)
+	if err != nil {
+		log.Printf("[UntagResource] Error: %v ", err)
+	}
+	return err
 }
 
 // More information on handling AWS errors: https://pkg.go.dev/github.com/aws/aws-sdk-go/aws/awserr

@@ -28,6 +28,7 @@ type LinkIndustryConnectorRes struct {
 type CreateConnectorCrawlerRq struct {
 	GlueRoleArn string
 	BucketPath  string
+	ConnectorId string
 }
 
 type UCPRequest struct {
