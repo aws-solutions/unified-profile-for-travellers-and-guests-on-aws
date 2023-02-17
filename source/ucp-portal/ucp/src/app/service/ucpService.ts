@@ -54,10 +54,11 @@ export class UcpService {
             BucketArn: bucketArn,
         }, <RestOptions>{ subEndpoint: "connector/link" });
     }
-    public createConnectorCrawler(glueRoleArn: string, bucketPath: string) {
+    public createConnectorCrawler(glueRoleArn: string, bucketPath: string, connectorId: string) {
         return this.service.post({}, {
             GlueRoleArn: glueRoleArn,
             BucketPath: bucketPath,
+            ConnectorId: connectorId
         }, <RestOptions>{ subEndpoint: "connector/crawler" });
     }
 }

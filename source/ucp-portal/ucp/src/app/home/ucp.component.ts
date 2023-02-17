@@ -482,9 +482,12 @@ export class UCPSettingsComponent {
   public shouldShowLinkButton(): boolean {
     return this.industryConnectorSolutions.length > 0 ? true : false
   }
-  showLinkConnector() {
+  showLinkConnector(connectorId: string) {
     const dialogRef = this.dialog.open(LinkConnectorComponent, {
       width: '90%',
+      data: {
+        connectorId: connectorId,
+      }
     });
   }
   public getColorStatus(status: string) {
@@ -556,7 +559,7 @@ export class UCPSettingsComponent {
   styleUrls: ['./ucp.component.css']
 })
 export class LinkConnectorComponent {
-  data: any;
+  response: any;
   domain: string;
   linkConnectorForm = new FormGroup({
     agwUrl: new FormControl('', Validators.required),
@@ -567,7 +570,7 @@ export class LinkConnectorComponent {
   });
   buttonDisabled: boolean;
 
-  constructor(public dialogRef: MatDialogRef<LinkConnectorComponent>, private ucpService: UcpService, private session: SessionService, public dialog: MatDialog) {
+  constructor(public dialogRef: MatDialogRef<LinkConnectorComponent>, private ucpService: UcpService, private session: SessionService, public dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any) {
     this.domain = this.session.getProfileDomain();
     let localData = this.session.getConnectorData(this.domain);
     this.linkConnectorForm.controls['agwUrl'].setValue(localData?.agwUrl ?? "");
@@ -591,14 +594,15 @@ export class LinkConnectorComponent {
   public link() {
     this.session.setConnectorData(this.domain, this.linkConnectorForm.value.agwUrl, this.linkConnectorForm.value.tokenEndpoint, this.linkConnectorForm.value.clientId, this.linkConnectorForm.value.clientSecret, this.linkConnectorForm.value.bucketArn);
     this.ucpService.linkIndustryConnector(this.linkConnectorForm.value.agwUrl, this.linkConnectorForm.value.tokenEndpoint, this.linkConnectorForm.value.clientId, this.linkConnectorForm.value.clientSecret, this.linkConnectorForm.value.bucketArn).subscribe((res: any) => {
-      this.data = res;
+      this.response = res;
       this.dialogRef.close(null);
       const dialogRef = this.dialog.open(CreateConnectorCrawler, {
         width: '90%',
         data: {
-          bucketPolicy: this.data["BucketPolicy"],
-          glueRoleArn: this.data["GlueRoleArn"],
+          bucketPolicy: this.response["BucketPolicy"],
+          glueRoleArn: this.response["GlueRoleArn"],
           bucketPath: this.linkConnectorForm.controls['bucketArn'].value,
+          connectorId: this.data.connectorId,
         }
       });
     });
@@ -625,8 +629,7 @@ export class CreateConnectorCrawler {
   }
 
   public link() {
-    this.ucpService.createConnectorCrawler(this.glueRoleArn, this.bucketPath).subscribe((res: any) => {
-    });
+    this.ucpService.createConnectorCrawler(this.glueRoleArn, this.bucketPath, this.data.connectorId).subscribe((res: any) => { });
     this.dialogRef.close(null);
   }
 

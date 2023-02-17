@@ -351,6 +351,14 @@ func ToMapString(in map[string]*string) map[string]string {
 	return out
 }
 
+func ToMapPtString(in map[string]string) map[string]*string {
+	out := map[string]*string{}
+	for key, val := range in {
+		out[key] = &val
+	}
+	return out
+}
+
 func PtToString(in *string) string {
 	if in != nil {
 		return *in
