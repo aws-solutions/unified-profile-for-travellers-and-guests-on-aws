@@ -200,6 +200,7 @@ def generateSegmentsArray(arrayRec, rec):
         #products
         generateProductsArray(arrayRec, element)
         #holder
+        fillHolderDetails("segments.holder.", )
         #additionalGuests
         #paymentInformation
         arrayRec.append(newRecSegments)
