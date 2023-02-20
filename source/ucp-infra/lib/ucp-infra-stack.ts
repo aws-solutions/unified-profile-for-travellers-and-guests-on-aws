@@ -111,7 +111,6 @@ export class UCPInfraStack extends Stack {
     //temp bucket for Amazon connect profile identity resolution matches
     const idResolution = new tah_s3.Bucket(this, "ucp-connect-id-resolution-temp", accessLogBucket)
 
-    //Source bucket for travel business objects
     let hotelBookingOutput = this.buildBusinessObjectPipeline("hotel-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
     let airBookingOutput = this.buildBusinessObjectPipeline("air-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
     let guestProfileOutput = this.buildBusinessObjectPipeline("guest-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
@@ -614,7 +613,10 @@ export class UCPInfraStack extends Stack {
     ]))
     //6- Job Triggers
     let jobTrigger = this.jobTriggerFromCrawler("ucp" + businessObjectName, envName, [crawler], job, workflow)
-
+    //7-Cfn Output
+    new CfnOutput(this, 'customerBucket' + businessObjectName, {
+      value: bucketRaw.bucketName
+    });
     let output: BusinessObjectPipelineOutput = {
       connectorJobName: industryConnectorJob.name ?? "",
     }

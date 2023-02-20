@@ -11,7 +11,7 @@
     "cdk": "cdk"
   },
   "peerDependencies": {
-    "aws-cdk-lib": "^2.0.0",
+    "aws-cdk-lib": "^2.60.0",
     "constructs": "^10.0.0",
     "@aws-cdk/aws-synthetics-alpha": "^2.60.0-alpha.0",
     "@aws-cdk/aws-glue-alpha": "^2.60.0-alpha.0",
@@ -19,7 +19,7 @@
     "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.60.0-alpha.0"
   },
   "devDependencies": {
-    "aws-cdk-lib": "^2.0.0",
+    "aws-cdk-lib": "^2.60.0",
     "@aws-cdk/aws-synthetics-alpha": "^2.60.0-alpha.0",
     "@aws-cdk/aws-glue-alpha": "^2.60.0-alpha.0",
     "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.60.0-alpha.0",
