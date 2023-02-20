@@ -22,12 +22,12 @@ nestedSegments =  Map.apply(frame = businessObjectDF, f = buildObjectRecord)
 segments = nestedSegments.toDF().select(explode(nestedSegments.data))
 
 segments.printSchema()
-segments.toDF().show(100)
+segments.show(100)
 
-print("nPartitions: ", segments.toDF().rdd.getNumPartitions())
+print("nPartitions: ", segments.rdd.getNumPartitions())
 newNPartitions = max(int(count/25), 1)
 print("repartitionning in: ", newNPartitions)
-repartitionedSegmentsDF = segments.toDF().coalesce(newNPartitions)
+repartitionedSegmentsDF = segments.coalesce(newNPartitions)
 print("nPartitions after: ", repartitionedSegmentsDF.rdd.getNumPartitions())
 
 repartitionedSegmentsDF.write.mode("overwrite").format("csv").save("s3://"+args["DEST_BUCKET"]+"/"+businessObject)
