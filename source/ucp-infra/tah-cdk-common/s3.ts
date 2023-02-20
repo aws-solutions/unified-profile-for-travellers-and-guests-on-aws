@@ -1,6 +1,9 @@
-import { RemovalPolicy, Fn, Token } from 'aws-cdk-lib';
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+import { RemovalPolicy, Fn } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { aws_s3 as s3 } from 'aws-cdk-lib';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import { NagSuppressions } from 'cdk-nag';
 
 export class Bucket extends s3.Bucket {
@@ -28,7 +31,7 @@ export class AccessLogBucket extends s3.Bucket {
     //this constructor creates a default bucket that complies with all cdk_nag roles for AWS solutions
     constructor(scope: Construct, id: string) {
         super(scope, id, {
-            removalPolicy: RemovalPolicy.DESTROY,
+            removalPolicy: RemovalPolicy.RETAIN,
             versioned: true,
             encryption: s3.BucketEncryption.S3_MANAGED,
             blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
