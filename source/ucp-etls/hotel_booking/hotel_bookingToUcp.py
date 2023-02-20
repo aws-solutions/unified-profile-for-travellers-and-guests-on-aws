@@ -5,19 +5,23 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.dynamicframe import DynamicFrame
-from hotel_bookingTransform import buildObjectRecord # Change import based on business object
+# Change import based on business object
+from hotel_bookingTransform import buildObjectRecord
+from autoFlatten import flattenWithNestedArrays
 
 glueContext = GlueContext(SparkContext.getOrCreate())
-args = getResolvedOptions(sys.argv, ['JOB_NAME','GLUE_DB','SOURCE_TABLE','DEST_BUCKET','BUSINESS_OBJECT'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET', 'BUSINESS_OBJECT'])
 businessObject = args['BUSINESS_OBJECT']
 
 businessObjectDF = glueContext.create_dynamic_frame.from_catalog(database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"])
+flattenedDF = flattenWithNestedArrays(businessObjectDF)
+businessObjectDF = DynamicFrame.fromDF(flattenedDF, glueContext, businessObject)
 
 count = businessObjectDF.count()
 print(businessObject + " count: ", count)
 businessObjectDF.printSchema()
 
-segments =  Map.apply(frame = businessObjectDF, f = buildObjectRecord)
+segments = Map.apply(frame=businessObjectDF, f=buildObjectRecord)
 segments.printSchema()
 segments.toDF().show(100)
 

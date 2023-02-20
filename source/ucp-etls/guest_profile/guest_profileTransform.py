@@ -1,7 +1,5 @@
 def buildObjectRecord(rec):
     try:
-        # remove the word holder from each of the below lines please
-        arrayRec = []
         newRec = {}
         newRec["modelVersion"] = rec["modelVersion"]
         newRec["id"] = rec["id"]
@@ -9,9 +7,9 @@ def buildObjectRecord(rec):
         newRec["createdOn"] = rec["createdOn"]
         newRec["lastUpdatedBy"] = rec["lastUpdatedBy"]
         newRec["createdBy"] = rec["createdBy"]
-        generateEmailsArray(arrayRec, rec)
-        generatePhonesArray(arrayRec, rec)
-        generateAdressesArray(arrayRec, rec)
+        fillEmailsDetails("emails_", newRec, rec)
+        fillPhonesDetails("phones_", newRec, rec)
+        fillAddressesDetails("addresses_", newRec, rec)
         newRec["honorific"] = rec["honorific"]
         newRec["firstName"] = rec["firstName"]
         newRec["middleName"] = rec["middleName"]
@@ -19,68 +17,59 @@ def buildObjectRecord(rec):
         newRec["gender"] = rec["gender"]
         newRec["pronoun"] = rec["pronoun"]
         newRec["dateOfBirth"] = rec["dateOfBirth"]
-        newRec["language.code"] = rec["language"]["code"]
-        newRec["language.name"] = rec["language"]["name"]
-        newRec["nationality.code"] = rec["nationality"]["code"]
-        newRec["nationality.name"] = rec["nationality"]["name"]
+        newRec["language_code"] = rec["language_code"]
+        newRec["language_name"] = rec["language_name"]
+        newRec["nationality_code"] = rec["nationality_code"]
+        newRec["nationality_name"] = rec["nationality_name"]
         newRec["jobTitle"] = rec["jobTitle"]
         newRec["parentCompany"] = rec["parentCompany"]
-        generateLoyaltyProgramsArray(arrayRec, rec)
+        fillLoyaltyProgramsDetails("loyaltyPrograms_", newRec, rec)
+        newRec["partition_0"] = rec["partition_0"]
+        newRec["partition_1"] = rec["partition_1"]
+        newRec["partition_2"] = rec["partition_2"]
     except Exception as e:
         newRec["error"] = str(e)
         return newRec
     return newRec
 
-def fillAddressDetails(startingString, dict, element):
-    dict[startingString+"type"] = element["type"]
-    dict[startingString+"line1"] = element["line1"]
-    dict[startingString+"line2"] = element["line2"]
-    dict[startingString+"line2"] = element["line3"]
-    dict[startingString+"line2"] = element["line4"]
-    dict[startingString+"city"] = element["city"]
-    dict[startingString+"stateProvince.code"] = element["stateProvince"]["code"]
-    dict[startingString+"stateProvince.name"] = element["stateProvince"]["name"]
-    dict[startingString+"postalCode"] = element["postalCode"]
-    dict[startingString+"country.code"] = element["country"]["code"]
-    dict[startingString+"country.name"] = element["country"]["name"]
-    dict[startingString+"primary"] = element["primary"]
+
+def fillEmailsDetails(startingString, dict, element):
+    dict[startingString+"type"] = element[startingString+"type"]
+    dict[startingString+"address"] = element[startingString+"address"]
+    dict[startingString+"primary"] = element[startingString+"primary"]
     return dict
 
-def generateEmailsArray(arrayRec, rec):
-    arr = rec["emails"]
-    for element in arr:
-        newRecEmail = {}
-        newRecEmail["emails.type"] = element["type"]
-        newRecEmail["emails.address"] = element["address"]
-        newRecEmail["emails.primary"] = element["primary"]
-        arrayRec.append(newRecEmail)
 
-def generatePhonesArray(arrayRec, rec):
-    arr = rec["phones"]
-    for element in arr:
-        newRecPhone = {}
-        newRecPhone["phones.type"] = element["type"]
-        newRecPhone["phones.number"] = element["number"]
-        newRecPhone["phones.primary"] = element["primary"]
-        newRecPhone["phones.countryCode"] = element["countryCODE"]
-        arrayRec.append(newRecPhone)
+def fillPhonesDetails(startingString, dict, element):
+    dict[startingString+"type"] = element[startingString+"type"]
+    dict[startingString+"number"] = element[startingString+"number"]
+    dict[startingString+"primary"] = element[startingString+"primary"]
+    dict[startingString+"countryCode"] = element[startingString+"countryCode"]
+    return dict
 
-def generateAdressesArray(arrayRec, rec):
-    arr = rec["addresses"]
-    for element in arr:
-        newRecAddresses = {}
-        newRecAddresses = fillAddressDetails("addresses.", newRecAddresses, element)
-        arrayRec.append(newRecAddresses)
 
-def generateLoyaltyProgramsArray(arrayRec, rec):
-    arr = rec["loyaltyPrograms"]
-    for element in arr:
-        newRecLoyaltyPrograms = {}
-        newRecLoyaltyPrograms["loyaltyPrograms.id"] = element["id"]
-        newRecLoyaltyPrograms["loyaltyPrograms.programName"] = element["programName"]
-        newRecLoyaltyPrograms["loyaltyPrograms.points"] = element["points"]
-        newRecLoyaltyPrograms["loyaltyPrograms.pointUnit"] = element["pointUnit"]
-        newRecLoyaltyPrograms["loyaltyPrograms.pointsToNextLevel"] = element["pointsToNextLevel"]
-        newRecLoyaltyPrograms["loyaltyPrograms.level"] = element["level"]
-        newRecLoyaltyPrograms["loyaltyPrograms.joined"] = element["joined"]
-        arrayRec.append(newRecLoyaltyPrograms)
+def fillAddressesDetails(startingString, dict, element):
+    dict[startingString+"type"] = element[startingString+"type"]
+    dict[startingString+"line1"] = element[startingString+"line1"]
+    dict[startingString+"line2"] = element[startingString+"line2"]
+    dict[startingString+"line2"] = element[startingString+"line3"]
+    dict[startingString+"line2"] = element[startingString+"line4"]
+    dict[startingString+"city"] = element[startingString+"city"]
+    dict[startingString+"stateProvince_code"] = element[startingString + "stateProvince_code"]
+    dict[startingString+"stateProvince_name"] = element[startingString + "stateProvince_name"]
+    dict[startingString+"postalCode"] = element[startingString+"postalCode"]
+    dict[startingString+"country_code"] = element[startingString+"country_code"]
+    dict[startingString+"country_name"] = element[startingString+"country_name"]
+    dict[startingString+"primary"] = element[startingString+"primary"]
+    return dict
+
+
+def fillLoyaltyProgramsDetails(startingString, dict, element):
+    dict[startingString+"id"] = element[startingString+"id"]
+    dict[startingString+"programName"] = element[startingString+"programName"]
+    dict[startingString+"points"] = element[startingString+"points"]
+    dict[startingString+"pointUnit"] = element[startingString+"pointUnit"]
+    dict[startingString+"pointsToNextLevel"] = element[startingString+"pointsToNextLevel"]
+    dict[startingString+"level"] = element[startingString+"level"]
+    dict[startingString+"joined"] = element[startingString+"joined"]
+    return dict
