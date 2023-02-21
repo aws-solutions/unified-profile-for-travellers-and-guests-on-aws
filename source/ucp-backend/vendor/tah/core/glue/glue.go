@@ -81,6 +81,7 @@ func (c Config) CreateS3Crawler(name, role, schedule, queueArn, dlqArn string, s
 	err1 := c.DeleteCrawlerIfExists(name)
 	if err1 != nil {
 		log.Printf("[CreateS3Crawler] Error deleting existing crawler: %v", err1)
+		return err1
 	}
 	targets := &glue.CrawlerTargets{
 		S3Targets: ConvertS3Targets(s3Targets, queueArn, dlqArn),

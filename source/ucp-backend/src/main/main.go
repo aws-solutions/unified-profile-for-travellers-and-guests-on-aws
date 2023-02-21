@@ -67,7 +67,8 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 		log.Printf("Selected Use Case %v", subFunction)
 		if err == nil {
 			rq := model.UCPRequest{
-				ID: req.PathParameters["id"],
+				ID:      req.PathParameters["id"],
+				EnvName: LAMBDA_ENV,
 			}
 			log.Printf("Retreive request: %+v", rq)
 			err = ValidateUCPRetreiveRequest(rq)
@@ -86,7 +87,8 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 		log.Printf("Selected Use Case %v", subFunction)
 		if err == nil {
 			rq := model.UCPRequest{
-				ID: req.PathParameters["id"],
+				ID:      req.PathParameters["id"],
+				EnvName: LAMBDA_ENV,
 			}
 			log.Printf("Delete request: %+v", rq)
 			err = ValidateUCPRetreiveRequest(rq)
@@ -134,7 +136,9 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	} else if subFunction == FN_LIST_UCP_DOMAINS {
 		log.Printf("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{}
+			rq := model.UCPRequest{
+				EnvName: LAMBDA_ENV,
+			}
 			log.Printf("Search request: %+v", rq)
 			ucpRes, err = usecase.ListUcpDomains(rq, profiles)
 			if err == nil {
@@ -148,6 +152,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 		if err == nil {
 			rq := model.UCPRequest{}
 			rq, err = decodeUCPBody(req)
+			rq.EnvName = LAMBDA_ENV
 			log.Printf("Create Domain request: %+v", rq)
 			if err == nil {
 				ucpRes, err = usecase.CreateUcpDomain(rq, profiles, KMS_KEY_PROFILE_DOMAIN, CONNECT_PROFILE_SOURCE_BUCKET)
@@ -165,6 +170,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 				Domain: model.Domain{
 					Name: req.PathParameters["id"],
 				},
+				EnvName: LAMBDA_ENV,
 			}
 			log.Printf("Delete request: %+v", rq)
 			ucpRes, err = usecase.DeleteUcpDomain(rq, profiles)
