@@ -29,7 +29,6 @@ def buildObjectRecord(rec):
         newRec["currency_symbol"] = rec["currency_symbol"]
         # cancelReason
         newRec["cancelReason_reason"] = rec["cancelReason_reason"]
-        newRec["cancelReason_name"] = rec["cancelReason_name"]
         newRec["cancelReason_comment_type"] = rec["cancelReason_comment_type"]
         newRec["cancelReason_comment_language_code"] = rec["cancelReason_comment_language_name"]
         newRec["cancelReason_comment_language_name"] = rec["cancelReason_comment_language_code"]
@@ -56,7 +55,7 @@ def buildObjectRecord(rec):
         # pricePerNight
         fillPricePerNightDetails("segments_price_pricePerNight_", newRec, rec)
         # taxePerNight
-        fillPricePerNightDetails("segments_price_taxPerNight_", newRec, rec)
+        fillPricePerNightDetails("segments_price_taxePerNight_", newRec, rec)
         # pricePerStay
         newRec["segments_price_pricePerStay"] = rec["segments_price_pricePerStay"]
         newRec["segments_price_taxPerStay"] = rec["segments_price_taxPerStay"]
@@ -65,8 +64,8 @@ def buildObjectRecord(rec):
         newRec["segments_price_totalPricePerNightAfterTaxes"] = rec["segments_price_totalPricePerNightAfterTaxes"]
         newRec["segments_price_totalPricePerProductBeforeTaxes"] = rec["segments_price_totalPricePerProductBeforeTaxes"]
         newRec["segments_price_totalPricePerProductAfterTaxes"] = rec["segments_price_totalPricePerProductAfterTaxes"]
-        newRec["segments_price_totalBeforeTax"] = rec["segments_price_totalBeforeTax"]
-        newRec["segments_price_totalAfterTax"] = rec["segments_price_totalAfterTax"]
+        newRec["segments_price_totalBeforeTax"] = float(rec["segments_price_totalBeforeTax_double"])
+        newRec["segments_price_totalAfterTax"] = float(rec["segments_price_totalAfterTax_double"])
         # comments
         newRec["comments_type"] = rec["comments_type"]
         newRec["comments_language_code"] = rec["comments_language_code"]
@@ -93,26 +92,26 @@ def fillHolderDetails(startingString, dict, element):
     dict[startingString+"modelVersion"] = element[startingString+"modelVersion"]
     dict[startingString+"id"] = element[startingString+"id"]
     dict[startingString+"lastUpdatedOn"] = element[startingString+"lastUpdatedOn"]
-    dict[startingString+"createdOn"] = element["createdOn"]
-    dict[startingString+"lastUpdatedBy"] = element["lastUpdatedBy"]
-    dict[startingString+"createdBy"] = element["createdBy"]
+    dict[startingString+"createdOn"] = element[startingString+"createdOn"]
+    dict[startingString+"lastUpdatedBy"] = element[startingString+"lastUpdatedBy"]
+    dict[startingString+"createdBy"] = element[startingString+"createdBy"]
     # addresses, emails, phones
     fillEmailsDetails(startingString+"emails_", dict, element)
     fillPhonesDetails(startingString+"phones_", dict, element)
     fillAddressesDetails(startingString+"addresses_", dict, element)
-    dict[startingString+"honorific"] = element["honorific"]
-    dict[startingString+"firstName"] = element["firstName"]
-    dict[startingString+"middleName"] = element["middleName"]
-    dict[startingString+"lastName"] = element["lastName"]
-    dict[startingString+"gender"] = element["gender"]
-    dict[startingString+"pronoun"] = element["pronoun"]
-    dict[startingString+"dateOfBirth"] = element["dateOfBirth"]
-    dict[startingString+"language_code"] = element["language_code"]
-    dict[startingString+"language_name"] = element["language_name"]
-    dict[startingString+"nationality_code"] = element["nationality_code"]
-    dict[startingString+"nationality_name"] = element["nationality_name"]
-    dict[startingString+"jobTitle"] = element["jobTitle"]
-    dict[startingString+"parentCompany"] = element["parentCompany"]
+    dict[startingString+"honorific"] = element[startingString+"honorific"]
+    dict[startingString+"firstName"] = element[startingString+"firstName"]
+    dict[startingString+"middleName"] = element[startingString+"middleName"]
+    dict[startingString+"lastName"] = element[startingString+"lastName"]
+    dict[startingString+"gender"] = element[startingString+"gender"]
+    dict[startingString+"pronoun"] = element[startingString+"pronoun"]
+    dict[startingString+"dateOfBirth"] = element[startingString+"dateOfBirth"]
+    dict[startingString+"language_code"] = element[startingString+"language_code"]
+    dict[startingString+"language_name"] = element[startingString+"language_name"]
+    dict[startingString+"nationality_code"] = element[startingString+"nationality_code"]
+    dict[startingString+"nationality_name"] = element[startingString+"nationality_name"]
+    dict[startingString+"jobTitle"] = element[startingString+"jobTitle"]
+    dict[startingString+"parentCompany"] = element[startingString+"parentCompany"]
     fillLoyaltyProgramsDetails(startingString+"loyaltyPrograms_", dict, element)
     return dict
 
@@ -167,7 +166,7 @@ def fillPaymentInformationDetails(startingString, dict, element):
     dict[startingString+"ccInfo_cardCvv"] = element[startingString+"ccInfo_cardCvv"]
     dict[startingString+"ccInfo_expiration"] = element[startingString+"ccInfo_expiration"]
     dict[startingString+"ccInfo_name"] = element[startingString+"ccInfo_name"]
-    fillAddressesDetails(startingString+"address_", dict, element)
+    fillAddressesDetails(startingString+"ccInfo_address_", dict, element)
     dict[startingString+"routingNumber"] = element[startingString+"routingNumber"]
     dict[startingString+"accountNumber"] = element[startingString+"accountNumber"]
     dict[startingString+"voucherID"] = element[startingString+"voucherID"]
