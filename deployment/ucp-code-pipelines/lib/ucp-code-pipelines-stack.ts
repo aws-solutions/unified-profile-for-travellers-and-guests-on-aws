@@ -4,10 +4,14 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as notifications from 'aws-cdk-lib/aws-codestarnotifications';
+import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
+import * as iam from 'aws-cdk-lib/aws-iam';
+
 import { NagSuppressions } from 'cdk-nag';
 import * as tah_s3 from '../tah-cdk-common/s3';
 import * as tah_core from '../tah-cdk-common/core';
-import * as tah_codepipeline from '../tah-cdk-common/codepipeline';
 
 
 const GO_VERSION = 1.18
@@ -61,8 +65,12 @@ export class UCPCodePipelinesStack extends Stack {
     tah_core.Output.add(this, "accessLogging", accessLogging.bucketName)
     tah_core.Output.add(this, "artifactBucket", artifactBucket.bucketName)
     tah_core.Output.add(this, "pipelineArtifactBucket", pipelineArtifactBucket.bucketName)
-    //build role with admin access
-    const buildProjectRole = new tah_codepipeline.BuildRole(this, 'buildRole')
+
+    //TODO: add this role as parametter to avoid packing and Admin role with the solution
+    const buildProjectRole = new iam.Role(this, 'buildRole', {
+      assumedBy: new iam.ServicePrincipal('codebuild.amazonaws.com'),
+      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("AdministratorAccess")]
+    })
 
     let codeBuildKmsKey = new kms.Key(this, 'MyKey', {
       enableKeyRotation: true,
@@ -389,6 +397,34 @@ export class UCPCodePipelinesStack extends Stack {
       crossAccountKeys: false,
       artifactBucket: pipelineArtifactBucket,
     });
+
+    ///////////////////////////
+    // Notification on Complete
+    ////////////////////////////
+    let snsEncryptionKey = new kms.Key(this, 'SnsEncryptionKey', {
+      enableKeyRotation: true,
+    });
+    const topic = new sns.Topic(this, 'Topic', {
+      displayName: 'AWS T&H Solution CICD Pipeline Events ' + envName,
+      masterKey: snsEncryptionKey,
+    });
+    topic.addSubscription(new subscriptions.EmailSubscription(contactEmail.valueAsString));
+
+    const rule = new notifications.NotificationRule(this, 'NotificationRule', {
+      source: pipeline,
+      events: [
+        'codepipeline-pipeline-pipeline-execution-failed',
+        'codepipeline-pipeline-pipeline-execution-canceled',
+        'codepipeline-pipeline-pipeline-execution-started',
+        'codepipeline-pipeline-pipeline-execution-resumed',
+        'codepipeline-pipeline-pipeline-execution-succeeded',
+        'codepipeline-pipeline-pipeline-execution-superseded'
+      ],
+      targets: [topic],
+    });
+
+
+
     NagSuppressions.addResourceSuppressions(pipeline.role, [
       {
         id: 'AwsSolutions-IAM5',
@@ -401,7 +437,12 @@ export class UCPCodePipelinesStack extends Stack {
         reason: 'Administrator role permission for build role required'
       },
     ], true);
-
+    NagSuppressions.addResourceSuppressions(buildProjectRole, [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason: 'Administrator role permission for build role required'
+      },
+    ], true);
   }
 
 }
