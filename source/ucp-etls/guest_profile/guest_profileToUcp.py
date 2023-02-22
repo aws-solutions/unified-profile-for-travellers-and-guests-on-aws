@@ -14,7 +14,7 @@ args = getResolvedOptions(sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DES
 businessObject = args['BUSINESS_OBJECT']
 
 businessObjectDF = glueContext.create_dynamic_frame.from_catalog(database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"])
-flattededBusinessObjectDF = flattenWithNestedArrays(businessObjectDF)
+flattededBusinessObjectDF = flattenWithNestedArrays(businessObjectDF.toDF())
 businessObjectDF = DynamicFrame.fromDF(flattededBusinessObjectDF, glueContext, businessObject)
 businessObjectDF.printSchema()
 
@@ -32,5 +32,4 @@ print("repartitionning in: ", newNPartitions)
 repartitionedSegmentsDF = segments.toDF().coalesce(newNPartitions)
 print("nPartitions after: ", repartitionedSegmentsDF.rdd.getNumPartitions())
 
-repartitionedSegmentsDF.write.mode("overwrite").format(
-    "csv").save("s3://"+args["DEST_BUCKET"]+"/"+businessObject)
+repartitionedSegmentsDF.write.mode("overwrite").format("csv").option("header", "true").save("s3://"+args["DEST_BUCKET"]+"/"+businessObject)

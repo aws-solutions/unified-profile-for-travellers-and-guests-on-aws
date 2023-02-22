@@ -11,7 +11,7 @@ def explode_cols(data, cols):
 
     return data.drop(F.col('exp_combo'))
 
-# Note, took this function from the following link: 
+# Note, took this function from the following link:
 # https://subhamkharwal.medium.com/pyspark-flatten-json-struct-data-frame-dynamically-c2e5d8937dcc
 # Create outer method to return the flattened Data Frame
 
@@ -35,7 +35,6 @@ def flatten_json_df(_df: DataFrame) -> DataFrame:
     get_flattened_cols(_df)
     return _df.selectExpr(flattened_col_list)
 
-
 def get_top_level_arrays(df):
     array_columns = []
     for column in df.schema:
@@ -44,9 +43,8 @@ def get_top_level_arrays(df):
 
     return array_columns
 
-
 def flattenWithNestedArrays(dataframe: DataFrame):
-    sparkDF = dataframe.toDF()
+    sparkDF = dataframe
     flattenedDF = flatten_json_df(sparkDF)
     arrNames = get_top_level_arrays(sparkDF)
 
@@ -55,3 +53,12 @@ def flattenWithNestedArrays(dataframe: DataFrame):
         flattenedDF = flatten_json_df(explodedDF)
         arrNames = get_top_level_arrays(flattenedDF)
     return flattenedDF
+
+def cleanNullColumns(dataframe: DataFrame):
+    cleanedFrame = dataframe.select([
+        F.lit(None).cast('string').alias(i.name)
+        if isinstance(i.dataType, NullType)
+        else i.name
+        for i in dataframe.schema
+    ])
+    return cleanedFrame
