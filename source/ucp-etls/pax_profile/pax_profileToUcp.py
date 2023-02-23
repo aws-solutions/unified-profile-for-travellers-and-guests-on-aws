@@ -13,10 +13,12 @@ glueContext = GlueContext(SparkContext.getOrCreate())
 args = getResolvedOptions(sys.argv, ['JOB_NAME','GLUE_DB','SOURCE_TABLE','DEST_BUCKET','BUSINESS_OBJECT'])
 businessObject = args['BUSINESS_OBJECT']
 
+# TODO: decide on solution to get data from business object partition
+# https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-crawler-pyspark-extensions-glue-context.html#aws-glue-api-crawler-pyspark-extensions-glue-context-create-sample-dynamic-frame-from-catalog
 businessObjectDYF = glueContext.create_dynamic_frame.from_catalog(database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"])
 
 count = businessObjectDYF.count()
-print(businessObject + " count: ", count)
+print("count: ", count)
 businessObjectDYF.printSchema()
 
 nestedSegments =  Map.apply(frame = businessObjectDYF, f = buildObjectRecord)
@@ -25,12 +27,12 @@ nestedSegmentsDF = nestedSegments.toDF()
 nestedSegmentsDF.printSchema()
 nestedSegmentsDF.show(10)
 
-profile = nestedSegmentsDF.select(explode(nestedSegmentsDF.profileRecs))
-email = nestedSegmentsDF.select(explode(nestedSegmentsDF.profileRecs))
-phone = nestedSegmentsDF.select(explode(nestedSegmentsDF.profileRecs))
-loyalty = nestedSegmentsDF.select(explode(nestedSegmentsDF.profileRecs))
+profileDF = nestedSegmentsDF.select(explode(nestedSegmentsDF.profileRecs))
+emailDF = nestedSegmentsDF.select(explode(nestedSegmentsDF.profileRecs))
+phoneDF = nestedSegmentsDF.select(explode(nestedSegmentsDF.profileRecs))
+loyaltyDF = nestedSegmentsDF.select(explode(nestedSegmentsDF.profileRecs))
 
-profile.write.format("csv").option("header", "true").save("s3://"+args["DEST_BUCKET"]+"/"+businessObject+"/pax_profile")
-email.write.format("csv").option("header", "true").save("s3://"+args["DEST_BUCKET"]+"/"+businessObject+"/email_history")
-phone.write.format("csv").option("header", "true").save("s3://"+args["DEST_BUCKET"]+"/"+businessObject+"/phone_history")
-loyalty.write.format("csv").option("header", "true").save("s3://"+args["DEST_BUCKET"]+"/"+businessObject+"/air_loyalty")
+profileDF.write.format("csv").option("header", "true").save("s3://"+args["DEST_BUCKET"]+"/"+businessObject+"/pax_profile")
+emailDF.write.format("csv").option("header", "true").save("s3://"+args["DEST_BUCKET"]+"/"+businessObject+"/email_history")
+phoneDF.write.format("csv").option("header", "true").save("s3://"+args["DEST_BUCKET"]+"/"+businessObject+"/phone_history")
+loyaltyDF.write.format("csv").option("header", "true").save("s3://"+args["DEST_BUCKET"]+"/"+businessObject+"/air_loyalty")

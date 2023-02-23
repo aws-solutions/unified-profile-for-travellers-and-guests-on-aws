@@ -42,16 +42,12 @@ def buildObjectRecord(rec):
             profileRec['biz_email'] = rec['emails'][0]['address']
         else:
             profileRec['email'] = rec['emails'][0]['address']
-
-        number = buildPhoneNumber(rec['phones'][0]['countryCode'], rec['phones'][0]['number'])
         if rec['phones'][0]['type'] == 'business':
-            profileRec['biz_phone'] = number
+            profileRec['biz_phone'] = rec['phones'][0]['number']
+            profileRec['biz_phone_country_code'] = rec['phones'][0]['countryCode']
         else:
-            profileRec['phone'] = number
-        
-        # TODO: decide on adding primary fields
-        # Set primary option for phone/email/address
-        setPrimaryEmail(profileRec, rec['emails'])
+            profileRec['phone'] = rec['phones'][0]['number']
+            profileRec['phone_country_code'] = rec['phones'][0]['countryCode']
 
         # Email Addresses
         for email in rec['emails']:
@@ -64,7 +60,7 @@ def buildObjectRecord(rec):
                 'type': email['type'],
             }
             emailRecs.append(historicalEmail)
-        
+
         # Phone Numbers
         for phone in rec['phones']:
             historicalPhone = {
@@ -98,20 +94,12 @@ def buildObjectRecord(rec):
 
         profileRecs.append(profileRec)
     except Exception as e:
-        profileRecs['error'] = str(e)
+        return {
+            'error': e
+        }
     return {
         'profileRecs': profileRecs,
         'emailRecs': emailRecs,
         'phoneRecs': phoneRecs,
         'loyaltyRecs': loyaltyRecs,
     }
-
-def setPrimaryEmail(profileRec, emails):
-    for email in emails:
-        if email['primary'] == True:
-            profileRec['address'] = email['address']
-            profileRec['type'] = email['type']
-            return
-
-def buildPhoneNumber(countryCode, number):
-    return '+' + str(countryCode) + str(number)

@@ -1,0 +1,87 @@
+{
+  "modelVersion": "1.0",
+  "id": "5456783918",
+  "lastUpdatedOn": "2022-03-19T22:36:56.388173986Z",
+  "createdOn": "2021-12-19T22:36:56.388173986Z",
+  "lastUpdatedBy": "Enoch Schmitt",
+  "createdBy": "Marlin McDermott",
+  "emails": [
+    {
+      "type": "",
+      "address": "madelynnwelch1@senger.com",
+      "primary": false
+    },
+    {
+      "type": "",
+      "address": "madelynnwelch2@senger.com",
+      "primary": true
+    },
+    {
+      "type": "",
+      "address": "madelynnwelch3@senger.com",
+      "primary": false
+    }
+  ],
+  "phones": [
+    {
+      "type": "personal",
+      "number": "2529611363",
+      "primary": false,
+      "countryCode": 28
+    },
+    {
+      "type": "personal",
+      "number": "2529611363",
+      "primary": false,
+      "countryCode": 28
+    }
+  ],
+  "addresses": [
+    {
+      "type": "personal",
+      "line1": "520 South Inlet mouth",
+      "line2": "more content line 2",
+      "line3": "more content line 3",
+      "line4": "more content line 4",
+      "city": "Portland",
+      "stateProvince": {
+        "code": "GA",
+        "name": ""
+      },
+      "postalCode": "78137",
+      "country": {
+        "code": "PW",
+        "name": ""
+      },
+      "primary": false
+    }
+  ],
+  "honorific": "Dr",
+  "firstName": "Lance",
+  "middleName": "William",
+  "lastName": "Rice",
+  "gender": "other",
+  "pronoun": "",
+  "dateOfBirth": "1974-04-30",
+  "language": {
+    "code": "bi",
+    "name": ""
+  },
+  "nationality": {
+    "code": "ZW",
+    "name": ""
+  },
+  "jobTitle": "Assistant",
+  "parentCompany": "Ernst \u0026 Young LLP",
+  "loyaltyPrograms": [
+    {
+      "id": "1823223229",
+      "programName": "reward",
+      "miles": 561497.0,
+      "milesToNextLevel": 4509.0,
+      "level": "bronze",
+      "joined": "2021-12-19T22:36:56.388173986Z"
+    }
+  ],
+  "identityProofs": null
+}
