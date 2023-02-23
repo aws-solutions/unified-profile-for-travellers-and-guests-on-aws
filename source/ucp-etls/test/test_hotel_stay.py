@@ -16,5 +16,4 @@ def test_transformation(data_file):
 class TestHotelStay(unittest.TestCase):
     def test_transformation_success(self):
         actual = test_transformation(data_path + 'rawData.json')
-        print(actual)
         self.assertIsNotNone(actual['data'])
