@@ -78,7 +78,7 @@ def buildObjectRecord(rec):
                     'last_updated_by': rec["lastUpdatedBy"],
                     'number': phone["number"],
                     'country_code': phone["countryCode"],
-                    'type': email["type"],
+                    'type': phone["type"],
                 }
                 newRec["data"].append(historicalPhone)
             for loyalty in pax["loyaltyPrograms"]:

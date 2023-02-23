@@ -59,7 +59,20 @@ else
     websiteBucket=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='websiteBucket'].OutputValue" --output text)
     connectProfileExportBucket=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileExportBucket'].OutputValue" --output text)
     kmsKeyProfileDomain=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='kmsKeyProfileDomain'].OutputValue" --output text)
-   
+    glueDBname=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='glueDBname'].OutputValue" --output text)
+    ucpDataAdminRoleName=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='ucpDataAdminRoleName'].OutputValue" --output text)
+    customerJobNameairbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerJobNameairbooking'].OutputValue" --output text)
+    connectProfileImportBucketOut=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerJobNameairbooking'].OutputValue" --output text)
+    customerTestBuckethotelbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBuckethotelbooking'].OutputValue" --output text)
+    customerTestBucketairbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBucketairbooking'].OutputValue" --output text)
+    customerTestBucketguestprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBucketguestprofile'].OutputValue" --output text)
+    customerTestBucketpaxprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBucketpaxprofile'].OutputValue" --output text)
+    customerTestBucketclickstream=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBucketclickstream'].OutputValue" --output text)
+    customerTestBuckethotelstay=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBuckethotelstay'].OutputValue" --output text)
+    connectProfileImportBucketOut=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileImportBucketOut'].OutputValue" --output text)
+    connectProfileImportBucketTestOut=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileImportBucketTestOut'].OutputValue" --output text)
+  
+
     echo "3.2 Creating admin User and getting refresh token"
     RANDOM=$$
     time=$(date +"%Y-%m-%d-%H-%M-%S")
@@ -107,6 +120,12 @@ else
     | Portal URL              |  '$cloudfrontDomainName'</br>
     --------------------------------------------------------------------------------------------</br>
     | Website Bucket          |  '$websiteBucket'</br>
+    --------------------------------------------------------------------------------------------</br>
+    | Glue DB Name            |  '$glueDBname'</br>
+    --------------------------------------------------------------------------------------------</br>
+    | Data Admin Role Name    |  '$ucpDataAdminRoleName'</br>
+    --------------------------------------------------------------------------------------------</br>
+    | AirBooking Job Name     |  '$customerJobNameairbooking'</br>
     --------------------------------------------------------------------------------------------</br>'
 
     echo "$summary"
@@ -129,6 +148,17 @@ else
          "\"websiteDistributionId\" : \"$websiteDistributionId\","\
          "\"connectProfileExportBucket\":\"$connectProfileExportBucket\","\
          "\"kmsKeyProfileDomain\":\"$kmsKeyProfileDomain\","\
+         "\"glueDBname\":\"$glueDBname\","\
+         "\"ucpDataAdminRoleName\":\"$ucpDataAdminRoleName\","\
+         "\"customerJobNameairbooking\":\"$customerJobNameairbooking\","\
+         "\"customerTestBuckethotelbooking\":\"$customerTestBuckethotelbooking\","\
+         "\"customerTestBucketairbooking\":\"$customerTestBucketairbooking\","\
+         "\"customerTestBucketguestprofile\":\"$customerTestBucketguestprofile\","\
+         "\"customerTestBucketpaxprofile\":\"$customerTestBucketpaxprofile\","\
+         "\"customerTestBucketclickstream\":\"$customerTestBucketclickstream\","\
+         "\"customerTestBuckethotelstay\":\"$customerTestBuckethotelstay\","\
+         "\"connectProfileImportBucketOut\":\"$connectProfileImportBucketOut\","\
+         "\"connectProfileImportBucketTestOut\":\"$connectProfileImportBucketTestOut\","\
          "\"region\":\"$OUTRegion\""\
          "}">infra-config-$env.json
     cat infra-config-$env.json
