@@ -602,7 +602,6 @@ export class UCPInfraStack extends Stack {
 
     let toUcpScript = businessObjectName.replace('-', '_') + "ToUcp"
     let transformScript = businessObjectName.replace('-', '_') + "Transform.py"
-    let _businessObjectName = businessObjectName.replace('-', '_')
     let job = this.job(businessObjectName + "FromCustomer", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
       ["SOURCE_TABLE", bucketRaw.toAthenaTable()],
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
