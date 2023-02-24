@@ -608,7 +608,7 @@ export class UCPInfraStack extends Stack {
     ]))
     let industryConnectorJob = this.job(businessObjectName + "FromConnector", envName, artifactBucketName, _businessObjectName + "ToUcp", glueDb, dataLakeAdminRole, new Map([
       // SOURCE_TABLE provided by customer when linking connector
-      ["DEST_BUCKET", connectProfileImportBucket.bucketName],
+      ["DEST_BUCKET", _businessObjectName],
       ["BUSINESS_OBJECT", businessObjectName],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/" + _businessObjectName + "Transform.py,s3://" + artifactBucketName + "/" + envName + "/etl/autoFlatten.py"],
     ]))

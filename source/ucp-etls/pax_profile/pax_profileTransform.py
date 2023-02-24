@@ -21,8 +21,10 @@ def buildObjectRecord(rec):
             'gender': rec['gender'],
             'pronoun': rec['pronoun'],
             'date_of_birth': rec['dateOfBirth'],
-            'language': rec['language'],
-            'nationality': rec['nationality'],
+            'language_code': rec['language']['code'],
+            'language_name': rec['language']['name'],
+            'nationality_code': rec['nationality']['code'],
+            'nationality_name': rec['nationality']['name'],
             'job_title': rec['jobTitle'],
             'company': rec['parentCompany'],
 
