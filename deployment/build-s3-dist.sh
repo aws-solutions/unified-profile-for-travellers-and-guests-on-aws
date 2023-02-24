@@ -238,7 +238,7 @@ template_dir="$PWD"
 staging_dist_dir="$template_dir/staging"
 template_dist_dir="$template_dir/global-s3-assets"
 build_dist_dir="$template_dir/regional-s3-assets"
-source_dir="$template_dir/../deployment/tah-connector-code-pipelines"
+source_dir="$template_dir/../deployment/ucp-code-pipelines"
 
 echo "------------------------------------------------------------------------------"
 echo "${bold}[Init] Remove any old dist files from previous runs${normal}"

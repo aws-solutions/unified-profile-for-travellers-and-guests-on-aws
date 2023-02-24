@@ -44,9 +44,8 @@ def get_top_level_arrays(df):
     return array_columns
 
 def flattenWithNestedArrays(dataframe: DataFrame):
-    sparkDF = dataframe
-    flattenedDF = flatten_json_df(sparkDF)
-    arrNames = get_top_level_arrays(sparkDF)
+    flattenedDF = flatten_json_df(dataframe)
+    arrNames = get_top_level_arrays(dataframe)
 
     while arrNames != []:
         explodedDF = explode_cols(flattenedDF, arrNames)
