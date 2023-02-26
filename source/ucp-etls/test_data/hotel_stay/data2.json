@@ -1,0 +1,508 @@
+{
+  "objectVersion": 5,
+  "modelVersion": "1.0",
+  "id": "V1KV5QCYHE",
+  "bookingId": "FURAH3Q8I5",
+  "guestId": "7183545777",
+  "lastUpdatedOn": "2023-04-12T01:29:07.243908707Z",
+  "createdOn": "2023-03-26T07:18:38.754817025Z",
+  "lastUpdatedBy": "Talon Nolan",
+  "createdBy": "Eliseo Strosin",
+  "currency": {
+    "code": "SPL",
+    "name": "Seborga Luigino",
+    "symbol": ""
+  },
+  "firstName": "Justen",
+  "lastName": "Romaguera",
+  "email": "carsonharris@hahn.biz",
+  "phone": "365343891199",
+  "startDate": "2023-02-24",
+  "hotelCode": "SGP16",
+  "revenue": [
+    {
+      "type": "Room Charge 2023-04-12",
+      "description": "Suite with  ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1442.1775,
+      "date": "2023-04-12T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-12",
+      "description": "Doubel room with Mini bar,Balcony ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1279.0872,
+      "date": "2023-04-12T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-12",
+      "description": "King Room with Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1295.1559,
+      "date": "2023-04-12T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-12",
+      "description": "Suite with Mini bar ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1432.3279,
+      "date": "2023-04-12T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-12",
+      "description": "Doubel room with Balcony,Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 196.60835,
+      "date": "2023-04-12T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-12",
+      "description": "Suite with Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1973.9489,
+      "date": "2023-04-12T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-12",
+      "description": "Suite with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1947.645,
+      "date": "2023-04-12T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-12",
+      "description": "Suite with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 909.0594,
+      "date": "2023-04-12T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Suite with  ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 2824.7554,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Doubel room with Mini bar,Balcony ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1222.7587,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "King Room with Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 971.85516,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Suite with Mini bar ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 805.6296,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Doubel room with Balcony,Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 118.81849,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Suite with Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 5407.9087,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Suite with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1611.4648,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Suite with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 528.66315,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "Suite with  ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 2024.5732,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "Doubel room with Mini bar,Balcony ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 968.5639,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "King Room with Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1493.3661,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "Suite with Mini bar ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 3727.6614,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "Doubel room with Balcony,Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 306.62875,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "Suite with Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 5459.043,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "Suite with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 2174.5642,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "Suite with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 627.9273,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "Suite with  ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1859.986,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "Doubel room with Mini bar,Balcony ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1226.0974,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "King Room with Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1720.1038,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "Suite with Mini bar ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 2991.385,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "Doubel room with Balcony,Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 283.31335,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "Suite with Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1691.2522,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "Suite with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1166.0168,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "Suite with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1295.7145,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "sodas",
+      "description": "",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 90.50384,
+      "date": "2023-04-11T05:52:43.197345764Z"
+    },
+    {
+      "type": "just-walk-out-purchase",
+      "description": "",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 15.854377,
+      "date": "2023-03-27T21:24:40.428508636Z"
+    },
+    {
+      "type": "just-walk-out-purchase",
+      "description": "",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 69.04288,
+      "date": "2023-03-10T03:16:14.816982467Z"
+    },
+    {
+      "type": "Room Charge 2023-04-12",
+      "description": "King Room with  ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1095.7037,
+      "date": "2023-04-12T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "King Room with  ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1446.9841,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "King Room with  ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1287.1833,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "King Room with  ( Xmas special rate)",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 1195.4028,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "sodas",
+      "description": "",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 48.011486,
+      "date": "2023-03-16T07:53:59.267588972Z"
+    },
+    {
+      "type": "sodas",
+      "description": "",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 66.2577,
+      "date": "2023-02-27T04:30:12.18899247Z"
+    },
+    {
+      "type": "sodas",
+      "description": "",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 62.641182,
+      "date": "2023-03-23T05:51:12.442712776Z"
+    },
+    {
+      "type": "just-walk-out-purchase",
+      "description": "",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 54.44923,
+      "date": "2023-03-04T13:18:03.541048186Z"
+    },
+    {
+      "type": "snack bar",
+      "description": "",
+      "currency": {
+        "code": "SPL",
+        "name": "Seborga Luigino",
+        "symbol": ""
+      },
+      "amount": 66.05661,
+      "date": "2023-03-15T05:31:45.303996602Z"
+    }
+  ]
+}

@@ -1,20 +1,29 @@
 import unittest
 import json
-# from pax_profile.pax_profileTransform import buildObjectRecord
-from pax_profile.transformv2 import buildObjectRecord
+from tah_lib.pax_profileTransform import buildObjectRecord
 
-business_object = 'pax_profile'
-data_path = business_object + '/testData/'
+data_path = 'test_data/pax_profile/'
 
-def test_transformation(data_file):
+
+def loadTestRecord(data_file):
     f = open(data_file)
     data = json.load(f)
     f.close()
+    return buildObjectRecord(data)
 
-    actual = buildObjectRecord(data)
-    return actual
+
+def loadExpectedRecord(data_file):
+    f = open(data_file)
+    data = json.load(f)
+    f.close()
+    return data
+
 
 class TestPaxProfile(unittest.TestCase):
+    unittest.TestCase.maxDiff = None
+
     def test_transformation_success(self):
-        actual = test_transformation(data_path + '2476172448.json')
-        print(actual)
+        for rec in ["data1", "data2"]:
+            actual = loadTestRecord(data_path + rec + '.json')
+            expected = loadExpectedRecord(data_path + rec + '_expected.json')
+            self.assertEqual(actual, expected)

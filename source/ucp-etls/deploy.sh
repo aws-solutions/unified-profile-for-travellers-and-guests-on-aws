@@ -21,17 +21,13 @@ if [ $? != 0 ]; then
     exit 1
 fi
 
-aws s3 cp clickstream/clickstreamToUcp.py s3://$bucket/$env/etl/clickstreamToUcp.py
-aws s3 cp clickstream/clickstreamTransform.py s3://$bucket/$env/etl/clickstreamTransform.py
+aws s3 cp etls/clickstreamToUcp.py s3://$bucket/$env/etl/clickstreamToUcp.py
+aws s3 cp etls/air_bookingToUcp.py s3://$bucket/$env/etl/air_bookingToUcp.py
+aws s3 cp etls/hotel_bookingToUcp.py s3://$bucket/$env/etl/hotel_bookingToUcp.py
+aws s3 cp etls/guest_profileToUcp.py s3://$bucket/$env/etl/guest_profileToUcp.py
 
-aws s3 cp air_booking/air_bookingToUcp.py s3://$bucket/$env/etl/air_bookingToUcp.py
-aws s3 cp air_booking/air_bookingTransform.py s3://$bucket/$env/etl/air_bookingTransform.py
-
-aws s3 cp hotel_booking/hotel_bookingToUcp.py s3://$bucket/$env/etl/hotel_bookingToUcp.py
-aws s3 cp hotel_booking/hotel_bookingTransform.py s3://$bucket/$env/etl/hotel_bookingTransform.py
-
-aws s3 cp guest_profile/guest_profileToUcp.py s3://$bucket/$env/etl/guest_profileToUcp.py
-aws s3 cp guest_profile/guest_profileTransform.py s3://$bucket/$env/etl/guest_profileTransform.py
-
-aws s3 cp autoFlatten.py s3://$bucket/$env/etl/autoFlatten.py
+echo "zipping transforms and common code into lib"
+zip -r tah_lib.zip tah_lib/* -x tah_lib/__pycache__/**\* -x tah_lib/__pycache__
+aws s3 cp tah_lib.zip  s3://$bucket/$env/etl/tah_lib.zip
+rm tah_lib.zip
 

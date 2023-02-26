@@ -1,0 +1,227 @@
+{
+    "modelVersion": "1.0",
+    "event_type": "SelectNRooms",
+    "event_timestamp": "2021-10-03T02:54:43.360928927Z",
+    "arrival_timestamp": 0,
+    "event_version": "",
+    "application": {},
+    "client": {},
+    "device": {
+        "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"
+    },
+    "session": {
+        "id": "f925dc73-63a5-4d35-92ce-0559844b65db"
+    },
+    "attributes": [
+        {
+            "type": "numbers",
+            "name": "quantity",
+            "stringValue": "",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": [
+                2.0,
+                5.0,
+                1.0,
+                2.0,
+                2.0,
+                1.0,
+                3.0,
+                1.0,
+                2.0,
+                2.0
+            ]
+        },
+        {
+            "type": "strings",
+            "name": "products_price",
+            "stringValue": "",
+            "stringValues": [
+                "SEAT",
+                "SEAT",
+                "LUGG",
+                "FARE",
+                "FARE",
+                "LUGG",
+                "FARE",
+                "LUGG",
+                "FARE",
+                "LUGG"
+            ],
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "numbers",
+            "name": "products",
+            "stringValue": "",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": [
+                800.0,
+                907.0,
+                783.0,
+                472.0,
+                183.0,
+                914.0,
+                802.0,
+                733.0,
+                307.0,
+                328.0
+            ]
+        },
+        {
+            "type": "string",
+            "name": "fare_class",
+            "stringValue": "Y",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "fare_type",
+            "stringValue": "O",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "strings",
+            "name": "flight_segments_departure_date_time",
+            "stringValue": "",
+            "stringValues": [
+                "2023-01-15T15:04:36",
+                "2023-01-15T22:04:36",
+                "2023-01-16T01:04:36",
+                "2023-01-16T12:04:36"
+            ],
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "strings",
+            "name": "flight_segments_arrival_date_time",
+            "stringValue": "",
+            "stringValues": [
+                "2023-01-15T20:04:36",
+                "2023-01-16T00:04:36",
+                "2023-01-16T10:04:36",
+                "2023-01-16T22:04:36"
+            ],
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "strings",
+            "name": "flight_segment_sku",
+            "stringValue": "",
+            "stringValues": [
+                "AA8506",
+                "AA7631",
+                "AA4528",
+                "AA8476"
+            ],
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "flight_market",
+            "stringValue": "DOM,DOM",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "flight_type",
+            "stringValue": "one-way",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "origin_date",
+            "stringValue": "DOM,DOM",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "origin_date_time",
+            "stringValue": "DOM,DOM",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "returning_date_time",
+            "stringValue": "DOM,DOM",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "returning_date",
+            "stringValue": "DOM,DOM",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "returning_flight_route",
+            "stringValue": "DOM,DOM",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "number",
+            "name": "num_Pax_Adults",
+            "stringValue": "",
+            "stringValues": null,
+            "numValue": 6.0,
+            "numValues": null
+        },
+        {
+            "type": "number",
+            "name": "num_pax_inf",
+            "stringValue": "",
+            "stringValues": null,
+            "numValue": 1.0,
+            "numValues": null
+        },
+        {
+            "type": "number",
+            "name": "num_Pax_Children",
+            "stringValue": "",
+            "stringValues": null,
+            "numValue": 1.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "pax_type",
+            "stringValue": "child",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "number",
+            "name": "total_passengers",
+            "stringValue": "",
+            "stringValues": null,
+            "numValue": 5.0,
+            "numValues": null
+        }
+    ],
+    "endpoint": {},
+    "awsAccountId": ""
+}

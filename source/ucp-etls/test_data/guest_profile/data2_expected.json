@@ -1,0 +1,92 @@
+{
+    "common_email_recs": [
+        {
+            "address": "lelarowe@mclaughlin.com",
+            "last_updated": "2022-03-24T23:07:59.386436665Z",
+            "last_updated_by": "Abbey Little",
+            "model_version": "1.0",
+            "object_type": "email_history",
+            "traveller_id": "8586451052",
+            "type": "personal"
+        }
+    ],
+    "common_phone_recs": [
+        {
+            "country_code": 53,
+            "last_updated": "2022-03-24T23:07:59.386436665Z",
+            "last_updated_by": "Abbey Little",
+            "model_version": "1.0",
+            "number": "4626146981",
+            "object_type": "phone_history",
+            "traveller_id": "8586451052",
+            "type": "home"
+        },
+        {
+            "country_code": 47,
+            "last_updated": "2022-03-24T23:07:59.386436665Z",
+            "last_updated_by": "Abbey Little",
+            "model_version": "1.0",
+            "number": "9465488670",
+            "object_type": "phone_history",
+            "traveller_id": "8586451052",
+            "type": "personal"
+        }
+    ],
+    "guest_profile_recs": [
+        {
+            "address_city": "",
+            "address_country": "",
+            "address_line1": "",
+            "address_line2": "",
+            "address_line3": "",
+            "address_line4": "",
+            "address_postal_code": "",
+            "address_state_province": "",
+            "address_type": "",
+            "company": "PlotWatt",
+            "created_by": "Madyson Mueller",
+            "created_on": "2022-01-24T23:07:59.386436665Z",
+            "date_of_birth": "1965-01-13",
+            "email": "lelarowe@mclaughlin.com",
+            "email_type": "personal",
+            "first_name": "Timmothy",
+            "gender": "other",
+            "honorific": "Sir",
+            "job_title": "Facilitator",
+            "language": {
+                "code": "ln",
+                "name": ""
+            },
+            "last_name": "Wiza",
+            "last_updated_by": "Abbey Little",
+            "last_updated_on": "2022-03-24T23:07:59.386436665Z",
+            "middle_name": "Eliane",
+            "model_version": "1.0",
+            "nationality": {
+                "code": "LU",
+                "name": ""
+            },
+            "object_type": "pax_profile",
+            "phone_home": "4626146981",
+            "phone_type": "home",
+            "pronoun": "he",
+            "traveller_id": "8586451052"
+        }
+    ],
+    "hotel_loyalty_recs": [
+        {
+            "id": "7767442999",
+            "joined": "2022-01-24T23:07:59.386436665Z",
+            "last_updated": "2022-03-24T23:07:59.386436665Z",
+            "last_updated_by": "Abbey Little",
+            "level": "silver",
+            "model_version": "1.0",
+            "object_type": "air_loyalty",
+            "points": 205918.0,
+            "points_to_next_level": 8302.0,
+            "program_name": "club",
+            "traveller_id": "8586451052",
+            "units": "miles"
+        }
+    ]
+}

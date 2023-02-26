@@ -1,19 +1,30 @@
 import unittest
 import json
-from hotel_stay.hotel_stayTransform import buildObjectRecord
+from tah_lib.hotel_stayTransform import buildObjectRecord
 
-business_object = 'hotel_stay'
-data_path = business_object + '/testData/'
 
-def test_transformation(data_file):
+data_path = 'test_data/hotel_stay/'
+
+
+def loadTestRecord(data_file):
     f = open(data_file)
     data = json.load(f)
     f.close()
+    return buildObjectRecord(data)
 
-    actual = buildObjectRecord(data)
-    return actual
+
+def loadExpectedRecord(data_file):
+    f = open(data_file)
+    data = json.load(f)
+    f.close()
+    return data
+
 
 class TestHotelStay(unittest.TestCase):
+    unittest.TestCase.maxDiff = None
+
     def test_transformation_success(self):
-        actual = test_transformation(data_path + 'rawData.json')
-        self.assertIsNotNone(actual['data'])
+        for rec in ["data1", "data2"]:
+            actual = loadTestRecord(data_path + rec + '.json')
+            expected = loadExpectedRecord(data_path + rec + '_expected.json')
+            self.assertEqual(actual, expected)

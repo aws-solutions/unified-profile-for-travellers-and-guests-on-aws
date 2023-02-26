@@ -1,0 +1,132 @@
+{
+    "modelVersion": "1.0",
+    "event_type": "SelectEndDate",
+    "event_timestamp": "2022-05-30T11:26:45.506808073Z",
+    "arrival_timestamp": 0,
+    "event_version": "",
+    "application": {},
+    "client": {},
+    "device": {
+        "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"
+    },
+    "session": {
+        "id": "ac2a5054-b56f-4b9a-abc1-2e968d498785"
+    },
+    "attributes": [
+        {
+            "type": "string",
+            "name": "quantity",
+            "stringValue": "",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": [
+                5.0,
+                3.0,
+                3.0,
+                4.0,
+                3.0,
+                3.0,
+                2.0,
+                3.0,
+                1.0,
+                4.0
+            ]
+        },
+        {
+            "type": "strings",
+            "name": "products_price",
+            "stringValue": "",
+            "stringValues": [
+                "CHMPGN",
+                "SUITE-BAR",
+                "SUITE-BAR",
+                "CHMPGN",
+                "KING_SUPER_SAVER",
+                "CHMPGN",
+                "DBL-BAR",
+                "SUITE-BAR",
+                "DBL-BAR",
+                "BKFST"
+            ],
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "destination",
+            "stringValue": "Corpus Christi, Washington, Iraq",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "number",
+            "name": "num_nights",
+            "stringValue": "",
+            "stringValues": null,
+            "numValue": 2.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "room_type",
+            "stringValue": "SUITE",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "rate_plan",
+            "stringValue": "SUPER_SAVER",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "checkin_date",
+            "stringValue": "2024-01-29",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "checkout_date",
+            "stringValue": "2024-01-31",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "hotel_code",
+            "stringValue": "TOK12",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "strings",
+            "name": "hotel_code_list",
+            "stringValue": "",
+            "stringValues": [
+                "ROM14",
+                "ROM07",
+                "LIM16",
+                "LON07",
+                "TOK18",
+                "ROM03",
+                "TOK05",
+                "NYC08",
+                "ROM06",
+                "SPO07"
+            ],
+            "numValue": 0.0,
+            "numValues": null
+        }
+    ],
+    "endpoint": {},
+    "awsAccountId": ""
+}

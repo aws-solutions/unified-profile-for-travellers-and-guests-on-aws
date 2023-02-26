@@ -1,0 +1,915 @@
+{
+  "objectVersion": 7,
+  "modelVersion": "1.0",
+  "id": "Z6B0KAPS0Y",
+  "bookingId": "8JIMLJDNSH",
+  "guestId": "4307640828",
+  "lastUpdatedOn": "2023-04-04T02:14:13.321567316Z",
+  "createdOn": "2023-03-13T10:43:39.147937849Z",
+  "lastUpdatedBy": "Lura Cartwright",
+  "createdBy": "Kiley Harvey",
+  "currency": {
+    "code": "IDR",
+    "name": "Indonesia Rupiah",
+    "symbol": ""
+  },
+  "firstName": "Lauren",
+  "lastName": "Donnelly",
+  "email": "",
+  "phone": "21721-744-1917",
+  "startDate": "2023-02-24",
+  "hotelCode": "ATL03",
+  "revenue": [
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Doubel room with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 160.99872,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "King Room with Balcony,Mini bar ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 716.9451,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "King Room with  ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 198.37425,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "Doubel room with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 125.816826,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "King Room with Balcony,Mini bar ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1170.8083,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "King Room with  ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 257.83463,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "Doubel room with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 126.8391,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "King Room with Balcony,Mini bar ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1033.4266,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "King Room with  ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 227.23209,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-16",
+      "description": "Doubel room with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 118.199844,
+      "date": "2023-04-16T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-16",
+      "description": "King Room with Balcony,Mini bar ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 697.0699,
+      "date": "2023-04-16T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-16",
+      "description": "King Room with  ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 145.57458,
+      "date": "2023-04-16T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-17",
+      "description": "Doubel room with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 170.79877,
+      "date": "2023-04-17T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-17",
+      "description": "King Room with Balcony,Mini bar ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 898.6315,
+      "date": "2023-04-17T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-17",
+      "description": "King Room with  ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 147.70015,
+      "date": "2023-04-17T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-18",
+      "description": "Doubel room with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 206.42607,
+      "date": "2023-04-18T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-18",
+      "description": "King Room with Balcony,Mini bar ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 981.6259,
+      "date": "2023-04-18T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-18",
+      "description": "King Room with  ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 154.53012,
+      "date": "2023-04-18T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-19",
+      "description": "Doubel room with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 129.27847,
+      "date": "2023-04-19T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-19",
+      "description": "King Room with Balcony,Mini bar ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 490.78052,
+      "date": "2023-04-19T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-19",
+      "description": "King Room with  ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 237.87639,
+      "date": "2023-04-19T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-20",
+      "description": "Doubel room with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 202.35928,
+      "date": "2023-04-20T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-20",
+      "description": "King Room with Balcony,Mini bar ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1025.6964,
+      "date": "2023-04-20T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-20",
+      "description": "King Room with  ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 121.05347,
+      "date": "2023-04-20T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-21",
+      "description": "Doubel room with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 197.59332,
+      "date": "2023-04-21T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-21",
+      "description": "King Room with Balcony,Mini bar ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1089.1373,
+      "date": "2023-04-21T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-21",
+      "description": "King Room with  ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 306.58286,
+      "date": "2023-04-21T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-22",
+      "description": "Doubel room with Mini bar,Balcony ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 154.80373,
+      "date": "2023-04-22T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-22",
+      "description": "King Room with Balcony,Mini bar ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 740.6298,
+      "date": "2023-04-22T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-22",
+      "description": "King Room with  ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 152.23267,
+      "date": "2023-04-22T00:00:00Z"
+    },
+    {
+      "type": "just-walk-out-purchase",
+      "description": "",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 61.143166,
+      "date": "2023-03-07T11:19:19.110743028Z"
+    },
+    {
+      "type": "restaurant",
+      "description": "",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 43.142498,
+      "date": "2023-02-27T23:20:41.267777487Z"
+    },
+    {
+      "type": "just-walk-out-purchase",
+      "description": "",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 23.186544,
+      "date": "2023-03-05T00:07:42.112667113Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Suite with Balcony,Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 7637.0674,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "King Room with Sea View ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 2713.3628,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Doubel room with  ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 468.84314,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Doubel room with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 106.07459,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "Suite with Balcony,Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 6702.784,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "King Room with Sea View ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1246.6079,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "Doubel room with  ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 953.2911,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-14",
+      "description": "Doubel room with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 291.80072,
+      "date": "2023-04-14T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "Suite with Balcony,Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 5912.1753,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "King Room with Sea View ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 2788.9138,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "Doubel room with  ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1002.211,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-15",
+      "description": "Doubel room with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 134.11844,
+      "date": "2023-04-15T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-16",
+      "description": "Suite with Balcony,Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 2301.9724,
+      "date": "2023-04-16T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-16",
+      "description": "King Room with Sea View ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 2948.1501,
+      "date": "2023-04-16T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-16",
+      "description": "Doubel room with  ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 821.6697,
+      "date": "2023-04-16T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-16",
+      "description": "Doubel room with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 314.8256,
+      "date": "2023-04-16T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-17",
+      "description": "Suite with Balcony,Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 5536.273,
+      "date": "2023-04-17T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-17",
+      "description": "King Room with Sea View ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1255.9475,
+      "date": "2023-04-17T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-17",
+      "description": "Doubel room with  ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1337.2349,
+      "date": "2023-04-17T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-17",
+      "description": "Doubel room with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 222.39917,
+      "date": "2023-04-17T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-18",
+      "description": "Suite with Balcony,Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 4148.25,
+      "date": "2023-04-18T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-18",
+      "description": "King Room with Sea View ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1362.2936,
+      "date": "2023-04-18T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-18",
+      "description": "Doubel room with  ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1068.3789,
+      "date": "2023-04-18T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-18",
+      "description": "Doubel room with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 109.38317,
+      "date": "2023-04-18T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-19",
+      "description": "Suite with Balcony,Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 8142.5684,
+      "date": "2023-04-19T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-19",
+      "description": "King Room with Sea View ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 2362.4336,
+      "date": "2023-04-19T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-19",
+      "description": "Doubel room with  ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 629.9609,
+      "date": "2023-04-19T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-19",
+      "description": "Doubel room with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 138.84862,
+      "date": "2023-04-19T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-20",
+      "description": "Suite with Balcony,Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 6332.684,
+      "date": "2023-04-20T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-20",
+      "description": "King Room with Sea View ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1162.3195,
+      "date": "2023-04-20T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-20",
+      "description": "Doubel room with  ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1161.1271,
+      "date": "2023-04-20T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-20",
+      "description": "Doubel room with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 266.51627,
+      "date": "2023-04-20T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-21",
+      "description": "Suite with Balcony,Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 6505.7383,
+      "date": "2023-04-21T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-21",
+      "description": "King Room with Sea View ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 2575.2932,
+      "date": "2023-04-21T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-21",
+      "description": "Doubel room with  ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 749.8163,
+      "date": "2023-04-21T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-21",
+      "description": "Doubel room with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 116.66217,
+      "date": "2023-04-21T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-22",
+      "description": "Suite with Balcony,Sea View ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 4010.9346,
+      "date": "2023-04-22T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-22",
+      "description": "King Room with Sea View ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 1278.1785,
+      "date": "2023-04-22T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-22",
+      "description": "Doubel room with  ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 902.0223,
+      "date": "2023-04-22T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-22",
+      "description": "Doubel room with Mini bar ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 306.05508,
+      "date": "2023-04-22T00:00:00Z"
+    },
+    {
+      "type": "restaurant",
+      "description": "",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 56.271645,
+      "date": "2023-04-06T14:22:10.857715811Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Suite with Sea View,Balcony ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 2044.2417,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "King Room with  ( Best avaialble rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 302.99475,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Doubel room with  ( Xmas special rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 248.42984,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "Room Charge 2023-04-13",
+      "description": "Doubel room with Sea View,Mini bar ( Super Saver rate)",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 487.18512,
+      "date": "2023-04-13T00:00:00Z"
+    },
+    {
+      "type": "just-walk-out-purchase",
+      "description": "",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 8.2961445,
+      "date": "2023-03-29T03:35:47.253576997Z"
+    },
+    {
+      "type": "restaurant",
+      "description": "",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 81.32611,
+      "date": "2023-03-31T16:49:00.06386539Z"
+    },
+    {
+      "type": "just-walk-out-purchase",
+      "description": "",
+      "currency": {
+        "code": "IDR",
+        "name": "Indonesia Rupiah",
+        "symbol": ""
+      },
+      "amount": 11.261875,
+      "date": "2023-03-09T04:28:26.927069145Z"
+    }
+  ]
+}
