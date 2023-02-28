@@ -351,14 +351,29 @@ export class UCPCodePipelinesStack extends Stack {
     })
     //Test Stage
     stages.push({
-      stageName: 'Test',
+      stageName: 'EndToEndTests',
       actions: [
         new codepipeline_actions.CodeBuildAction({
-          actionName: 'e2eTesting',
+          actionName: 'apiTests',
           project: onboardingTest,
           input: sourceOutput,
           outputs: [cdkBuildOutputTest],
+          runOrder: 1,
         }),
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'runFeTests',
+          project: feTest,
+          input: sourceOutput,
+          runOrder: 1,
+          outputs: [feTestOutput],
+        }),
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'deployEtlCode',
+          project: etlProject,
+          input: sourceOutput,
+          runOrder: 1,
+          outputs: [cdkBuildOutputEtl],
+        })
       ],
     })
     //Deploy Stages
@@ -367,20 +382,6 @@ export class UCPCodePipelinesStack extends Stack {
       actions: [],
     }
     if (deployStage.actions) {
-      deployStage.actions.push(new codepipeline_actions.CodeBuildAction({
-        actionName: 'runFeTests',
-        project: feTest,
-        input: sourceOutput,
-        runOrder: 1,
-        outputs: [feTestOutput],
-      }))
-      deployStage.actions.push(new codepipeline_actions.CodeBuildAction({
-        actionName: 'deployEtlCode',
-        project: etlProject,
-        input: sourceOutput,
-        runOrder: 1,
-        outputs: [cdkBuildOutputEtl],
-      }))
       deployStage.actions.push(new codepipeline_actions.CodeBuildAction({
         actionName: 'deployFrontEnd',
         project: feProject,

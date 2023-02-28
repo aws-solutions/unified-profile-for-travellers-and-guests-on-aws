@@ -1,4 +1,4 @@
-# this file shopuld eventyally contain common functions between all etls
+# this file should eventually contain common functions between all etls
 # this function set the mandatory ACCP traveller ID using the following rule
 # if the guest has an ID provided by customer we use this one
 # if not we will use the unique generated UUID for all ACCP records associated with this guest
@@ -10,10 +10,10 @@ def setTravellerId(rec, guestBizObject, uid):
         rec["traveller_id"] = uid
 
 
-# this function set the primary email according to the following logicc
+# this function set the primary email according to the following logic
 # 1- if one or multiple emails are flagged as Primary, we choose the first one
 # 2- if not we choose the first email in the list.
-# 3- then we use teh email type to chosse whether we set the biz_email key or 'email' key
+# 3- then we use the email type to choose whether we set the biz_email key or 'email' key
 # 3- if the list is empty we set both keys to empty strings to allow creation of the column in the CSV
 def setPrimaryEmail(rec, emails):
     if len(emails) == 0:

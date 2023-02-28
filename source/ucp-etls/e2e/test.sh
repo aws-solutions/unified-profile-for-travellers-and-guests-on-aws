@@ -41,12 +41,10 @@ echo "GLUE_JOB_NAME_AIR_BOOKING: $GLUE_JOB_NAME_AIR_BOOKING"
 echo "TEST_BUCKET_AIR_BOOKING: $TEST_BUCKET_AIR_BOOKING"
 echo "TEST_BUCKET_ACCP_IMPORT: $TEST_BUCKET_ACCP_IMPORT"
 
-
 echo "2-removing existing executables"
 rm main main.zip
 echo "3-Organizing dependenies"
-if [ $env == $LOCAL_ENV_NAME ]
-    then
+if [ $env == $LOCAL_ENV_NAME ]; then
     echo "3.1-Cleaning unused dependencies (local env only)"
     go mod tidy
     echo "3.1-Vendoring dependencies (local env only)"
