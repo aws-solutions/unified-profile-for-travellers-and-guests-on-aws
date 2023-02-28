@@ -334,13 +334,6 @@ export class UCPCodePipelinesStack extends Stack {
           outputs: [cdkBuildOutputLambda],
         }),
         new codepipeline_actions.CodeBuildAction({
-          actionName: 'deployEtlCode',
-          project: etlProject,
-          input: sourceOutput,
-          runOrder: 2,
-          outputs: [cdkBuildOutputEtl],
-        }),
-        new codepipeline_actions.CodeBuildAction({
           actionName: 'deployInfra',
           project: infraBuild,
           input: sourceOutput,
