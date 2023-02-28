@@ -320,8 +320,8 @@ export class UCPCodePipelinesStack extends Stack {
           oauthToken: SecretValue.unsafePlainText(githubtoken.valueAsString),
           branch: branchName,
           owner: owner,
-          //we poll gihub to bypass the limitation on github webhooks
-          trigger: codepipeline_actions.GitHubTrigger.POLL,
+          //we pevent automated pull as we use code pipeine as a deployment mecanism
+          trigger: codepipeline_actions.GitHubTrigger.NONE,
           output: sourceOutput,
         }),
       ],
