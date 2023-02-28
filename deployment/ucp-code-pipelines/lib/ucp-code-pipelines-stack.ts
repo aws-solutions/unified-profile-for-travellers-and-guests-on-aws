@@ -333,13 +333,13 @@ export class UCPCodePipelinesStack extends Stack {
           runOrder: 2,
           outputs: [cdkBuildOutputLambda],
         }),
-        /*new codepipeline_actions.CodeBuildAction({
-          actionName: 'buildFirehoseLambdaCode',
-          project: firehoselambdaBuild,
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'deployEtlCode',
+          project: etlProject,
           input: sourceOutput,
           runOrder: 2,
-          outputs: [cdkBuildOutputFirehoseLambda],
-        }),*/
+          outputs: [cdkBuildOutputEtl],
+        }),
         new codepipeline_actions.CodeBuildAction({
           actionName: 'deployInfra',
           project: infraBuild,

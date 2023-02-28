@@ -35,6 +35,7 @@ type UCPRequest struct {
 	ID       string
 	SearchRq SearchRq
 	Domain   Domain
+	EnvName  string
 }
 
 type UCPConfig struct {

@@ -9,8 +9,6 @@ import (
 	"encoding/json"
 	"log"
 	"strings"
-
-	"golang.org/x/exp/maps"
 )
 
 const IndustryConnectorPrefix = "travel-and-hospitality-connector"
@@ -233,15 +231,15 @@ func updateTaggedConnectors(taggedConnectorString, newConnector string) (string,
 // Convert colon separated list of connectors to an array of business objects
 func tagToObjects(tag string) []string {
 	taggedConnectors := strings.Split(tag, ":")
-	objects := make(map[string]string)
+	objects := make(map[string]struct{})
 	for _, v := range taggedConnectors {
 		connectorObjects := connectorMap[v]
 		for _, v := range connectorObjects {
-			objects[v] = ""
+			objects[v] = struct{}{}
 		}
 	}
 
-	return maps.Keys(objects)
+	return getKeys(objects)
 }
 
 func AddConnectorBucketToJobs(glueClient glue.Config, bucketName string, jobNames []string) error {
@@ -255,4 +253,12 @@ func AddConnectorBucketToJobs(glueClient glue.Config, bucketName string, jobName
 		}
 	}
 	return nil
+}
+
+func getKeys(m map[string]struct{}) []string {
+	keys := []string{}
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }

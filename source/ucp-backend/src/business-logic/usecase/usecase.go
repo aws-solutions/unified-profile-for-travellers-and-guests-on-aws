@@ -44,6 +44,8 @@ var SEARCH_KEY_PHONE = "PhoneNumber"
 var SEARCH_KEY_ACCOUNT_NUMBER = "AccountNumber"
 var SEARCH_KEY_CONF_NUMBER = "confirmationNumber"
 
+var DOMAIN_TAG_ENV_NAME = "envName"
+
 func RetreiveUCPProfile(rq model.UCPRequest, profilesSvc customerprofiles.CustomerProfileConfig) (model.ResWrapper, error) {
 	profile, err := profilesSvc.GetProfile(rq.ID)
 	return model.ResWrapper{Profiles: []model.Traveller{profileToTraveller(profile)}, Matches: profileToMatches(profile)}, err
@@ -298,17 +300,19 @@ func ListUcpDomains(rq model.UCPRequest, profilesSvc customerprofiles.CustomerPr
 	}
 	domains := []model.Domain{}
 	for _, dom := range profileDomains {
-		domains = append(domains, model.Domain{
-			Name:        dom.Name,
-			Created:     dom.Created,
-			LastUpdated: dom.LastUpdated,
-		})
+		if rq.EnvName == dom.Tags[DOMAIN_TAG_ENV_NAME] {
+			domains = append(domains, model.Domain{
+				Name:        dom.Name,
+				Created:     dom.Created,
+				LastUpdated: dom.LastUpdated,
+			})
+		}
 	}
 	return model.ResWrapper{UCPConfig: model.UCPConfig{Domains: domains}}, err
 }
 
 func CreateUcpDomain(rq model.UCPRequest, profilesSvc customerprofiles.CustomerProfileConfig, KMS_KEY_PROFILE_DOMAIN string, CONNECT_PROFILE_SOURCE_BUCKET string) (model.ResWrapper, error) {
-	err := profilesSvc.CreateDomain(rq.Domain.Name, true, KMS_KEY_PROFILE_DOMAIN)
+	err := profilesSvc.CreateDomain(rq.Domain.Name, true, KMS_KEY_PROFILE_DOMAIN, map[string]string{DOMAIN_TAG_ENV_NAME: rq.EnvName})
 	if err != nil {
 		return model.ResWrapper{}, err
 	}

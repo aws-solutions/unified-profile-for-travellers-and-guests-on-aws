@@ -276,6 +276,7 @@ export class UCPInfraStack extends Stack {
         'profile:ListProfileObjects',
         'profile:ListProfileObjectTypes',
         'profile:GetProfileObjectType',
+        'profile:TagResource',
         'appflow:DescribeFlow',
         'servicecatalog:ListApplications',
         's3:ListBucket',
