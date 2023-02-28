@@ -612,14 +612,16 @@ export class UCPInfraStack extends Stack {
     this.scheduledCrawlerTrigger("ucp" + businessObjectName, envName, crawler, "cron(0 * * * ? *)", workflow)
     this.crawlerOnDemandTrigger("ucp" + businessObjectName, envName, crawler)
     //5- Jobs
-    let _businessObjectName = businessObjectName.replace('-', '_')
-    let job = this.job(businessObjectName + "FromCustomer", envName, artifactBucketName, _businessObjectName + "ToUcp", glueDb, dataLakeAdminRole, new Map([
+
+    let toUcpScript = businessObjectName.replace('-', '_') + "ToUcp"
+    let transformScript = businessObjectName.replace('-', '_') + "Transform.py"
+    let job = this.job(businessObjectName + "FromCustomer", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
       ["SOURCE_TABLE", bucketRaw.toAthenaTable()],
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
       ["BUSINESS_OBJECT", businessObjectName],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
-    let industryConnectorJob = this.job(businessObjectName + "FromConnector", envName, artifactBucketName, _businessObjectName + "ToUcp", glueDb, dataLakeAdminRole, new Map([
+    let industryConnectorJob = this.job(businessObjectName + "FromConnector", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
       // SOURCE_TABLE provided by customer when linking connector
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
       ["BUSINESS_OBJECT", businessObjectName],
