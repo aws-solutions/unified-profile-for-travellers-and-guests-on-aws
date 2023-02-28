@@ -39,11 +39,12 @@ export class UCPInfraStack extends Stack {
     if (!envName) {
       throw new Error('No environemnt name provided for stack');
     }
-
     if (!artifactBucket) {
       throw new Error('No bucket name provided for stack');
     }
-
+    if (!account) {
+      throw new Error('No account ID provided for stack');
+    }
 
     /*************
      * Datalake admin Role
@@ -53,8 +54,11 @@ export class UCPInfraStack extends Stack {
       description: "Glue role for UCP data",
       roleName: "ucp-data-admin-role-" + envName
     })
-    let roleArn = new CfnOutput(this, 'ucpDataAdminRoleArn', {
+    new CfnOutput(this, 'ucpDataAdminRoleArn', {
       value: datalakeAdminRole.roleArn
+    });
+    new CfnOutput(this, 'ucpDataAdminRoleName', {
+      value: datalakeAdminRole.roleName
     });
     //we need to gran the data admin (which will be the rol for all glue jobs) access to the artifact bucket
     //since the python scripts are stored there
@@ -75,8 +79,6 @@ export class UCPInfraStack extends Stack {
       actions: ["iam:PassRole"]
     }))
     const accessLogBucket = new tah_s3.AccessLogBucket(this, "ucp-access-logging")
-
-
 
     /*************************
      * Datalake 3rd party users
@@ -103,22 +105,25 @@ export class UCPInfraStack extends Stack {
     new CfnOutput(this, 'glueDBArn', {
       value: glueDb.databaseArn
     });
+    new CfnOutput(this, 'glueDBname', {
+      value: glueDb.databaseName
+    });
 
     /***************************
    * Data Buckets for temporary processing
    *****************************/
     //Target Bucket for Amazon connect profile import
     const connectProfileImportBucket = new tah_s3.Bucket(this, "connectProfileImportBucket", accessLogBucket)
+    const connectProfileImportBucketTest = new tah_s3.Bucket(this, "connectProfileImportBucketTest", accessLogBucket)
     //temp bucket for Amazon connect profile identity resolution matches
     const idResolution = new tah_s3.Bucket(this, "ucp-connect-id-resolution-temp", accessLogBucket)
 
-    //Source bucket for travel business objects
-    this.buildBusinessObjectPipeline("hotel-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    this.buildBusinessObjectPipeline("air-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    this.buildBusinessObjectPipeline("guest-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    this.buildBusinessObjectPipeline("pax-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    this.buildBusinessObjectPipeline("clickstream", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    this.buildBusinessObjectPipeline("hotel-stay", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let hotelBookingOutput = this.buildBusinessObjectPipeline("hotel-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let airBookingOutput = this.buildBusinessObjectPipeline("air_booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let guestProfileOutput = this.buildBusinessObjectPipeline("guest-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let paxProfileOutput = this.buildBusinessObjectPipeline("pax-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let clickstreamOutput = this.buildBusinessObjectPipeline("clickstream", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let hotelStayOutput = this.buildBusinessObjectPipeline("hotel-stay", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
 
     //Target Bucket for Amazon connect profile export
     let connectProfileExportBucket = new tah_s3.Bucket(this, "ucp-mazon-connect-profile-export", accessLogBucket);
@@ -129,6 +134,7 @@ export class UCPInfraStack extends Stack {
      * Bucket Permission
      **************************/
     connectProfileImportBucket.grantReadWrite(datalakeAdminRole)
+    connectProfileImportBucketTest.grantReadWrite(datalakeAdminRole)
     connectProfileExportBucket.grantReadWrite(datalakeAdminRole)
     amperityExportBucket.grantReadWrite(datalakeAdminRole)
 
@@ -167,8 +173,6 @@ export class UCPInfraStack extends Stack {
     this.jobOnDemandTrigger("ucp-amperity-data-import", envName, [amperityImportJob])
     this.jobOnDemandTrigger("ucp-amperity-data-export", envName, [amperityExportJob])
 
-
-
     /////////////////////////
     //Appflow and Amazon Connect Customer profile
     ///////////////////////////
@@ -176,15 +180,17 @@ export class UCPInfraStack extends Stack {
      * KMS Key
      */
     //TODO: to rename the key into something moroe explicit
-    const kmsKeyProfileDomain = new kms.Key(this, "new_kms_key", {
+    const kmsKeyProfileDomain = new kms.Key(this, "ucpDomainKey", {
       removalPolicy: RemovalPolicy.DESTROY,
       pendingWindow: Duration.days(20),
-      alias: 'alias/mykey',
+      alias: 'alias/ucpDomainKey' + envName,
       description: 'KMS key for encrypting business object S3 buckets',
       enableKeyRotation: true,
     });
 
     //Customer Profile Outputs for Domain Testing
+    new CfnOutput(this, "connectProfileImportBucketOut", { value: connectProfileImportBucket.bucketName })
+    new CfnOutput(this, "connectProfileImportBucketTestOut", { value: connectProfileImportBucketTest.bucketName })
     new CfnOutput(this, "connectProfileExportBucket", { value: connectProfileExportBucket.bucketName })
     new CfnOutput(this, "kmsKeyProfileDomain", { value: kmsKeyProfileDomain.keyArn })
 
@@ -201,14 +207,20 @@ export class UCPInfraStack extends Stack {
       tracing: lambda.Tracing.ACTIVE,
       timeout: Duration.seconds(60),
       environment: {
-        LAMBDA_ACCOUNT_ID: account ?? "",
+        LAMBDA_ACCOUNT_ID: account,
         LAMBDA_ENV: envName,
         ATHENA_WORKGROUP: "",
         ATHENA_DB: "",
-        CLICKSTREAM_JOB_NAME: "clickstreamJob" + envName,
+        HOTEL_BOOKING_JOB_NAME: hotelBookingOutput.connectorJobName,
+        AIR_BOOKING_JOB_NAME: airBookingOutput.connectorJobName,
+        GUEST_PROFILE_JOB_NAME: guestProfileOutput.connectorJobName,
+        PAX_PROFILE_JOB_NAME: paxProfileOutput.connectorJobName,
+        CLICKSTREAM_JOB_NAME: clickstreamOutput.connectorJobName,
+        HOTEL_STAY_JOB_NAME: hotelStayOutput.connectorJobName,
         CONNECTOR_CRAWLER_QUEUE: connectorCrawlerQueue.queueArn,
         CONNECTOR_CRAWLER_DLQ: connectorCrawlerDlq.queueArn,
         GLUE_DB: glueDb.databaseName,
+        DATALAKE_ADMIN_ROLE_ARN: datalakeAdminRole.roleArn,
         UCP_GUEST360_TABLE_NAME: "",
         UCP_GUEST360_TABLE_PK: "",
         UCP_GUEST360_ATHENA_TABLE: "",
@@ -226,7 +238,13 @@ export class UCPInfraStack extends Stack {
         'glue:CreateCrawler',
         'glue:DeleteCrawler',
         'glue:CreateTrigger',
-        // TODO: remove iam actions and set up permission boundary instead
+        'glue:GetTrigger',
+        'glue:UpdateTrigger',
+        'glue:DeleteTrigger',
+        'glue:GetTags',
+        'glue:TagResource',
+        'glue:GetJob',
+        'glue:UpdateJob',
         'kms:GenerateDataKey',
         'kms:Decrypt',
         'kms:CreateGrant',
@@ -234,6 +252,7 @@ export class UCPInfraStack extends Stack {
         'kms:ListAliases',
         'kms:DescribeKey',
         'kms:ListKeys',
+        // TODO: remove iam actions and set up permission boundary instead
         'iam:AttachRolePolicy',
         'iam:CreatePolicy',
         'iam:CreateRole',
@@ -257,6 +276,7 @@ export class UCPInfraStack extends Stack {
         'profile:ListProfileObjects',
         'profile:ListProfileObjectTypes',
         'profile:GetProfileObjectType',
+        'profile:TagResource',
         'appflow:DescribeFlow',
         'servicecatalog:ListApplications',
         's3:ListBucket',
@@ -575,11 +595,14 @@ export class UCPInfraStack extends Stack {
   * HELPER FUNCTIONS
   ******************/
 
-  buildBusinessObjectPipeline(businessObjectName: string, envName: string, dataLakeAdminRole: iam.Role, glueDb: Database, artifactBucketName: string, accessLogBucket: s3.Bucket, connectProfileImportBucket: s3.Bucket) {
+  buildBusinessObjectPipeline(businessObjectName: string, envName: string, dataLakeAdminRole: iam.Role, glueDb: Database, artifactBucketName: string, accessLogBucket: s3.Bucket, connectProfileImportBucket: s3.Bucket): BusinessObjectPipelineOutput {
     //0-create bucket
     let bucketRaw = new tah_s3.Bucket(this, "ucp" + businessObjectName, accessLogBucket);
+    //we create a test bucket to be able to test  the job run
+    let testBucketRaw = new tah_s3.Bucket(this, "ucp" + businessObjectName + "Test", accessLogBucket);
     //1-Bucket permission
     bucketRaw.grantReadWrite(dataLakeAdminRole)
+    testBucketRaw.grantReadWrite(dataLakeAdminRole)
     //2-Creating workflow to visualize
     let workflow = new CfnWorkflow(this, businessObjectName, {
       name: "ucp" + businessObjectName + envName
@@ -590,12 +613,40 @@ export class UCPInfraStack extends Stack {
     this.scheduledCrawlerTrigger("ucp" + businessObjectName, envName, crawler, "cron(0 * * * ? *)", workflow)
     this.crawlerOnDemandTrigger("ucp" + businessObjectName, envName, crawler)
     //5- Jobs
-    let job = this.job(businessObjectName, envName, artifactBucketName, businessObjectName + "ToUcp", glueDb, dataLakeAdminRole, new Map([
+
+    let toUcpScript = businessObjectName.replace('-', '_') + "ToUcp"
+    let transformScript = businessObjectName.replace('-', '_') + "Transform.py"
+    let job = this.job(businessObjectName + "FromCustomer", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
       ["SOURCE_TABLE", bucketRaw.toAthenaTable()],
-      ["DEST_BUCKET", connectProfileImportBucket.bucketName]
+      ["DEST_BUCKET", connectProfileImportBucket.bucketName],
+      ["BUSINESS_OBJECT", businessObjectName],
+      ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
+    ]))
+    let industryConnectorJob = this.job(businessObjectName + "FromConnector", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
+      // SOURCE_TABLE provided by customer when linking connector
+      ["DEST_BUCKET", connectProfileImportBucket.bucketName],
+      ["BUSINESS_OBJECT", businessObjectName],
+      ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
     //6- Job Triggers
     let jobTrigger = this.jobTriggerFromCrawler("ucp" + businessObjectName, envName, [crawler], job, workflow)
+    //7-Cfn Output
+    new CfnOutput(this, 'customerBucket' + businessObjectName, {
+      value: bucketRaw.bucketName
+    });
+    new CfnOutput(this, 'customerTestBucket' + businessObjectName, {
+      value: testBucketRaw.bucketName
+    });
+    new CfnOutput(this, 'customerJobName' + businessObjectName, {
+      value: job.name || "",
+    });
+    new CfnOutput(this, 'industryConnectorJobName' + businessObjectName, {
+      value: job.name || "",
+    });
+    let output: BusinessObjectPipelineOutput = {
+      connectorJobName: industryConnectorJob.name ?? "",
+    }
+    return output;
   }
 
   job(prefix: string, envName: string, artifactBucket: string, scriptName: string, glueDb: Database, dataLakeAdminRole: iam.Role, envVar: Map<string, string>): CfnJob {
@@ -649,7 +700,7 @@ export class UCPInfraStack extends Stack {
       ]
     })
     if (workflow) {
-      trigger.addDependsOn(workflow)
+      trigger.addDependency(workflow)
       trigger.workflowName = workflow.name
     }
     return trigger
@@ -660,13 +711,13 @@ export class UCPInfraStack extends Stack {
     for (let job of jobs) {
       actions.push({ jobName: job.name })
     }
-    let trigger = new CfnTrigger(this, prefix + "crawlerOnDemandTrigger" + envName, {
+    let trigger = new CfnTrigger(this, prefix + "jobOnDemandTrigger" + envName, {
       type: "ON_DEMAND",
       name: prefix + "jobOnDemandTrigger" + envName,
       actions: actions
     })
     if (workflow) {
-      trigger.addDependsOn(workflow)
+      trigger.addDependency(workflow)
       trigger.workflowName = workflow.name
     }
     return trigger
@@ -681,7 +732,7 @@ export class UCPInfraStack extends Stack {
       ]
     })
     if (workflow) {
-      trigger.addDependsOn(workflow)
+      trigger.addDependency(workflow)
       trigger.workflowName = workflow.name
     }
     return trigger
@@ -706,7 +757,7 @@ export class UCPInfraStack extends Stack {
       ]
     })
     if (workflow) {
-      trigger.addDependsOn(workflow)
+      trigger.addDependency(workflow)
       trigger.workflowName = workflow.name
     }
     return trigger
@@ -724,7 +775,7 @@ export class UCPInfraStack extends Stack {
       ]
     })
     if (workflow) {
-      trigger.addDependsOn(workflow)
+      trigger.addDependency(workflow)
       trigger.workflowName = workflow.name
     }
     return trigger
@@ -742,7 +793,7 @@ export class UCPInfraStack extends Stack {
       ]
     })
     if (workflow) {
-      trigger.addDependsOn(workflow)
+      trigger.addDependency(workflow)
       trigger.workflowName = workflow.name
     }
     return trigger

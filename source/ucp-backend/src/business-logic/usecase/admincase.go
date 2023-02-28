@@ -15,7 +15,7 @@ const IndustryConnectorPrefix = "travel-and-hospitality-connector"
 
 // https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html
 type RolePrincipal struct {
-	AWS string
+	AWS []string
 }
 
 type Statement struct {
@@ -45,13 +45,13 @@ func ListIndustryConnectors(cfg appregistry.Config) ([]appregistry.ApplicationSu
 	return connectors, nil
 }
 
-func LinkIndustryConnector(iamClient iam.Config, connectorData model.LinkIndustryConnectorRq, accountId, region string) (string, string, error) {
+func LinkIndustryConnector(iamClient iam.Config, connectorData model.LinkIndustryConnectorRq, accountId, region, datalakeAdminRoleArn string) (string, string, error) {
 	glueRoleArn, _, err := GenerateGlueServiceRole(iamClient, connectorData.BucketArn, accountId, region)
 	if err != nil {
 		log.Printf("[LinkIndustryConnector] Error generating glue service role: %v", err)
 		return "", "", err
 	}
-	bucketPolicy, err := GenerateConnectorBucketPolicy(connectorData.BucketArn, glueRoleArn)
+	bucketPolicy, err := GenerateConnectorBucketPolicy(connectorData.BucketArn, glueRoleArn, datalakeAdminRoleArn)
 	if err != nil {
 		log.Printf("[LinkIndustryConnector] Error generating bucket policy for connector: %v", err)
 		return "", "", err
@@ -118,13 +118,16 @@ func GenerateGlueServiceRole(cfg iam.Config, bucketArn, accountId, region string
 	return roleArn, policyArn, nil
 }
 
-func GenerateConnectorBucketPolicy(bucketArn, glueRoleArn string) (string, error) {
+func GenerateConnectorBucketPolicy(bucketArn, glueRoleArn, datalakeAdminRoleArn string) (string, error) {
 	policy := Policy{
 		Version: "2012-10-17",
 		Statement: Statement{
 			Effect: "Allow",
 			Principal: RolePrincipal{
-				AWS: glueRoleArn,
+				AWS: []string{
+					glueRoleArn,
+					datalakeAdminRoleArn,
+				},
 			},
 			Action: []string{
 				"s3:*",
@@ -159,10 +162,103 @@ func CreateConnectorCrawler(glueClient glue.Config, glueRoleArn, bucketName, env
 	return err
 }
 
-func CreateConnectorJobTrigger(glueClient glue.Config, businessObject, crawlerName, jobName string) error {
-	err := glueClient.CreateCrawlerSucceededTrigger("ucp-crawl-success-trigger-"+businessObject, crawlerName, jobName)
+func CreateConnectorJobTrigger(glueClient glue.Config, accountId, region, connectorId, crawlerName string) ([]string, error) {
+	triggerName := "ucp-connector-crawl-success-trigger"
+	triggerArn := "arn:aws:glue:" + region + ":" + accountId + ":trigger/" + triggerName
+	tagKey := "connectors"
+	entityNotFoundPrefix := "EntityNotFoundException"
+
+	// Get current tags
+	currentTags, err := glueClient.GetTags(triggerArn)
+	taggedConnectors := currentTags[tagKey]
+	triggerExists := true
 	if err != nil {
-		log.Printf("[CreateConnectorCrawler] Error creating trigger for %v: %v", businessObject, err)
+		if strings.HasPrefix(err.Error(), entityNotFoundPrefix) {
+			triggerExists = false
+		} else {
+			return []string{}, err
+		}
 	}
-	return err
+
+	// Create updated tags with new connector's ID
+	updatedTag, updateRequired := updateTaggedConnectors(taggedConnectors, connectorId)
+	updatedTags := map[string]string{
+		tagKey: updatedTag,
+	}
+
+	// Create updated list of jobs to trigger
+	supportedBusinessObjects := tagToObjects(updatedTag)
+	jobNames := GetJobNamesForObjects(supportedBusinessObjects)
+
+	if !updateRequired {
+		return jobNames, nil
+	}
+
+	if triggerExists {
+		// Update jobs based on tagged connectors
+		err := glueClient.ReplaceTriggerJobs(triggerName, jobNames)
+		if err != nil {
+			log.Printf("[CreateConnectorCrawler] Error updating trigger: %v", err)
+			return []string{}, err
+		}
+	} else {
+		// Create trigger
+		err := glueClient.CreateCrawlerSucceededTrigger(triggerName, crawlerName, jobNames)
+		if err != nil {
+			log.Printf("[CreateConnectorCrawler] Error creating trigger: %v", err)
+			return []string{}, err
+		}
+	}
+
+	// Set/update trigger tags
+	err = glueClient.TagResource(triggerArn, updatedTags)
+	return jobNames, err
+}
+
+func updateTaggedConnectors(taggedConnectorString, newConnector string) (string, bool) {
+	if len(taggedConnectorString) == 0 {
+		return newConnector, true
+	}
+	existingConnectors := strings.Split(taggedConnectorString, ":")
+	for _, connector := range existingConnectors {
+		if connector == newConnector {
+			return taggedConnectorString, false
+		}
+	}
+	return taggedConnectorString + ":" + newConnector, true
+}
+
+// Convert colon separated list of connectors to an array of business objects
+func tagToObjects(tag string) []string {
+	taggedConnectors := strings.Split(tag, ":")
+	objects := make(map[string]struct{})
+	for _, v := range taggedConnectors {
+		connectorObjects := connectorMap[v]
+		for _, v := range connectorObjects {
+			objects[v] = struct{}{}
+		}
+	}
+
+	return getKeys(objects)
+}
+
+func AddConnectorBucketToJobs(glueClient glue.Config, bucketName string, jobNames []string) error {
+	key := "--SOURCE_TABLE"
+	val := strings.Replace(bucketName, "-", "_", -1) // translate bucket name to Glue table name
+	for _, job := range jobNames {
+		err := glueClient.UpdateJobArgument(job, key, val)
+		if err != nil {
+			log.Printf("[AddConnectorBucketToJobs] Error setting Connector table name for Glue job %v", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func getKeys(m map[string]struct{}) []string {
+	keys := []string{}
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
 }

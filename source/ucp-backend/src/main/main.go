@@ -30,7 +30,7 @@ var ATHENA_DB = os.Getenv("ATHENA_DB")
 var CONNECTOR_CRAWLER_QUEUE = os.Getenv("CONNECTOR_CRAWLER_QUEUE")
 var CONNECTOR_CRAWLER_DLQ = os.Getenv("CONNECTOR_CRAWLER_DLQ")
 var GLUE_DB = os.Getenv("GLUE_DB")
-var CLICKSTREAM_JOB_NAME = os.Getenv("CLICKSTREAM_JOB_NAME")
+var DATALAKE_ADMIN_ROLE_ARN = os.Getenv("DATALAKE_ADMIN_ROLE_ARN")
 var CONNECT_PROFILE_SOURCE_BUCKET = os.Getenv("CONNECT_PROFILE_SOURCE_BUCKET")
 var KMS_KEY_PROFILE_DOMAIN = os.Getenv("KMS_KEY_PROFILE_DOMAIN")
 var UCP_CONNECT_DOMAIN = ""
@@ -67,7 +67,8 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 		log.Printf("Selected Use Case %v", subFunction)
 		if err == nil {
 			rq := model.UCPRequest{
-				ID: req.PathParameters["id"],
+				ID:      req.PathParameters["id"],
+				EnvName: LAMBDA_ENV,
 			}
 			log.Printf("Retreive request: %+v", rq)
 			err = ValidateUCPRetreiveRequest(rq)
@@ -86,7 +87,8 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 		log.Printf("Selected Use Case %v", subFunction)
 		if err == nil {
 			rq := model.UCPRequest{
-				ID: req.PathParameters["id"],
+				ID:      req.PathParameters["id"],
+				EnvName: LAMBDA_ENV,
 			}
 			log.Printf("Delete request: %+v", rq)
 			err = ValidateUCPRetreiveRequest(rq)
@@ -134,7 +136,9 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	} else if subFunction == FN_LIST_UCP_DOMAINS {
 		log.Printf("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{}
+			rq := model.UCPRequest{
+				EnvName: LAMBDA_ENV,
+			}
 			log.Printf("Search request: %+v", rq)
 			ucpRes, err = usecase.ListUcpDomains(rq, profiles)
 			if err == nil {
@@ -148,6 +152,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 		if err == nil {
 			rq := model.UCPRequest{}
 			rq, err = decodeUCPBody(req)
+			rq.EnvName = LAMBDA_ENV
 			log.Printf("Create Domain request: %+v", rq)
 			if err == nil {
 				ucpRes, err = usecase.CreateUcpDomain(rq, profiles, KMS_KEY_PROFILE_DOMAIN, CONNECT_PROFILE_SOURCE_BUCKET)
@@ -165,6 +170,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 				Domain: model.Domain{
 					Name: req.PathParameters["id"],
 				},
+				EnvName: LAMBDA_ENV,
 			}
 			log.Printf("Delete request: %+v", rq)
 			ucpRes, err = usecase.DeleteUcpDomain(rq, profiles)
@@ -201,7 +207,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 				log.Printf("Use Case %s failed with error: %v", subFunction, err)
 				return builResponseError(err), nil
 			}
-			glueRoleArn, bucketPolicy, err := usecase.LinkIndustryConnector(iamClient, data, LAMBDA_ACCOUNT_ID, LAMBDA_REGION)
+			glueRoleArn, bucketPolicy, err := usecase.LinkIndustryConnector(iamClient, data, LAMBDA_ACCOUNT_ID, LAMBDA_REGION, DATALAKE_ADMIN_ROLE_ARN)
 			if err != nil {
 				log.Printf("Use Case %s failed with error: %v", subFunction, err)
 				return builResponseError(err), nil
@@ -235,10 +241,16 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 				log.Printf("Use Case %s failed with error: %v", subFunction, err)
 				return builResponseError(err), nil
 			}
-			err = usecase.CreateConnectorJobTrigger(glueClient, "clickstream", "ucp-connector-crawler-"+LAMBDA_ENV, CLICKSTREAM_JOB_NAME)
+			var jobNames = []string{}
+			crawlerName := "ucp-connector-crawler-" + LAMBDA_ENV
+			jobNames, err = usecase.CreateConnectorJobTrigger(glueClient, LAMBDA_ACCOUNT_ID, LAMBDA_REGION, data.ConnectorId, crawlerName)
 			if err != nil {
 				log.Printf("Use Case %s failed with error: %v", subFunction, err)
 				return builResponseError(err), nil
+			}
+			err = usecase.AddConnectorBucketToJobs(glueClient, bucketName, jobNames)
+			if err != nil {
+				log.Printf("Use Case %s failed with error: %v", subFunction, err)
 			}
 			res := events.APIGatewayProxyResponse{
 				StatusCode: 200,

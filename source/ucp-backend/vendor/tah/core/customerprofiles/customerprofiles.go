@@ -66,6 +66,7 @@ type Domain struct {
 	DefaultEncryptionKey string
 	Created              time.Time
 	LastUpdated          time.Time
+	Tags                 map[string]string
 }
 
 type ProfileObject struct {
@@ -256,13 +257,14 @@ func (c CustomerProfileConfig) ListDomains() ([]Domain, error) {
 			Name:        *dom.DomainName,
 			Created:     *dom.CreatedAt,
 			LastUpdated: *dom.LastUpdatedAt,
+			Tags:        core.ToMapString(dom.Tags),
 		})
 	}
 	return domains, nil
 
 }
 
-func (c *CustomerProfileConfig) CreateDomain(name string, idResolutionOn bool, kmsArn string) error {
+func (c *CustomerProfileConfig) CreateDomain(name string, idResolutionOn bool, kmsArn string, tags map[string]string) error {
 	sqsSvc := sqs.Init(c.Region)
 	log.Printf("[core][customerProfiles] Creating new customer profile domain")
 	log.Printf("[core][customerProfiles] 1-Creating SQS Queue")
@@ -286,6 +288,7 @@ func (c *CustomerProfileConfig) CreateDomain(name string, idResolutionOn bool, k
 		DeadLetterQueueUrl:    aws.String(queueUrl),
 		DefaultExpirationDays: aws.Int64(300),
 		DefaultEncryptionKey:  &kmsArn,
+		Tags:                  core.ToMapPtString(tags),
 	}
 	_, err = c.Client.CreateDomain(input)
 	if err == nil {
@@ -470,6 +473,7 @@ func (c CustomerProfileConfig) GetDomain() (Domain, error) {
 	dom := Domain{
 		Name:                 *out.DomainName,
 		DefaultEncryptionKey: *out.DefaultEncryptionKey,
+		Tags:                 core.ToMapString(out.Tags),
 	}
 	if out.Matching != nil {
 		dom.MatchingEnabled = toBool(out.Matching.Enabled)

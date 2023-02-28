@@ -8,6 +8,7 @@ import (
 	s3 "tah/core/s3"
 	model "tah/ucp/src/business-logic/model"
 	"testing"
+	"time"
 )
 
 var UCP_REGION = getRegion()
@@ -26,12 +27,13 @@ func TestDomainCreationDeletion(t *testing.T) {
 	if err0 != nil {
 		t.Errorf("error adding bucket policy %+v", err0)
 	}
+	//adding timestamp to avoid propagation issue
 	keyArn, err1 := kmsc.CreateKey("ucp-unit-test-key")
 	if err1 != nil {
-		t.Errorf("Ccound not create KMS key to unit test UCP %v", err1)
+		t.Errorf("Cound not create KMS key to unit test UCP %v", err1)
 	}
 	log.Printf("Testing domain creation and deletion")
-	testDomain := "ucp-component-test-domain"
+	testDomain := "ucp-component-test-domain-" + time.Now().Format("15-04-05")
 	var profileClient = customerprofiles.InitWithDomain("", UCP_REGION)
 	req := model.UCPRequest{
 		Domain: model.Domain{Name: testDomain},

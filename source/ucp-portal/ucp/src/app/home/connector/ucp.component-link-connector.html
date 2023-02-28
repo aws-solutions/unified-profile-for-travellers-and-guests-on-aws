@@ -16,7 +16,7 @@
         </div>
     </div>
     <div mat-dialog-content>
-        <button type="submit" class="btn btn-primary float-right form-button" (click)="link()">
+        <button type="submit" class="btn btn-primary float-right form-button" [disabled]="buttonDisabled" (click)="link()">
             <i class="fa fa-check"></i>Link</button>
         <button type="submit" class="btn btn-secondary float-right form-button" (click)="cancel()">
             <i class="fa fa-times"></i>Cancel</button>

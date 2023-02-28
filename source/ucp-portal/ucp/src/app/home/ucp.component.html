@@ -6,7 +6,7 @@
         <div class="header">
             <img class="aws-logo" src="assets/1200px-Amazon_Web_Services_Logo.svg.png" />
 
-            <div class="btn btn-large btn-link settings-button" (click)="showSettings()">
+            <div id="settings-button" class="btn btn-large btn-link settings-button" (click)="showSettings()">
                 <fa-icon [icon]="faCog"></fa-icon>
                 Settings
             </div>
@@ -19,10 +19,12 @@
             <br />
             <div class="row">
                 <div class="col-sm-2" *ngFor="let domain of domains">
-                    <div class="domain {{selectedDomain === domain.customerProfileDomain?'domain-selected':''}}"
+                    <div id="domain-component-name-{{domain.customerProfileDomain}}" 
+                        class="domain {{selectedDomain === domain.customerProfileDomain?'domain-selected':''}}"
                         (click)="selectDomain(domain.customerProfileDomain)">
                         <span class="delete-icon">
-                            <fa-icon [icon]="faTimes" (click)="deleteDomain(domain.customerProfileDomain)"></fa-icon>
+                            <fa-icon id="delete-domain-icon-{{domain.customerProfileDomain}}" 
+                            [icon]="faTimes" (click)="deleteDomain(domain.customerProfileDomain)"></fa-icon>
                         </span>
                         <b>{{domain.customerProfileDomain}}</b><br />
                         <span class="domain-details">Last
@@ -42,7 +44,7 @@
             </div>
             <div class="row">
                 <div class="col-sm-12">
-                    <div class="btn btn-large btn-link float-right" (click)="createDomain()">
+                    <div id="new-domain-button" class="btn btn-large btn-link float-right" (click)="createDomain()">
                         <fa-icon [icon]="faPlus"></fa-icon>
                         New Domain
                     </div>
@@ -170,6 +172,10 @@
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
             </table>
             <br />
+        </div>
+        <div *ngIf="!selectedDomain">
+            <span style="color:#aaa;font-size:x-large;text-align:center">Welcome to Travel and Hospitality United Customer Profile!<br>
+            Please Click New Domain to get Started</span>
         </div>
 
     </div>

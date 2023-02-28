@@ -118,20 +118,10 @@ table {
   margin-top: 16px;
 }
 
-.integration-status-active {
+.integration-status {
   border-radius: 10px;
   margin: 2px;
   text-align: center;
-  background-color: green;
-  color: white;
-  padding: 5px;
-}
-
-.integration-status-not-active {
-  border-radius: 10px;
-  margin: 2px;
-  text-align: center;
-  background-color: firebrick;
   color: white;
   padding: 5px;
   margin-top: 12px;

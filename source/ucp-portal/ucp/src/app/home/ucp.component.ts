@@ -445,7 +445,7 @@ export class UCPSettingsComponent {
       id: "hapi",
       icon: "https://media-exp1.licdn.com/dms/image/C4E0BAQE38nbk86XEOQ/company-logo_200_200/0/1618338688553?e=2147483647&v=beta&t=32RQL7yl3BxcFrkhVLKiJZEgxrApfj4kJsgC2uhm6Vg",
       description: "Hapi is a Cloud Data Hub that exposes event streams and transactional APIs from hotel systems at scale",
-      objectType: "booking",
+      objectType: "hotel booking, guest profile, hotel stay revenue",
       deploymentStatus: "Not Deployed"
     },
     {
@@ -482,10 +482,74 @@ export class UCPSettingsComponent {
   public shouldShowLinkButton(): boolean {
     return this.industryConnectorSolutions.length > 0 ? true : false
   }
-  showLinkConnector() {
+  showLinkConnector(connectorId: string) {
     const dialogRef = this.dialog.open(LinkConnectorComponent, {
       width: '90%',
+      data: {
+        connectorId: connectorId,
+      }
     });
+  }
+  public getColorStatus(status: string) {
+    let statusColor: string;
+
+    switch(status) {
+      case "Active": {
+        statusColor = "darkgreen";
+        break;
+      }
+      case "Deleted": {
+        statusColor = "firebrick";
+        break;
+      }
+      case "Errored": {
+        statusColor = "firebrick";
+        break;
+      }
+      case "Suspended": {
+        statusColor = "firebrick";
+        break;
+      }
+      case "Depreciated": {
+        statusColor = "goldenrod";
+        break;
+      }
+      case "Draft": {
+        statusColor = "goldenrod";
+        break;
+      }
+      default: {
+        statusColor = "gray"
+        break;
+      }
+    }
+    return statusColor
+  }
+  public getLastRunColorStatus(status: string) {
+    let statusColor: string;
+    switch(status) {
+      case "Successful": {
+        statusColor = "darkgreen";
+        break;
+      }
+      case "Error": {
+        statusColor = "darkgreen";
+        break;
+      }
+      case "InProgress": {
+        statusColor = "goldenrod";
+        break;
+      }
+      case "": {
+        statusColor = "goldenrod"
+        break;
+      }
+      default: {
+        statusColor = "gray"
+        break;
+      }
+    }
+    return statusColor
   }
 }
 
@@ -495,36 +559,50 @@ export class UCPSettingsComponent {
   styleUrls: ['./ucp.component.css']
 })
 export class LinkConnectorComponent {
-  data: any;
+  response: any;
   domain: string;
   linkConnectorForm = new FormGroup({
-    agwUrl: new FormControl(),
-    tokenEndpoint: new FormControl(),
-    clientId: new FormControl(),
-    clientSecret: new FormControl(),
-    bucketArn: new FormControl(),
+    agwUrl: new FormControl('', Validators.required),
+    tokenEndpoint: new FormControl('', Validators.required),
+    clientId: new FormControl('', Validators.required),
+    clientSecret: new FormControl('', Validators.required),
+    bucketArn: new FormControl('', Validators.required),
   });
-  constructor(public dialogRef: MatDialogRef<LinkConnectorComponent>, private ucpService: UcpService, private session: SessionService, public dialog: MatDialog) {
+  buttonDisabled: boolean;
+
+  constructor(public dialogRef: MatDialogRef<LinkConnectorComponent>, private ucpService: UcpService, private session: SessionService, public dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any) {
     this.domain = this.session.getProfileDomain();
     let localData = this.session.getConnectorData(this.domain);
-    this.linkConnectorForm.controls['agwUrl'].setValue(localData?.agwUrl ?? "")
-    this.linkConnectorForm.controls['tokenEndpoint'].setValue(localData?.tokenEndpoint ?? "")
-    this.linkConnectorForm.controls['clientId'].setValue(localData?.clientId ?? "")
-    this.linkConnectorForm.controls['clientSecret'].setValue(localData?.clientSecret ?? "")
-    this.linkConnectorForm.controls['bucketArn'].setValue(localData?.bucketArn ?? "")
+    this.linkConnectorForm.controls['agwUrl'].setValue(localData?.agwUrl ?? "");
+    this.linkConnectorForm.controls['tokenEndpoint'].setValue(localData?.tokenEndpoint ?? "");
+    this.linkConnectorForm.controls['clientId'].setValue(localData?.clientId ?? "");
+    this.linkConnectorForm.controls['clientSecret'].setValue(localData?.clientSecret ?? "");
+    this.linkConnectorForm.controls['bucketArn'].setValue(localData?.bucketArn ?? "");
+    this.buttonDisabled = true;
+  }
+
+  ngOnInit() {
+    this.linkConnectorForm.valueChanges.subscribe(() => {
+      if (this.linkConnectorForm.valid) {
+        this.buttonDisabled = false;
+      } else {
+        this.buttonDisabled = true;
+      }
+    });
   }
 
   public link() {
     this.session.setConnectorData(this.domain, this.linkConnectorForm.value.agwUrl, this.linkConnectorForm.value.tokenEndpoint, this.linkConnectorForm.value.clientId, this.linkConnectorForm.value.clientSecret, this.linkConnectorForm.value.bucketArn);
     this.ucpService.linkIndustryConnector(this.linkConnectorForm.value.agwUrl, this.linkConnectorForm.value.tokenEndpoint, this.linkConnectorForm.value.clientId, this.linkConnectorForm.value.clientSecret, this.linkConnectorForm.value.bucketArn).subscribe((res: any) => {
-      this.data = res;
+      this.response = res;
       this.dialogRef.close(null);
       const dialogRef = this.dialog.open(CreateConnectorCrawler, {
         width: '90%',
         data: {
-          bucketPolicy: this.data["BucketPolicy"],
-          glueRoleArn: this.data["GlueRoleArn"],
+          bucketPolicy: this.response["BucketPolicy"],
+          glueRoleArn: this.response["GlueRoleArn"],
           bucketPath: this.linkConnectorForm.controls['bucketArn'].value,
+          connectorId: this.data.connectorId,
         }
       });
     });
@@ -551,8 +629,7 @@ export class CreateConnectorCrawler {
   }
 
   public link() {
-    this.ucpService.createConnectorCrawler(this.glueRoleArn, this.bucketPath).subscribe((res: any) => {
-    });
+    this.ucpService.createConnectorCrawler(this.glueRoleArn, this.bucketPath, this.data.connectorId).subscribe((res: any) => { });
     this.dialogRef.close(null);
   }
 

@@ -4,10 +4,14 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
 import * as codepipeline from 'aws-cdk-lib/aws-codepipeline';
 import * as codepipeline_actions from 'aws-cdk-lib/aws-codepipeline-actions';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as notifications from 'aws-cdk-lib/aws-codestarnotifications';
+import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
+import * as iam from 'aws-cdk-lib/aws-iam';
+
 import { NagSuppressions } from 'cdk-nag';
 import * as tah_s3 from '../tah-cdk-common/s3';
 import * as tah_core from '../tah-cdk-common/core';
-import * as tah_codepipeline from '../tah-cdk-common/codepipeline';
 
 
 const GO_VERSION = 1.18
@@ -19,7 +23,7 @@ export class UCPCodePipelinesStack extends Stack {
 
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-
+    const envName = this.node.tryGetContext("envName");
     const gitHubRepo = "unified-profile-for-travellers-and-guests-on-aws"
 
     //CloudFormatiion Input Parmetters to be provided by end user:
@@ -27,12 +31,6 @@ export class UCPCodePipelinesStack extends Stack {
       type: "String",
       allowedPattern: "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
       description: "Email address for the administrator"
-    });
-    const envNameVal = new CfnParameter(this, "environment", {
-      type: "String",
-      allowedValues: ["dev", "int", "staging", "prod"],
-      default: "int",
-      description: "Your environment name. Change to a unique name only if deploy the stack multiple times in the same region and account."
     });
     const gitHubUserName = new CfnParameter(this, "gitHubUserName", {
       type: "String",
@@ -67,15 +65,19 @@ export class UCPCodePipelinesStack extends Stack {
     tah_core.Output.add(this, "accessLogging", accessLogging.bucketName)
     tah_core.Output.add(this, "artifactBucket", artifactBucket.bucketName)
     tah_core.Output.add(this, "pipelineArtifactBucket", pipelineArtifactBucket.bucketName)
-    //build role with admin access
-    const buildProjectRole = new tah_codepipeline.BuildRole(this, 'buildRole')
+
+    //TODO: add this role as parametter to avoid packing and Admin role with the solution
+    const buildProjectRole = new iam.Role(this, 'buildRole', {
+      assumedBy: new iam.ServicePrincipal('codebuild.amazonaws.com'),
+      managedPolicies: [iam.ManagedPolicy.fromAwsManagedPolicyName("AdministratorAccess")]
+    })
 
     let codeBuildKmsKey = new kms.Key(this, 'MyKey', {
       enableKeyRotation: true,
     });
 
-    const infraBuild = new codebuild.PipelineProject(this, 'infraBuilProject', {
-      projectName: "code-build-ucp-infra-" + envNameVal.valueAsString,
+    const infraBuild = new codebuild.PipelineProject(this, 'infraBuilProject' + envName, {
+      projectName: "code-build-ucp-infra-" + envName,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
       buildSpec: codebuild.BuildSpec.fromObject({
@@ -88,7 +90,7 @@ export class UCPCodePipelinesStack extends Stack {
             },
             commands: [
               'echo "CodeBuild is running in $AWS_REGION" && aws configure set region $AWS_REGION',
-              'npm install -g aws-cdk@2.60.0',
+              'npm install -g aws-cdk',
               'npm -g install typescript@4.2.2',
               'cdk --version',
               'gem install cfn-nag',
@@ -99,14 +101,14 @@ export class UCPCodePipelinesStack extends Stack {
           build: {
             commands: [
               'echo "Build and Deploy Infrastructure"',
-              'pwd && sh deploy.sh ' + envNameVal.valueAsString + " " + artifactBucket.bucketName + " " + contactEmail.valueAsString
+              'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName + " " + contactEmail.valueAsString
             ],
           },
         },
         artifacts: {
           "discard-path": "yes",
           files: [
-            'source/ucp-infra/infra-config-' + envNameVal.valueAsString + '.json',
+            'source/ucp-infra/infra-config-' + envName + '.json',
           ],
         },
       }),
@@ -115,8 +117,8 @@ export class UCPCodePipelinesStack extends Stack {
       },
     });
 
-    const lambdaBuild = new codebuild.PipelineProject(this, 'lambdaBuilProject', {
-      projectName: "ucp-lambda-" + envNameVal.valueAsString,
+    const lambdaBuild = new codebuild.PipelineProject(this, 'lambdaBuilProject' + envName, {
+      projectName: "ucp-lambda-" + envName,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
       buildSpec: codebuild.BuildSpec.fromObject({
@@ -131,7 +133,7 @@ export class UCPCodePipelinesStack extends Stack {
             commands: [
               'echo "Build and Deploy lambda Function"',
               'cd source/ucp-backend',
-              'pwd && sh lbuild.sh ' + envNameVal.valueAsString + " " + artifactBucket.bucketName
+              'pwd && sh lbuild.sh ' + envName + " " + artifactBucket.bucketName
             ],
           },
         }
@@ -140,8 +142,8 @@ export class UCPCodePipelinesStack extends Stack {
         buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
       },
     });
-    const firehoselambdaBuild = new codebuild.PipelineProject(this, 'streamLambdaBuilProject', {
-      projectName: "ucp-stream-lambda-" + envNameVal.valueAsString,
+    const firehoselambdaBuild = new codebuild.PipelineProject(this, 'streamLambdaBuilProject' + envName, {
+      projectName: "ucp-stream-lambda-" + envName,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
       buildSpec: codebuild.BuildSpec.fromObject({
@@ -156,7 +158,7 @@ export class UCPCodePipelinesStack extends Stack {
             commands: [
               'echo "Build and Deploy lambda Function"',
               'cd source/ucp-stream-processor',
-              'pwd && sh lbuild.sh ' + envNameVal.valueAsString + " " + artifactBucket.bucketName
+              'pwd && sh lbuild.sh ' + envName + " " + artifactBucket.bucketName
             ],
           },
         }
@@ -167,11 +169,8 @@ export class UCPCodePipelinesStack extends Stack {
     });
 
 
-
-
-
-    const onboardingTest = new codebuild.PipelineProject(this, 'testProject', {
-      projectName: "ucp-test-" + envNameVal.valueAsString,
+    const onboardingTest = new codebuild.PipelineProject(this, 'testProject' + envName, {
+      projectName: "ucp-test-" + envName,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
       buildSpec: codebuild.BuildSpec.fromObject({
@@ -189,7 +188,7 @@ export class UCPCodePipelinesStack extends Stack {
             commands: [
               'echo "Testing Api using newman"',
               'cd source/ucp-backend/e2e',
-              'pwd && sh ./test.sh ' + envNameVal.valueAsString + " " + artifactBucket.bucketName
+              'pwd && sh ./test.sh ' + envName + " " + artifactBucket.bucketName
             ],
           },
         }
@@ -199,8 +198,8 @@ export class UCPCodePipelinesStack extends Stack {
       },
     });
 
-    const feProject = new codebuild.PipelineProject(this, "adminPortal", {
-      projectName: "ucp-admin-portal",
+    const feProject = new codebuild.PipelineProject(this, "adminPortal" + envName, {
+      projectName: "ucp-admin-portal" + envName,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
       buildSpec: codebuild.BuildSpec.fromObject({
@@ -220,7 +219,7 @@ export class UCPCodePipelinesStack extends Stack {
           build: {
             commands: [
               'echo "Build and Deploy Front end"',
-              'pwd && bash deploy.sh ' + envNameVal.valueAsString + " " + artifactBucket.bucketName
+              'pwd && bash deploy.sh ' + envName + " " + artifactBucket.bucketName
             ],
           },
         }
@@ -229,10 +228,38 @@ export class UCPCodePipelinesStack extends Stack {
         buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
         computeType: codebuild.ComputeType.MEDIUM
       },
-    })
+    });
 
-    const feTest = new codebuild.PipelineProject(this, 'feTestProject', {
-      projectName: "ucp-fe-test-" + envNameVal.valueAsString,
+    const etlProject = new codebuild.PipelineProject(this, 'etlDeployProject' + envName, {
+      projectName: "ucp-etl-" + envName,
+      role: buildProjectRole,
+      encryptionKey: codeBuildKmsKey,
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          install: {
+            "runtime-versions": {
+              golang: GO_VERSION
+            }
+          },
+          build: {
+            commands: [
+              'cd source/ucp-etls',
+              'echo "Deploy ETL code"',
+              'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName,
+              'cd e2e',
+              'sh test.sh ' + envName + " " + artifactBucket.bucketName,
+            ],
+          },
+        }
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+      },
+    });
+
+    const feTest = new codebuild.PipelineProject(this, 'feTestProject' + envName, {
+      projectName: "ucp-fe-test-" + envName,
       role: buildProjectRole,
       encryptionKey: codeBuildKmsKey,
       buildSpec: codebuild.BuildSpec.fromObject({
@@ -250,6 +277,7 @@ export class UCPCodePipelinesStack extends Stack {
               'npm install --legacy-peer-deps',
               'echo "2-Install headless Chrome"',
               'curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -',
+              "curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -",
               "echo \"deb http://dl.google.com/linux/chrome/deb/ stable main\" >> /etc/apt/sources.list.d/google-chrome.list",
               'apt-get -y update',
               'apt-get -y install google-chrome-stable',
@@ -259,7 +287,7 @@ export class UCPCodePipelinesStack extends Stack {
           build: {
             commands: [
               'echo "Testing angular ui"',
-              'pwd && sh ./test.sh ' + envNameVal.valueAsString + " " + artifactBucket.bucketName
+              'pwd && sh ./test.sh ' + envName + " " + artifactBucket.bucketName
             ],
           },
         }
@@ -272,6 +300,7 @@ export class UCPCodePipelinesStack extends Stack {
     //Output Artifacts
     const sourceOutput = new codepipeline.Artifact();
     const cdkBuildOutputLambda = new codepipeline.Artifact('CdkBuildOutputLambda');
+    const cdkBuildOutputEtl = new codepipeline.Artifact('CdkBuildOutputEtl');
     const cdkBuildOutputFirehoseLambda = new codepipeline.Artifact('CdkBuildOutputFirehoseLambda');
     const cdkBuildOutputInfra = new codepipeline.Artifact('CdkBuildOutputInfra');
     const cdkBuildOutputTest = new codepipeline.Artifact('CdkBuildOutputTest');
@@ -294,6 +323,8 @@ export class UCPCodePipelinesStack extends Stack {
           oauthToken: SecretValue.unsafePlainText(githubtoken.valueAsString),
           branch: branchName,
           owner: owner,
+          //we pevent automated pull as we use code pipeine as a deployment mecanism
+          trigger: codepipeline_actions.GitHubTrigger.NONE,
           output: sourceOutput,
         }),
       ],
@@ -309,13 +340,6 @@ export class UCPCodePipelinesStack extends Stack {
           runOrder: 2,
           outputs: [cdkBuildOutputLambda],
         }),
-        /*new codepipeline_actions.CodeBuildAction({
-          actionName: 'buildFirehoseLambdaCode',
-          project: firehoselambdaBuild,
-          input: sourceOutput,
-          runOrder: 2,
-          outputs: [cdkBuildOutputFirehoseLambda],
-        }),*/
         new codepipeline_actions.CodeBuildAction({
           actionName: 'deployInfra',
           project: infraBuild,
@@ -327,14 +351,29 @@ export class UCPCodePipelinesStack extends Stack {
     })
     //Test Stage
     stages.push({
-      stageName: 'Test',
+      stageName: 'EndToEndTests',
       actions: [
         new codepipeline_actions.CodeBuildAction({
-          actionName: 'e2eTesting',
+          actionName: 'apiTests',
           project: onboardingTest,
           input: sourceOutput,
           outputs: [cdkBuildOutputTest],
+          runOrder: 1,
         }),
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'runFeTests',
+          project: feTest,
+          input: sourceOutput,
+          runOrder: 1,
+          outputs: [feTestOutput],
+        }),
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'deployEtlCode',
+          project: etlProject,
+          input: sourceOutput,
+          runOrder: 1,
+          outputs: [cdkBuildOutputEtl],
+        })
       ],
     })
     //Deploy Stages
@@ -344,31 +383,51 @@ export class UCPCodePipelinesStack extends Stack {
     }
     if (deployStage.actions) {
       deployStage.actions.push(new codepipeline_actions.CodeBuildAction({
-        actionName: 'runFeTests',
-        project: feTest,
-        input: sourceOutput,
-        runOrder: 1,
-        outputs: [feTestOutput],
-      }))
-      deployStage.actions.push(new codepipeline_actions.CodeBuildAction({
         actionName: 'deployFrontEnd',
         project: feProject,
         input: sourceOutput,
         runOrder: 2,
         outputs: [feOutput],
       }))
-
     }
     stages.push(deployStage)
 
 
 
-    let pipeline = new codepipeline.Pipeline(this, 'ucpPipeline', {
-      pipelineName: "ucp-" + envNameVal.valueAsString,
+    let pipeline = new codepipeline.Pipeline(this, 'ucpPipeline' + envName, {
+      pipelineName: "ucp-" + envName,
       stages: stages,
       crossAccountKeys: false,
       artifactBucket: pipelineArtifactBucket,
     });
+
+    ///////////////////////////
+    // Notification on Complete
+    ////////////////////////////
+    let snsEncryptionKey = new kms.Key(this, 'SnsEncryptionKey', {
+      enableKeyRotation: true,
+    });
+    const topic = new sns.Topic(this, 'Topic', {
+      displayName: 'AWS T&H Solution CICD Pipeline Events ' + envName,
+      masterKey: snsEncryptionKey,
+    });
+    topic.addSubscription(new subscriptions.EmailSubscription(contactEmail.valueAsString));
+
+    const rule = new notifications.NotificationRule(this, 'NotificationRule', {
+      source: pipeline,
+      events: [
+        'codepipeline-pipeline-pipeline-execution-failed',
+        'codepipeline-pipeline-pipeline-execution-canceled',
+        'codepipeline-pipeline-pipeline-execution-started',
+        'codepipeline-pipeline-pipeline-execution-resumed',
+        'codepipeline-pipeline-pipeline-execution-succeeded',
+        'codepipeline-pipeline-pipeline-execution-superseded'
+      ],
+      targets: [topic],
+    });
+
+
+
     NagSuppressions.addResourceSuppressions(pipeline.role, [
       {
         id: 'AwsSolutions-IAM5',
@@ -381,7 +440,12 @@ export class UCPCodePipelinesStack extends Stack {
         reason: 'Administrator role permission for build role required'
       },
     ], true);
-
+    NagSuppressions.addResourceSuppressions(buildProjectRole, [
+      {
+        id: 'AwsSolutions-IAM4',
+        reason: 'Administrator role permission for build role required'
+      },
+    ], true);
   }
 
 }

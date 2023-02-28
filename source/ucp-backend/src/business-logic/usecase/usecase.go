@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"encoding/json"
 	"log"
 	"strconv"
 	customerprofiles "tah/core/customerprofiles"
@@ -44,6 +43,8 @@ var SEARCH_KEY_EMAIL = "PersonalEmailAddress"
 var SEARCH_KEY_PHONE = "PhoneNumber"
 var SEARCH_KEY_ACCOUNT_NUMBER = "AccountNumber"
 var SEARCH_KEY_CONF_NUMBER = "confirmationNumber"
+
+var DOMAIN_TAG_ENV_NAME = "envName"
 
 func RetreiveUCPProfile(rq model.UCPRequest, profilesSvc customerprofiles.CustomerProfileConfig) (model.ResWrapper, error) {
 	profile, err := profilesSvc.GetProfile(rq.ID)
@@ -299,17 +300,19 @@ func ListUcpDomains(rq model.UCPRequest, profilesSvc customerprofiles.CustomerPr
 	}
 	domains := []model.Domain{}
 	for _, dom := range profileDomains {
-		domains = append(domains, model.Domain{
-			Name:        dom.Name,
-			Created:     dom.Created,
-			LastUpdated: dom.LastUpdated,
-		})
+		if rq.EnvName == dom.Tags[DOMAIN_TAG_ENV_NAME] {
+			domains = append(domains, model.Domain{
+				Name:        dom.Name,
+				Created:     dom.Created,
+				LastUpdated: dom.LastUpdated,
+			})
+		}
 	}
 	return model.ResWrapper{UCPConfig: model.UCPConfig{Domains: domains}}, err
 }
 
 func CreateUcpDomain(rq model.UCPRequest, profilesSvc customerprofiles.CustomerProfileConfig, KMS_KEY_PROFILE_DOMAIN string, CONNECT_PROFILE_SOURCE_BUCKET string) (model.ResWrapper, error) {
-	err := profilesSvc.CreateDomain(rq.Domain.Name, true, KMS_KEY_PROFILE_DOMAIN)
+	err := profilesSvc.CreateDomain(rq.Domain.Name, true, KMS_KEY_PROFILE_DOMAIN, map[string]string{DOMAIN_TAG_ENV_NAME: rq.EnvName})
 	if err != nil {
 		return model.ResWrapper{}, err
 	}
@@ -334,15 +337,6 @@ func CreateUcpDomain(rq model.UCPRequest, profilesSvc customerprofiles.CustomerP
 			}
 			return model.ResWrapper{}, err
 		}
-
-		//TODO: looks like this should be removed
-		integrationInput, err3 := profilesSvc.CreatePutIntegrationInput(keyBusiness, CONNECT_PROFILE_SOURCE_BUCKET)
-		if err3 != nil {
-			log.Printf("Error creating integration input %s", err3)
-		}
-		js, _ := json.Marshal(integrationInput)
-		log.Println(string(js))
-
 		_, err4 := profilesSvc.PutIntegration(keyBusiness, CONNECT_PROFILE_SOURCE_BUCKET)
 		if err4 != nil {
 			log.Printf("Error creating integration %s", err4)
