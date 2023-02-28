@@ -169,9 +169,6 @@ export class UCPCodePipelinesStack extends Stack {
     });
 
 
-
-
-
     const onboardingTest = new codebuild.PipelineProject(this, 'testProject' + envName, {
       projectName: "ucp-test-" + envName,
       role: buildProjectRole,
@@ -240,6 +237,11 @@ export class UCPCodePipelinesStack extends Stack {
       buildSpec: codebuild.BuildSpec.fromObject({
         version: '0.2',
         phases: {
+          install: {
+            "runtime-versions": {
+              golang: GO_VERSION
+            }
+          },
           build: {
             commands: [
               'cd source/ucp-etls',
