@@ -21,6 +21,7 @@
     "typescript": "3.9.7"
   },
   "dependencies": {
+    "@types/node": "^18.11.18",
     "aws-cdk": "2.54.0",
     "cdk-nag": "2.21.19"
   }
