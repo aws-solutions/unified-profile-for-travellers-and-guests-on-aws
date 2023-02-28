@@ -1,15 +1,21 @@
 package glue
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"tah/core/core"
+	"tah/core/iam"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/glue"
 )
+
+var JOB_RUN_STATUS_NOT_RUNNING = "not_running"
+var JOB_RUN_STATUS_UNKNOWN = "unknown"
 
 type Config struct {
 	Client *glue.Glue
@@ -24,7 +30,9 @@ type S3Target struct {
 }
 
 type Crawler struct {
-	Name string
+	Name            string
+	State           string
+	LastCrawlStatus string
 }
 
 type Job struct {
@@ -52,6 +60,22 @@ func Init(region, dbName string) Config {
 	}
 }
 
+func (c Config) CreateGlueRole(roleName string, actions []string) (string, string, error) {
+	iamClient := iam.Init()
+	doc := iam.PolicyDocument{
+		Version: "2012-10-17",
+		Statement: []iam.StatementEntry{
+			{
+				Effect:   "Allow",
+				Action:   actions,
+				Resource: "*",
+			},
+		},
+	}
+	_, policyArn, err := iamClient.CreateRoleWithPolicy(roleName, "glue.amazonaws.com", doc)
+	return roleName, policyArn, err
+}
+
 func (c Config) CreateDatabase(name string) error {
 	databaseInput := &glue.DatabaseInput{
 		Name: &name,
@@ -75,6 +99,16 @@ func (c Config) DeleteDatabase(name string) error {
 		log.Printf("[DeleteDatabase] Error: %v", err)
 	}
 	return err
+}
+
+func (c Config) CreateSimpleS3Crawler(name, role, schedule, s3Bucket string) error {
+	s3Targets := []S3Target{
+		S3Target{
+			Path:       "s3://" + s3Bucket,
+			SampleSize: 50,
+		},
+	}
+	return c.CreateS3Crawler(name, role, schedule, "", "", s3Targets)
 }
 
 func (c Config) CreateS3Crawler(name, role, schedule, queueArn, dlqArn string, s3Targets []S3Target) error {
@@ -108,7 +142,11 @@ func (c Config) GetCrawler(name string) (Crawler, error) {
 		return Crawler{}, err
 	}
 	crawler := Crawler{
-		Name: *output.Crawler.Name,
+		Name:  *output.Crawler.Name,
+		State: *output.Crawler.State,
+	}
+	if output.Crawler.LastCrawl != nil {
+		crawler.LastCrawlStatus = *output.Crawler.LastCrawl.Status
 	}
 	return crawler, nil
 }
@@ -128,15 +166,50 @@ func (c Config) DeleteCrawlerIfExists(name string) error {
 	return nil
 }
 
+func (c Config) RunCrawler(name string) error {
+	input := &glue.StartCrawlerInput{
+		Name: &name,
+	}
+	_, err := c.Client.StartCrawler(input)
+	return err
+}
+
+func (c Config) WaitForCrawlerRun(name string, timeoutSeconds int) (string, error) {
+	log.Printf("Waiting for crawler run to complete")
+	crawler, err := c.GetCrawler(name)
+	if err != nil {
+		return "", err
+	}
+	it := 0
+	for crawler.State != glue.CrawlerStateReady {
+		log.Printf("Crawler State: %v Waiting 5 seconds before checking again", crawler.State)
+		time.Sleep(5 * time.Second)
+		crawler, err = c.GetCrawler(name)
+		if err != nil {
+			return "", err
+		}
+		it += 1
+		if it*5 >= timeoutSeconds {
+			return "", errors.New(fmt.Sprintf("Crawler wait timed out after %v secconds", it*5))
+		}
+	}
+	log.Printf("Crawler State: %v. Completed", crawler.State)
+	return crawler.LastCrawlStatus, err
+}
+
 func ConvertS3Targets(targets []S3Target, queueArn, dlqArn string) []*glue.S3Target {
 	glueTargets := []*glue.S3Target{}
 	for _, target := range targets {
 		glueTarget := glue.S3Target{
-			ConnectionName:   &target.ConnectionName,
-			DlqEventQueueArn: &dlqArn,
-			EventQueueArn:    &queueArn,
-			Path:             &target.Path,
-			SampleSize:       &target.SampleSize,
+			ConnectionName: &target.ConnectionName,
+			Path:           &target.Path,
+			SampleSize:     &target.SampleSize,
+		}
+		if dlqArn != "" {
+			glueTarget.DlqEventQueueArn = &dlqArn
+		}
+		if queueArn != "" {
+			glueTarget.EventQueueArn = &queueArn
 		}
 		glueTargets = append(glueTargets, &glueTarget)
 	}
@@ -162,6 +235,45 @@ func (c Config) CreateSparkETLJob(jobName, scriptLocation, role string) error {
 	return err
 }
 
+func (c Config) RunJob(name string, args map[string]string) error {
+	input := &glue.StartJobRunInput{
+		JobName:   &name,
+		Arguments: map[string]*string{},
+	}
+	for key, value := range args {
+		input.Arguments[key] = aws.String(value)
+	}
+	_, err := c.Client.StartJobRun(input)
+	return err
+}
+
+func (c Config) WaitForJobRun(name string, timeoutSeconds int) (string, error) {
+	log.Printf("Waiting for job run to complete")
+	status, err := c.GetJobRunStatus(name)
+	if err != nil {
+		return JOB_RUN_STATUS_UNKNOWN, err
+	}
+	it := 0
+	for status != glue.JobRunStateSucceeded {
+		log.Printf("Job run Status: %v Waiting 5 seconds before checking again", status)
+		time.Sleep(5 * time.Second)
+		status, err = c.GetJobRunStatus(name)
+		if err != nil {
+			return JOB_RUN_STATUS_UNKNOWN, err
+		}
+		if status == "FAILED" {
+			log.Printf("Job run Status: %v. Completed", status)
+			return status, nil
+		}
+		it += 1
+		if it*5 >= timeoutSeconds {
+			return JOB_RUN_STATUS_UNKNOWN, errors.New(fmt.Sprintf("Job wait timed out after %v secconds", it*5))
+		}
+	}
+	log.Printf("Job run Status: %v. Completed", status)
+	return status, err
+}
+
 func (c Config) GetJob(jobName string) (Job, error) {
 	output, err := c.Client.GetJob(&glue.GetJobInput{
 		JobName: &jobName,
@@ -179,6 +291,40 @@ func (c Config) GetJob(jobName string) (Job, error) {
 		DefaultArguments: core.ToMapString(output.Job.DefaultArguments),
 	}
 	return job, nil
+}
+
+func (c Config) GetJobRunStatus(jobName string) (string, error) {
+	input := &glue.GetJobRunsInput{
+		JobName: &jobName,
+	}
+	output, err := c.Client.GetJobRuns(input)
+	if err != nil {
+		log.Printf("[GetJob] Error getting job runs: %v", err)
+		return JOB_RUN_STATUS_UNKNOWN, err
+	}
+	lastJobRunTime := time.Time{}
+	status := JOB_RUN_STATUS_NOT_RUNNING
+	for _, jobRun := range output.JobRuns {
+		if jobRun.StartedOn.After(lastJobRunTime) {
+			lastJobRunTime = *jobRun.StartedOn
+			status = *jobRun.JobRunState
+		}
+	}
+	if output.NextToken != nil {
+		input.NextToken = output.NextToken
+		output, err = c.Client.GetJobRuns(input)
+		if err != nil {
+			log.Printf("[GetJob] Error getting job runs: %v", err)
+			return JOB_RUN_STATUS_UNKNOWN, err
+		}
+		for _, jobRun := range output.JobRuns {
+			if jobRun.StartedOn.After(lastJobRunTime) {
+				lastJobRunTime = *jobRun.StartedOn
+				status = *jobRun.JobRunState
+			}
+		}
+	}
+	return status, nil
 }
 
 func (c Config) DeleteJob(jobName string) error {
