@@ -21,7 +21,19 @@ cat ./ucp-config.json
 export GLUE_DB_NAME=$(jq -r .glueDBname ./ucp-config.json)
 export GLUE_ROLE_NAME=$(jq -r .ucpDataAdminRoleName ./ucp-config.json)
 export GLUE_JOB_NAME_AIR_BOOKING=$(jq -r .customerJobNameairbooking ./ucp-config.json)
+export GLUE_JOB_NAME_HOTEL_BOOKINGS=$(jq -r .customerJobNamehotelbooking ./ucp-config.json)
+export GLUE_JOB_NAME_PAX_PROFILES=$(jq -r .customerJobNamepaxprofile ./ucp-config.json)
+export GLUE_JOB_NAME_GUEST_PROFILES=$(jq -r .customerJobNameguestprofile ./ucp-config.json)
+export GLUE_JOB_NAME_STAY_REVENUE=$(jq -r .customerJobNamehotelstay ./ucp-config.json)
+export GLUE_JOB_NAME_CLICKSTREAM=$(jq -r .customerJobNameclickstream ./ucp-config.json)
+
 export TEST_BUCKET_AIR_BOOKING=$(jq -r .customerTestBucketairbooking ./ucp-config.json)
+export TEST_BUCKET_HOTEL_BOOKINGS=$(jq -r .customerTestBuckethotelbooking ./ucp-config.json)
+export TEST_BUCKET_PAX_PROFILES=$(jq -r .customerTestBucketpaxprofile ./ucp-config.json)
+export TEST_BUCKET_GUEST_PROFILES=$(jq -r .customerTestBucketguestprofile ./ucp-config.json)
+export TEST_BUCKET_STAY_REVENUE=$(jq -r .customerTestBuckethotelstay ./ucp-config.json)
+export TEST_BUCKET_CLICKSTREAM=$(jq -r .customerTestBucketclickstream ./ucp-config.json)
+
 export TEST_BUCKET_ACCP_IMPORT=$(jq -r .connectProfileImportBucketTestOut ./ucp-config.json)
 echo "GLUE_ROLE_NAME: $GLUE_ROLE_NAME"
 echo "GLUE_DB_NAME: $GLUE_DB_NAME"

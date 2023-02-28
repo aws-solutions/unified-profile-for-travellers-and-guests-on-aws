@@ -25,6 +25,8 @@ aws s3 cp etls/clickstreamToUcp.py s3://$bucket/$env/etl/clickstreamToUcp.py
 aws s3 cp etls/air_bookingToUcp.py s3://$bucket/$env/etl/air_bookingToUcp.py
 aws s3 cp etls/hotel_bookingToUcp.py s3://$bucket/$env/etl/hotel_bookingToUcp.py
 aws s3 cp etls/guest_profileToUcp.py s3://$bucket/$env/etl/guest_profileToUcp.py
+aws s3 cp etls/hotel_stayToUcp.py s3://$bucket/$env/etl/hotel_stayToUcp.py
+aws s3 cp etls/pax_profileToUcp.py s3://$bucket/$env/etl/pax_profileToUcp.py
 
 echo "zipping transforms and common code into lib"
 zip -r tah_lib.zip tah_lib/* -x tah_lib/__pycache__/**\* -x tah_lib/__pycache__

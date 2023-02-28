@@ -51,7 +51,23 @@ def addBookingRec(bookingRecs, rec, seg, product, guest, cid):
         'n_guests': rec["nGuests"],
         'product_id': product["id"],
         'check_in_date': rec["startDate"],
+        'honorific': guest['honorific'],
+        'first_name': guest['firstName'],
+        'middle_name': guest['middleName'],
+        'last_name': guest['lastName'],
+        'gender': guest['gender'],
+        'pronoun': guest['pronoun'],
+        'date_of_birth': guest['dateOfBirth'],
+        'job_title': guest['jobTitle'],
+        'company': guest['parentCompany'],
     }
+    if "nationality" in rec:
+        hotelBookingRec["nationality_code"] = rec['nationality']["code"]
+        hotelBookingRec["nationality_name"] = rec['nationality']["name"]
+    if "language" in rec:
+        hotelBookingRec["language_code"] = rec['language']["code"]
+        hotelBookingRec["language_name"] = rec['language']["name"]
+
     if "externalIds" in rec:
         rec['pms_id'] = getExternalId(rec["externalIds"], "pms")
         rec['crs_id'] = getExternalId(rec["externalIds"], "crs")
@@ -85,9 +101,8 @@ def addBookingRec(bookingRecs, rec, seg, product, guest, cid):
     # Set primary option for phone/email/address
     setPrimaryEmail(hotelBookingRec, guest['emails'])
     setPrimaryPhone(hotelBookingRec, guest['phones'])
-    setTravellerId(hotelBookingRec, guest, cid)
     setPrimaryAddress(hotelBookingRec, guest['addresses'])
-
+    # set traveller ID
     bookingRecs.append(hotelBookingRec)
 
 

@@ -138,6 +138,14 @@ def buildSerializedLists(list, key, sep):
     parts = []
     for item in list:
         if key in item:
-            key.replace(sep, "")
+            item[key].replace(sep, "")
             parts.append(item[key])
-    return parts.join(parts, sep)
+    return sep.join(parts)
+
+
+def replaceAndjoin(array, sep):
+    parts = []
+    for item in array:
+        item.replace(sep, "")
+        parts.append(item)
+    return sep.join(parts)

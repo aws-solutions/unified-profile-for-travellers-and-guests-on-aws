@@ -53,19 +53,15 @@
             "gender": "other",
             "honorific": "Sir",
             "job_title": "Facilitator",
-            "language": {
-                "code": "ln",
-                "name": ""
-            },
+            "language_code": "ln",
+            "language_name": "",
             "last_name": "Wiza",
             "last_updated_by": "Abbey Little",
             "last_updated_on": "2022-03-24T23:07:59.386436665Z",
             "middle_name": "Eliane",
             "model_version": "1.0",
-            "nationality": {
-                "code": "LU",
-                "name": ""
-            },
+            "nationality_code": "LU",
+            "nationality_name": "",
             "object_type": "pax_profile",
             "phone_home": "4626146981",
             "phone_type": "home",

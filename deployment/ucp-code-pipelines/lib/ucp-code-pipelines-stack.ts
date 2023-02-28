@@ -245,6 +245,8 @@ export class UCPCodePipelinesStack extends Stack {
               'cd source/ucp-etls',
               'echo "Deploy ETL code"',
               'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName,
+              'cd e2e',
+              'sh test.sh ' + envName + " " + artifactBucket.bucketName,
             ],
           },
         }
@@ -373,18 +375,18 @@ export class UCPCodePipelinesStack extends Stack {
         outputs: [feTestOutput],
       }))
       deployStage.actions.push(new codepipeline_actions.CodeBuildAction({
+        actionName: 'deployEtlCode',
+        project: etlProject,
+        input: sourceOutput,
+        runOrder: 1,
+        outputs: [cdkBuildOutputEtl],
+      }))
+      deployStage.actions.push(new codepipeline_actions.CodeBuildAction({
         actionName: 'deployFrontEnd',
         project: feProject,
         input: sourceOutput,
         runOrder: 2,
         outputs: [feOutput],
-      }))
-      deployStage.actions.push(new codepipeline_actions.CodeBuildAction({
-        actionName: 'deployEtlCode',
-        project: etlProject,
-        input: sourceOutput,
-        runOrder: 3,
-        outputs: [cdkBuildOutputEtl],
       }))
     }
     stages.push(deployStage)

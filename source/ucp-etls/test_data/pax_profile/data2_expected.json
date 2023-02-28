@@ -36,19 +36,15 @@
             "honorific": "Dr",
             "id": "2296805072",
             "job_title": "Officer",
-            "language": {
-                "code": "zh",
-                "name": ""
-            },
+            "language_code": "zh",
+            "language_name": "",
             "last_name": "Rowe",
             "last_updated_by": "Delfina Farrell",
             "last_updated_on": "2022-06-17T18:47:51.048086961Z",
             "middle_name": "Jacquelyn",
             "model_version": "1.0",
-            "nationality": {
-                "code": "IQ",
-                "name": ""
-            },
+            "nationality_code": "IQ",
+            "nationality_name": "",
             "object_type": "pax_profile",
             "phone": "(984)115-3468",
             "phone_type": "",

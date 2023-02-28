@@ -62,7 +62,11 @@ else
     glueDBname=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='glueDBname'].OutputValue" --output text)
     ucpDataAdminRoleName=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='ucpDataAdminRoleName'].OutputValue" --output text)
     customerJobNameairbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerJobNameairbooking'].OutputValue" --output text)
-    connectProfileImportBucketOut=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerJobNameairbooking'].OutputValue" --output text)
+    customerJobNameclickstream=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerJobNameclickstream'].OutputValue" --output text)
+    customerJobNameguestprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerJobNameguestprofile'].OutputValue" --output text)
+    customerJobNamehotelbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerJobNamehotelbooking'].OutputValue" --output text)
+    customerJobNamehotelstay=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerJobNamehotelstay'].OutputValue" --output text)
+    customerJobNamepaxprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerJobNamepaxprofile'].OutputValue" --output text)
     customerTestBuckethotelbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBuckethotelbooking'].OutputValue" --output text)
     customerTestBucketairbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBucketairbooking'].OutputValue" --output text)
     customerTestBucketguestprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBucketguestprofile'].OutputValue" --output text)
@@ -151,6 +155,11 @@ else
          "\"glueDBname\":\"$glueDBname\","\
          "\"ucpDataAdminRoleName\":\"$ucpDataAdminRoleName\","\
          "\"customerJobNameairbooking\":\"$customerJobNameairbooking\","\
+         "\"customerJobNameclickstream\":\"$customerJobNameclickstream\","\
+         "\"customerJobNameguestprofile\":\"$customerJobNameguestprofile\","\
+         "\"customerJobNamehotelbooking\":\"$customerJobNamehotelbooking\","\
+         "\"customerJobNamehotelstay\":\"$customerJobNamehotelstay\","\
+         "\"customerJobNamepaxprofile\":\"$customerJobNamepaxprofile\","\
          "\"customerTestBuckethotelbooking\":\"$customerTestBuckethotelbooking\","\
          "\"customerTestBucketairbooking\":\"$customerTestBucketairbooking\","\
          "\"customerTestBucketguestprofile\":\"$customerTestBucketguestprofile\","\

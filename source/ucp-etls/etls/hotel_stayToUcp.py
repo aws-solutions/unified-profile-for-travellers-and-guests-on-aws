@@ -1,4 +1,5 @@
 import sys
+import uuid
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
@@ -29,5 +30,7 @@ revenue_items = accpReccordsDF.select(
 
 revenue_items.printSchema()
 
+subfolder = str(uuid.uuid1(node=None, clock_seq=None))
+
 revenue_items.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/hotel_stay_revenue_items")
+    "s3://"+args["DEST_BUCKET"]+"/hotel_stay_revenue_items/"+subfolder)

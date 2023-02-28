@@ -1,7 +1,7 @@
 {
     "modelVersion": "1.0",
-    "event_type": "SelectEndDate",
-    "event_timestamp": "2022-05-30T11:26:45.506808073Z",
+    "event_type": "SearchExperience",
+    "event_timestamp": "2021-03-29T22:22:19.451829566Z",
     "arrival_timestamp": 0,
     "event_version": "",
     "application": {},
@@ -10,43 +10,43 @@
         "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"
     },
     "session": {
-        "id": "ac2a5054-b56f-4b9a-abc1-2e968d498785"
+        "id": "b21683f9-6345-40da-a4ea-9aac75f4149e"
     },
     "attributes": [
         {
             "type": "string",
-            "name": "quantity",
+            "name": "quantities",
             "stringValue": "",
             "stringValues": null,
             "numValue": 0.0,
             "numValues": [
-                5.0,
-                3.0,
-                3.0,
                 4.0,
+                2.0,
                 3.0,
                 3.0,
                 2.0,
                 3.0,
+                4.0,
                 1.0,
-                4.0
+                1.0,
+                5.0
             ]
         },
         {
             "type": "strings",
-            "name": "products_price",
+            "name": "products",
             "stringValue": "",
             "stringValues": [
-                "CHMPGN",
+                "DBL-BAR",
+                "BKFST",
+                "KING_SUPER_SAVER",
                 "SUITE-BAR",
                 "SUITE-BAR",
-                "CHMPGN",
+                "BKFST",
                 "KING_SUPER_SAVER",
                 "CHMPGN",
-                "DBL-BAR",
-                "SUITE-BAR",
-                "DBL-BAR",
-                "BKFST"
+                "CHMPGN",
+                "KING_SUPER_SAVER"
             ],
             "numValue": 0.0,
             "numValues": null
@@ -54,7 +54,7 @@
         {
             "type": "string",
             "name": "destination",
-            "stringValue": "Corpus Christi, Washington, Iraq",
+            "stringValue": "Bakersfield, Texas, Fiji",
             "stringValues": null,
             "numValue": 0.0,
             "numValues": null
@@ -64,7 +64,7 @@
             "name": "num_nights",
             "stringValue": "",
             "stringValues": null,
-            "numValue": 2.0,
+            "numValue": 6.0,
             "numValues": null
         },
         {
@@ -78,7 +78,7 @@
         {
             "type": "string",
             "name": "rate_plan",
-            "stringValue": "SUPER_SAVER",
+            "stringValue": "BAR",
             "stringValues": null,
             "numValue": 0.0,
             "numValues": null
@@ -86,7 +86,7 @@
         {
             "type": "string",
             "name": "checkin_date",
-            "stringValue": "2024-01-29",
+            "stringValue": "2021-04-28",
             "stringValues": null,
             "numValue": 0.0,
             "numValues": null
@@ -94,7 +94,7 @@
         {
             "type": "string",
             "name": "checkout_date",
-            "stringValue": "2024-01-31",
+            "stringValue": "2021-05-04",
             "stringValues": null,
             "numValue": 0.0,
             "numValues": null
@@ -102,7 +102,7 @@
         {
             "type": "string",
             "name": "hotel_code",
-            "stringValue": "TOK12",
+            "stringValue": "SPO05",
             "stringValues": null,
             "numValue": 0.0,
             "numValues": null
@@ -112,16 +112,16 @@
             "name": "hotel_code_list",
             "stringValue": "",
             "stringValues": [
-                "ROM14",
-                "ROM07",
-                "LIM16",
-                "LON07",
-                "TOK18",
-                "ROM03",
+                "TOK04",
+                "PAR18",
+                "SPO01",
+                "ROM09",
+                "TOK19",
                 "TOK05",
-                "NYC08",
-                "ROM06",
-                "SPO07"
+                "LIM15",
+                "PAR01",
+                "LIM17",
+                "TOK14"
             ],
             "numValue": 0.0,
             "numValues": null

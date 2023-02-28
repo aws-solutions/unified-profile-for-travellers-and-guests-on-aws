@@ -1,4 +1,5 @@
 import traceback
+from tah_lib.common import replaceAndjoin
 
 
 def buildObjectRecord(rec):
@@ -65,6 +66,14 @@ def buildObjectRecord(rec):
             rec["attributes"], "hotel_code_list")
         newRec["num_nights"] = getAttr(rec["attributes"], "num_nights")
         newRec["aws_account_id"] = rec["awsAccountId"]
+
+        # cleaning up None data
+        toDelete = []
+        for key in newRec:
+            if newRec[key] is None:
+                toDelete.append(key)
+        for key in toDelete:
+            del newRec[key]
     except Exception as e:
         traceback_info = traceback.format_exc()
         print(traceback_info)
@@ -78,15 +87,14 @@ def getAttr(attributes, name):
         if att["name"] == name:
             selectedAtt = att
             break
-    # loop through each attribute in list once for better performance
-    # obj = next(x for x in attributes if x["name"] == name)
-    # if obj is None:
-    #    return ""
     if "type" in selectedAtt:
         if selectedAtt["type"] == "string":
-            return selectedAtt["stringValue"]
+            return str(selectedAtt["stringValue"])
         elif selectedAtt["type"] == "strings":
-            return selectedAtt["stringValues"]
+            arr = []
+            for val in selectedAtt["stringValues"]:
+                arr.append(str(val))
+            return replaceAndjoin(arr, "|")
         elif selectedAtt["type"] == "number":
             try:
                 return float(selectedAtt["numValue"])
@@ -95,9 +103,6 @@ def getAttr(attributes, name):
         elif selectedAtt["type"] == "numbers":
             arr = []
             for val in selectedAtt["numValues"]:
-                try:
-                    arr.append(float(val))
-                except Exception as e:
-                    arr.append(0.0)
-            return arr
-    return ""
+                arr.append(str(val))
+            return replaceAndjoin(arr, "|")
+    return None

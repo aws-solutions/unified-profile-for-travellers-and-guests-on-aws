@@ -24,11 +24,15 @@ def buildObjectRecord(rec):
             'gender': rec['gender'],
             'pronoun': rec['pronoun'],
             'date_of_birth': rec['dateOfBirth'],
-            'language': rec['language'],
-            'nationality': rec['nationality'],
             'job_title': rec['jobTitle'],
             'company': rec['parentCompany'],
         }
+        if "nationality" in rec:
+            profileRec["nationality_code"] = rec['nationality']["code"]
+            profileRec["nationality_name"] = rec['nationality']["name"]
+        if "language" in rec:
+            profileRec["language_code"] = rec['language']["code"]
+            profileRec["language_name"] = rec['language']["name"]
 
         # Set primary option for phone/email/address
         setPrimaryEmail(profileRec, rec['emails'])

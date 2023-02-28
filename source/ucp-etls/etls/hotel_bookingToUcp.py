@@ -1,4 +1,5 @@
 import sys
+import uuid
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
@@ -40,12 +41,13 @@ email.printSchema()
 phone.printSchema()
 loyalty.printSchema()
 
+subfolder = str(uuid.uuid1(node=None, clock_seq=None))
 
 bookings.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/hotel_booking")
+    "s3://"+args["DEST_BUCKET"]+"/hotel_booking/"+subfolder)
 email.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/email_history")
+    "s3://"+args["DEST_BUCKET"]+"/email_history/"+subfolder)
 phone.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/phone_history")
+    "s3://"+args["DEST_BUCKET"]+"/phone_history/"+subfolder)
 loyalty.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/hotel_loyalty")
+    "s3://"+args["DEST_BUCKET"]+"/hotel_loyalty/"+subfolder)

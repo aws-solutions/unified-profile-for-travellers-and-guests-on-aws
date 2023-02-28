@@ -22,19 +22,15 @@
             "gender": "other",
             "honorific": "Cllr",
             "job_title": "Coordinator",
-            "language": {
-                "code": "ae",
-                "name": ""
-            },
+            "language_code": "ae",
+            "language_name": "",
             "last_name": "Wilkinson",
             "last_updated_by": "Vincent Mueller",
             "last_updated_on": "2022-03-20T11:58:02.529353371Z",
             "middle_name": "Hoyt",
             "model_version": "1.0",
-            "nationality": {
-                "code": "CR",
-                "name": ""
-            },
+            "nationality_code": "CR",
+            "nationality_name": "",
             "object_type": "pax_profile",
             "phone": "",
             "phone_business": "",

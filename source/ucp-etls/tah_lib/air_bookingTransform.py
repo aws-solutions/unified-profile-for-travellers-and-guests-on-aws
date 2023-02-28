@@ -93,12 +93,16 @@ def addAirBookingRecord(recs, rec, pax, seg, cid):
         "gender": pax["gender"],
         "pronoun": pax["pronoun"],
         "date_of_birth": pax["dateOfBirth"],
-        "language": pax["language"]["code"],
-        "nationality": pax["nationality"]["code"],
         "job_title": pax["jobTitle"],
         "company": pax["parentCompany"],
         "price": rec["price"]["grandTotal"],
     }
+    if "nationality" in rec:
+        airBookingRec["nationality_code"] = rec['nationality']["code"]
+        airBookingRec["nationality_name"] = rec['nationality']["name"]
+    if "language" in rec:
+        airBookingRec["language_code"] = rec['language']["code"]
+        airBookingRec["language_name"] = rec['language']["name"]
     if "externalIds" in rec:
         airBookingRec['pss_id'] = getExternalId(rec["externalIds"], "pss")
         airBookingRec['gds_id'] = getExternalId(rec["externalIds"], "gds")

@@ -1,5 +1,6 @@
 # pyright: reportMissingImports=false, reportUndefinedVariable=false
 import sys
+import uuid
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
@@ -34,11 +35,13 @@ phone = accpRecordsDF.select(
 loyalty = accpRecordsDF.select(
     explode(accpRecordsDF.air_loyalty_recs)).select("col.*")
 
+subfolder = str(uuid.uuid1(node=None, clock_seq=None))
+
 profile.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/pax_profile")
+    "s3://"+args["DEST_BUCKET"]+"/pax_profile/"+subfolder)
 email.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/email_history")
+    "s3://"+args["DEST_BUCKET"]+"/email_history/"+subfolder)
 phone.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/phone_history")
+    "s3://"+args["DEST_BUCKET"]+"/phone_history/"+subfolder)
 loyalty.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/air_loyalty")
+    "s3://"+args["DEST_BUCKET"]+"/air_loyalty/"+subfolder)

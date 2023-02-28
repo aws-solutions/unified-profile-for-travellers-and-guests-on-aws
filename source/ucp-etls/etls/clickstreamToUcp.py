@@ -1,4 +1,5 @@
 import sys
+import uuid
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
@@ -22,5 +23,7 @@ segments = Map.apply(frame=businessObjectDF, f=buildObjectRecord)
 segments.printSchema()
 # segments.toDF().show(100)
 
+subfolder = str(uuid.uuid1(node=None, clock_seq=None))
+
 segments.toDF().write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/clickstream")
+    "s3://"+args["DEST_BUCKET"]+"/clickstream/"+subfolder)
