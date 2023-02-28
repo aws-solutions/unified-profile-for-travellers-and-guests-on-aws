@@ -252,7 +252,10 @@ export class UCPCodePipelinesStack extends Stack {
             ],
           },
         }
-      })
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+      },
     });
 
     const feTest = new codebuild.PipelineProject(this, 'feTestProject' + envName, {
