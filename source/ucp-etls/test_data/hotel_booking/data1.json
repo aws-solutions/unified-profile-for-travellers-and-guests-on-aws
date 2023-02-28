@@ -1,0 +1,833 @@
+{
+  "objectVersion": 2,
+  "modelVersion": "1.0",
+  "id": "3BZIX5SH9I",
+  "externalIDs": [
+    {
+      "id": "L3UXZCIYEJ",
+      "IdName": "booking_id",
+      "originatingSystem": "gds"
+    },
+    {
+      "id": "TDR7I7OGPH",
+      "IdName": "booking_id",
+      "originatingSystem": "pms"
+    }
+  ],
+  "lastUpdatedOn": "2022-11-09T09:15:01.445661551Z",
+  "createdOn": "2022-07-09T09:15:01.445661551Z",
+  "lastUpdatedBy": "Mac Boehm",
+  "createdBy": "Ciara Armstrong",
+  "creationChannelId": "gds",
+  "hotelCode": "ATL02",
+  "nNights": 6,
+  "nGuests": 2,
+  "startDate": "2022-09-27",
+  "endDate": "2022-10-03",
+  "holder": {
+    "modelVersion": "1.0",
+    "id": "0072828729",
+    "lastUpdatedOn": "2021-12-27T06:01:03.972207049Z",
+    "createdOn": "2021-10-27T06:01:03.972207049Z",
+    "lastUpdatedBy": "Marlin Morissette",
+    "createdBy": "Leila Bode",
+    "emails": [
+      {
+        "type": "business",
+        "address": "bayleeratke@brakus.net",
+        "primary": true
+      }
+    ],
+    "phones": [
+      {
+        "type": "",
+        "number": "(838)346-5920",
+        "primary": false,
+        "countryCode": 71
+      },
+      {
+        "type": "mobile",
+        "number": "4770912343",
+        "primary": true,
+        "countryCode": 45
+      }
+    ],
+    "addresses": [
+      {
+        "type": "",
+        "line1": "2293 Lake Oval mouth",
+        "line2": "more content line 2",
+        "line3": "more content line 3",
+        "line4": "more content line 4",
+        "city": "Pittsburgh",
+        "stateProvince": {
+          "code": "SC",
+          "name": ""
+        },
+        "postalCode": "13565",
+        "country": {
+          "code": "GU",
+          "name": ""
+        },
+        "primary": true
+      }
+    ],
+    "honorific": "Mr",
+    "firstName": "Ruthe",
+    "middleName": "Jamarcus",
+    "lastName": "Zboncak",
+    "gender": "other",
+    "pronoun": "",
+    "dateOfBirth": "1922-12-12",
+    "language": {
+      "code": "ps",
+      "name": ""
+    },
+    "nationality": {
+      "code": "SD",
+      "name": ""
+    },
+    "jobTitle": "Coordinator",
+    "parentCompany": "Archimedes Inc.",
+    "loyaltyPrograms": [
+      {
+        "id": "3478014738",
+        "programName": "club",
+        "points": 651524.0,
+        "pointUnit": "miles",
+        "pointsToNextLevel": 7269.0,
+        "level": "silver",
+        "joined": "2021-10-27T06:01:03.972207049Z"
+      }
+    ]
+  },
+  "paymentInformation": {
+    "paymentType": "loyalty_redemption",
+    "ccInfo": {
+      "token": "",
+      "cardType": "",
+      "cardExp": "",
+      "cardCvv": "",
+      "expiration": "",
+      "name": "",
+      "address": {
+        "type": "",
+        "line1": "",
+        "line2": "",
+        "line3": "",
+        "line4": "",
+        "city": "",
+        "stateProvince": {
+          "code": "",
+          "name": ""
+        },
+        "postalCode": "",
+        "country": {
+          "code": "",
+          "name": ""
+        },
+        "primary": false
+      }
+    },
+    "routingNumber": "",
+    "accountNumber": "",
+    "voucherID": "",
+    "address": {
+      "type": "",
+      "line1": "",
+      "line2": "",
+      "line3": "",
+      "line4": "",
+      "city": "",
+      "stateProvince": {
+        "code": "",
+        "name": ""
+      },
+      "postalCode": "",
+      "country": {
+        "code": "",
+        "name": ""
+      },
+      "primary": false
+    }
+  },
+  "contextId": "",
+  "groupId": "LITDIM8UAQ",
+  "status": "cancelled",
+  "currency": {
+    "code": "MUR",
+    "name": "Mauritius Rupee",
+    "symbol": ""
+  },
+  "cancelReason": {
+    "reason": "mobile",
+    "comment": {
+      "type": "cancellation_reason",
+      "language": {
+        "code": "pa",
+        "name": ""
+      },
+      "title": "canccellation reason",
+      "text": "Hourly itself whom few its which whomever fragile heavily monthly then day pair speedily our describe love finish that motivation basket exemplified to correctly might anyone talent yours pig I often before first myself since she here her these the ours kindly out whom theirs ours never secondly such case soon body sleep across constantly that she it he which whatever relax it do dance mustering generally bouquet from fork selfishly tribe in tonight tribe Balinese welfare childhood it gracefully many Salvadorean aggravate school everything along week daily pause plane owl could while quite due firstly it into besides few.",
+      "context": null,
+      "createdDateTime": "2022-11-09T09:15:01.445661551Z",
+      "createdBy": "Adelle Bradtke",
+      "lastModifiedDateTime": "2022-11-09T09:15:01.445661551Z",
+      "lastModifiedBy": "Violette Farrell",
+      "isTravellerViewable": false
+    }
+  },
+  "segments": [
+    {
+      "id": "",
+      "hotelCode": "ATL02",
+      "nNights": 6,
+      "nGuests": 2,
+      "startDate": "2022-09-27",
+      "products": [
+        {
+          "id": "3HVTAA2J6R",
+          "description": "Suite with  ( Super Saver rate)",
+          "roomType": {
+            "Code": "SUITE",
+            "Name": "Suite",
+            "Description": "Luxury suite for a comfortable stays"
+          },
+          "ratePlan": {
+            "Code": "SUPER_SAVER",
+            "Name": "Super Saver rate",
+            "Description": "Lower price for advancced purchase"
+          },
+          "attributes": [],
+          "addOn": []
+        },
+        {
+          "id": "LZOCVZ7LP6",
+          "description": "Suite with Sea View ( Best avaialble rate)",
+          "roomType": {
+            "Code": "SUITE",
+            "Name": "Suite",
+            "Description": "Luxury suite for a comfortable stays"
+          },
+          "ratePlan": {
+            "Code": "BAR",
+            "Name": "Best avaialble rate",
+            "Description": "Our best available rate all year"
+          },
+          "attributes": [
+            {
+              "Code": "SEA_VIEW",
+              "Name": "Sea View",
+              "Description": "Full frontal view over the pacfic ocean"
+            }
+          ],
+          "addOn": []
+        }
+      ],
+      "holder": {
+        "modelVersion": "1.0",
+        "id": "0072828729",
+        "lastUpdatedOn": "2021-12-27T06:01:03.972207049Z",
+        "createdOn": "2021-10-27T06:01:03.972207049Z",
+        "lastUpdatedBy": "Marlin Morissette",
+        "createdBy": "Leila Bode",
+        "emails": [
+          {
+            "type": "business",
+            "address": "bayleeratke@brakus.net",
+            "primary": true
+          }
+        ],
+        "phones": [
+          {
+            "type": "",
+            "number": "(838)346-5920",
+            "primary": false,
+            "countryCode": 71
+          },
+          {
+            "type": "mobile",
+            "number": "4770912343",
+            "primary": true,
+            "countryCode": 45
+          }
+        ],
+        "addresses": [
+          {
+            "type": "",
+            "line1": "2293 Lake Oval mouth",
+            "line2": "more content line 2",
+            "line3": "more content line 3",
+            "line4": "more content line 4",
+            "city": "Pittsburgh",
+            "stateProvince": {
+              "code": "SC",
+              "name": ""
+            },
+            "postalCode": "13565",
+            "country": {
+              "code": "GU",
+              "name": ""
+            },
+            "primary": true
+          }
+        ],
+        "honorific": "Mr",
+        "firstName": "Ruthe",
+        "middleName": "Jamarcus",
+        "lastName": "Zboncak",
+        "gender": "other",
+        "pronoun": "",
+        "dateOfBirth": "1922-12-12",
+        "language": {
+          "code": "ps",
+          "name": ""
+        },
+        "nationality": {
+          "code": "SD",
+          "name": ""
+        },
+        "jobTitle": "Coordinator",
+        "parentCompany": "Archimedes Inc.",
+        "loyaltyPrograms": [
+          {
+            "id": "3478014738",
+            "programName": "club",
+            "points": 651524.0,
+            "pointUnit": "miles",
+            "pointsToNextLevel": 7269.0,
+            "level": "silver",
+            "joined": "2021-10-27T06:01:03.972207049Z"
+          }
+        ]
+      },
+      "additionalGuests": [
+        {
+          "modelVersion": "1.0",
+          "id": "0768445617",
+          "lastUpdatedOn": "2022-09-10T12:15:10.307784774Z",
+          "createdOn": "2022-05-10T12:15:10.307784774Z",
+          "lastUpdatedBy": "Kira Haag",
+          "createdBy": "Sean McDermott",
+          "emails": [],
+          "phones": [
+            {
+              "type": "business",
+              "number": "(025)029-7679",
+              "primary": false,
+              "countryCode": 96
+            },
+            {
+              "type": "",
+              "number": "1-330-615-7690",
+              "primary": false,
+              "countryCode": 68
+            },
+            {
+              "type": "home",
+              "number": "1-928-487-2432",
+              "primary": false,
+              "countryCode": 21
+            }
+          ],
+          "addresses": [
+            {
+              "type": "business",
+              "line1": "2797 Roads ville",
+              "line2": "more content line 2",
+              "line3": "more content line 3",
+              "line4": "more content line 4",
+              "city": "Boston",
+              "stateProvince": {
+                "code": "ME",
+                "name": ""
+              },
+              "postalCode": "78847",
+              "country": {
+                "code": "RO",
+                "name": ""
+              },
+              "primary": false
+            }
+          ],
+          "honorific": "Mr",
+          "firstName": "Estella",
+          "middleName": "Betty",
+          "lastName": "Wolf",
+          "gender": "other",
+          "pronoun": "they",
+          "dateOfBirth": "1943-06-11",
+          "language": {
+            "code": "de",
+            "name": ""
+          },
+          "nationality": {
+            "code": "CO",
+            "name": ""
+          },
+          "jobTitle": "Architect",
+          "parentCompany": "Lenddo",
+          "loyaltyPrograms": [
+            {
+              "id": "8181046275",
+              "programName": "club",
+              "points": 891693.0,
+              "pointUnit": "points",
+              "pointsToNextLevel": 9354.0,
+              "level": "platinium",
+              "joined": "2022-05-10T12:15:10.307784774Z"
+            }
+          ]
+        },
+        {
+          "modelVersion": "1.0",
+          "id": "6541596609",
+          "lastUpdatedOn": "2022-04-02T23:24:56.884513945Z",
+          "createdOn": "2022-03-02T23:24:56.884513945Z",
+          "lastUpdatedBy": "Amelia White",
+          "createdBy": "Ethan Hintz",
+          "emails": [
+            {
+              "type": "business",
+              "address": "fernelang@rempel.biz",
+              "primary": false
+            },
+            {
+              "type": "personal",
+              "address": "shaniyalabadie@gaylord.org",
+              "primary": true
+            },
+            {
+              "type": "",
+              "address": "ameliecremin@mclaughlin.name",
+              "primary": true
+            }
+          ],
+          "phones": [],
+          "addresses": [
+            {
+              "type": "mailing",
+              "line1": "3272 Curve town",
+              "line2": "more content line 2",
+              "line3": "more content line 3",
+              "line4": "more content line 4",
+              "city": "Nashville-Davidson",
+              "stateProvince": {
+                "code": "NJ",
+                "name": ""
+              },
+              "postalCode": "83370",
+              "country": {
+                "code": "GN",
+                "name": ""
+              },
+              "primary": true
+            },
+            {
+              "type": "business",
+              "line1": "8778 West Crossing land",
+              "line2": "more content line 2",
+              "line3": "more content line 3",
+              "line4": "more content line 4",
+              "city": "Reno",
+              "stateProvince": {
+                "code": "MO",
+                "name": ""
+              },
+              "postalCode": "95982",
+              "country": {
+                "code": "TL",
+                "name": ""
+              },
+              "primary": true
+            },
+            {
+              "type": "business",
+              "line1": "58492 Springs stad",
+              "line2": "more content line 2",
+              "line3": "more content line 3",
+              "line4": "more content line 4",
+              "city": "Wichita",
+              "stateProvince": {
+                "code": "SC",
+                "name": ""
+              },
+              "postalCode": "16305",
+              "country": {
+                "code": "KW",
+                "name": ""
+              },
+              "primary": false
+            }
+          ],
+          "honorific": "Mx",
+          "firstName": "Kayden",
+          "middleName": "Janice",
+          "lastName": "Ondricka",
+          "gender": "other",
+          "pronoun": "they",
+          "dateOfBirth": "1976-01-18",
+          "language": {
+            "code": "da",
+            "name": ""
+          },
+          "nationality": {
+            "code": "GS",
+            "name": ""
+          },
+          "jobTitle": "Manager",
+          "parentCompany": "Rivet Software",
+          "loyaltyPrograms": []
+        }
+      ],
+      "paymentInformation": {
+        "paymentType": "credit_card",
+        "ccInfo": {
+          "token": "4709112157615418",
+          "cardType": "JCB",
+          "cardExp": "11/29",
+          "cardCvv": "",
+          "expiration": "",
+          "name": "",
+          "address": {
+            "type": "",
+            "line1": "815 Via mouth",
+            "line2": "more content line 2",
+            "line3": "more content line 3",
+            "line4": "more content line 4",
+            "city": "San Antonio",
+            "stateProvince": {
+              "code": "ND",
+              "name": ""
+            },
+            "postalCode": "14191",
+            "country": {
+              "code": "SJ",
+              "name": ""
+            },
+            "primary": true
+          }
+        },
+        "routingNumber": "",
+        "accountNumber": "",
+        "voucherID": "",
+        "address": {
+          "type": "mailing",
+          "line1": "13899 Lake Village mouth",
+          "line2": "more content line 2",
+          "line3": "more content line 3",
+          "line4": "more content line 4",
+          "city": "St. Paul",
+          "stateProvince": {
+            "code": "NC",
+            "name": ""
+          },
+          "postalCode": "95090",
+          "country": {
+            "code": "GB",
+            "name": ""
+          },
+          "primary": false
+        }
+      },
+      "groupId": "LITDIM8UAQ",
+      "status": "cancelled",
+      "price": {
+        "pricePerNight": [
+          {
+            "date": "2022-09-27",
+            "label": "Prices for night 0 (2022-09-27)",
+            "amountPerProduct": [
+              {
+                "productId": "3HVTAA2J6R",
+                "productDescription": "Suite with  ( Super Saver rate)",
+                "amount": 482.56693,
+                "label": "Nightly price for product 0 (3HVTAA2J6R)",
+                "currency": {
+                  "code": "MUR",
+                  "name": "Mauritius Rupee",
+                  "symbol": ""
+                }
+              }
+            ],
+            "currency": {
+              "code": "MUR",
+              "name": "Mauritius Rupee",
+              "symbol": ""
+            }
+          },
+          {
+            "date": "2022-09-28",
+            "label": "Prices for night 1 (2022-09-28)",
+            "amountPerProduct": [
+              {
+                "productId": "3HVTAA2J6R",
+                "productDescription": "Suite with  ( Super Saver rate)",
+                "amount": 639.02313,
+                "label": "Nightly price for product 0 (3HVTAA2J6R)",
+                "currency": {
+                  "code": "MUR",
+                  "name": "Mauritius Rupee",
+                  "symbol": ""
+                }
+              }
+            ],
+            "currency": {
+              "code": "MUR",
+              "name": "Mauritius Rupee",
+              "symbol": ""
+            }
+          },
+          {
+            "date": "2022-09-29",
+            "label": "Prices for night 2 (2022-09-29)",
+            "amountPerProduct": [
+              {
+                "productId": "3HVTAA2J6R",
+                "productDescription": "Suite with  ( Super Saver rate)",
+                "amount": 247.28918,
+                "label": "Nightly price for product 0 (3HVTAA2J6R)",
+                "currency": {
+                  "code": "MUR",
+                  "name": "Mauritius Rupee",
+                  "symbol": ""
+                }
+              }
+            ],
+            "currency": {
+              "code": "MUR",
+              "name": "Mauritius Rupee",
+              "symbol": ""
+            }
+          },
+          {
+            "date": "2022-09-30",
+            "label": "Prices for night 3 (2022-09-30)",
+            "amountPerProduct": [
+              {
+                "productId": "3HVTAA2J6R",
+                "productDescription": "Suite with  ( Super Saver rate)",
+                "amount": 680.4237,
+                "label": "Nightly price for product 0 (3HVTAA2J6R)",
+                "currency": {
+                  "code": "MUR",
+                  "name": "Mauritius Rupee",
+                  "symbol": ""
+                }
+              }
+            ],
+            "currency": {
+              "code": "MUR",
+              "name": "Mauritius Rupee",
+              "symbol": ""
+            }
+          },
+          {
+            "date": "2022-10-01",
+            "label": "Prices for night 4 (2022-10-01)",
+            "amountPerProduct": [
+              {
+                "productId": "3HVTAA2J6R",
+                "productDescription": "Suite with  ( Super Saver rate)",
+                "amount": 465.6918,
+                "label": "Nightly price for product 0 (3HVTAA2J6R)",
+                "currency": {
+                  "code": "MUR",
+                  "name": "Mauritius Rupee",
+                  "symbol": ""
+                }
+              }
+            ],
+            "currency": {
+              "code": "MUR",
+              "name": "Mauritius Rupee",
+              "symbol": ""
+            }
+          },
+          {
+            "date": "2022-10-02",
+            "label": "Prices for night 5 (2022-10-02)",
+            "amountPerProduct": [
+              {
+                "productId": "3HVTAA2J6R",
+                "productDescription": "Suite with  ( Super Saver rate)",
+                "amount": 485.19604,
+                "label": "Nightly price for product 0 (3HVTAA2J6R)",
+                "currency": {
+                  "code": "MUR",
+                  "name": "Mauritius Rupee",
+                  "symbol": ""
+                }
+              }
+            ],
+            "currency": {
+              "code": "MUR",
+              "name": "Mauritius Rupee",
+              "symbol": ""
+            }
+          }
+        ],
+        "taxePerNight": [
+          {
+            "date": "2022-09-27",
+            "label": "Prices for night 0 (2022-09-27)",
+            "amountPerProduct": [
+              {
+                "productId": "3HVTAA2J6R",
+                "productDescription": "",
+                "amount": 72.38504,
+                "label": "15 percent city and sales Taxes for product 0 (3HVTAA2J6R)",
+                "currency": {
+                  "code": "MUR",
+                  "name": "Mauritius Rupee",
+                  "symbol": ""
+                }
+              }
+            ],
+            "currency": {
+              "code": "MUR",
+              "name": "Mauritius Rupee",
+              "symbol": ""
+            }
+          },
+          {
+            "date": "2022-09-28",
+            "label": "Prices for night 1 (2022-09-28)",
+            "amountPerProduct": [
+              {
+                "productId": "3HVTAA2J6R",
+                "productDescription": "",
+                "amount": 95.85347,
+                "label": "15 percent city and sales Taxes for product 0 (3HVTAA2J6R)",
+                "currency": {
+                  "code": "MUR",
+                  "name": "Mauritius Rupee",
+                  "symbol": ""
+                }
+              }
+            ],
+            "currency": {
+              "code": "MUR",
+              "name": "Mauritius Rupee",
+              "symbol": ""
+            }
+          },
+          {
+            "date": "2022-09-29",
+            "label": "Prices for night 2 (2022-09-29)",
+            "amountPerProduct": [
+              {
+                "productId": "3HVTAA2J6R",
+                "productDescription": "",
+                "amount": 37.09338,
+                "label": "15 percent city and sales Taxes for product 0 (3HVTAA2J6R)",
+                "currency": {
+                  "code": "MUR",
+                  "name": "Mauritius Rupee",
+                  "symbol": ""
+                }
+              }
+            ],
+            "currency": {
+              "code": "MUR",
+              "name": "Mauritius Rupee",
+              "symbol": ""
+            }
+          },
+          {
+            "date": "2022-09-30",
+            "label": "Prices for night 3 (2022-09-30)",
+            "amountPerProduct": [
+              {
+                "productId": "3HVTAA2J6R",
+                "productDescription": "",
+                "amount": 102.06355,
+                "label": "15 percent city and sales Taxes for product 0 (3HVTAA2J6R)",
+                "currency": {
+                  "code": "MUR",
+                  "name": "Mauritius Rupee",
+                  "symbol": ""
+                }
+              }
+            ],
+            "currency": {
+              "code": "MUR",
+              "name": "Mauritius Rupee",
+              "symbol": ""
+            }
+          },
+          {
+            "date": "2022-10-01",
+            "label": "Prices for night 4 (2022-10-01)",
+            "amountPerProduct": [
+              {
+                "productId": "3HVTAA2J6R",
+                "productDescription": "",
+                "amount": 69.85377,
+                "label": "15 percent city and sales Taxes for product 0 (3HVTAA2J6R)",
+                "currency": {
+                  "code": "MUR",
+                  "name": "Mauritius Rupee",
+                  "symbol": ""
+                }
+              }
+            ],
+            "currency": {
+              "code": "MUR",
+              "name": "Mauritius Rupee",
+              "symbol": ""
+            }
+          },
+          {
+            "date": "2022-10-02",
+            "label": "Prices for night 5 (2022-10-02)",
+            "amountPerProduct": [
+              {
+                "productId": "3HVTAA2J6R",
+                "productDescription": "",
+                "amount": 72.7794,
+                "label": "15 percent city and sales Taxes for product 0 (3HVTAA2J6R)",
+                "currency": {
+                  "code": "MUR",
+                  "name": "Mauritius Rupee",
+                  "symbol": ""
+                }
+              }
+            ],
+            "currency": {
+              "code": "MUR",
+              "name": "Mauritius Rupee",
+              "symbol": ""
+            }
+          }
+        ],
+        "pricePerStay": [],
+        "taxPerStay": [],
+        "businessRules": [],
+        "totalPricePerNightBeforeTaxes": [],
+        "totalPricePerNightAfterTaxes": [],
+        "totalPricePerProductBeforeTaxes": [],
+        "totalPricePerProductAfterTaxes": [],
+        "totalBeforeTax": 3000.1907,
+        "totalAfterTax": 3450.2195
+      }
+    }
+  ],
+  "comments": [
+    {
+      "type": "comment",
+      "language": {
+        "code": "cr",
+        "name": ""
+      },
+      "title": "Him sleep far but it lead student afterwards dishonesty cast sing guilt choir thrill damage why am murder Intelligent hers.",
+      "text": "Nightly words hair instead patrol earlier blender growth daringly moreover besides these themselves enthusiasm highly backwards very some me class early whenever what city she where with consequently they reluctantly I fight it formerly eye muster host in some indeed right whom when yesterday sky wake tonight that can bunch those work crowd bird nose is dance pack beneath somebody time his his at these bread for annually can from laugh end sometimes archipelago earlier troubling in infrequently its let nobody hand paralyze my my i.e. how bunch company dig surprise leap intelligence annually enough smile but electricity could there.",
+      "context": null,
+      "createdDateTime": "2022-07-09T09:15:01.445661551Z",
+      "createdBy": "Birdie Abbott",
+      "lastModifiedDateTime": "2022-07-09T09:15:01.445661551Z",
+      "lastModifiedBy": "Dereck Considine",
+      "isTravellerViewable": false
+    }
+  ]
+}

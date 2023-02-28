@@ -54,8 +54,11 @@ export class UCPInfraStack extends Stack {
       description: "Glue role for UCP data",
       roleName: "ucp-data-admin-role-" + envName
     })
-    let roleArn = new CfnOutput(this, 'ucpDataAdminRoleArn', {
+    new CfnOutput(this, 'ucpDataAdminRoleArn', {
       value: datalakeAdminRole.roleArn
+    });
+    new CfnOutput(this, 'ucpDataAdminRoleName', {
+      value: datalakeAdminRole.roleName
     });
     //we need to gran the data admin (which will be the rol for all glue jobs) access to the artifact bucket
     //since the python scripts are stored there
@@ -102,12 +105,16 @@ export class UCPInfraStack extends Stack {
     new CfnOutput(this, 'glueDBArn', {
       value: glueDb.databaseArn
     });
+    new CfnOutput(this, 'glueDBname', {
+      value: glueDb.databaseName
+    });
 
     /***************************
    * Data Buckets for temporary processing
    *****************************/
     //Target Bucket for Amazon connect profile import
     const connectProfileImportBucket = new tah_s3.Bucket(this, "connectProfileImportBucket", accessLogBucket)
+    const connectProfileImportBucketTest = new tah_s3.Bucket(this, "connectProfileImportBucketTest", accessLogBucket)
     //temp bucket for Amazon connect profile identity resolution matches
     const idResolution = new tah_s3.Bucket(this, "ucp-connect-id-resolution-temp", accessLogBucket)
 
@@ -127,6 +134,7 @@ export class UCPInfraStack extends Stack {
      * Bucket Permission
      **************************/
     connectProfileImportBucket.grantReadWrite(datalakeAdminRole)
+    connectProfileImportBucketTest.grantReadWrite(datalakeAdminRole)
     connectProfileExportBucket.grantReadWrite(datalakeAdminRole)
     amperityExportBucket.grantReadWrite(datalakeAdminRole)
 
@@ -181,6 +189,8 @@ export class UCPInfraStack extends Stack {
     });
 
     //Customer Profile Outputs for Domain Testing
+    new CfnOutput(this, "connectProfileImportBucketOut", { value: connectProfileImportBucket.bucketName })
+    new CfnOutput(this, "connectProfileImportBucketTestOut", { value: connectProfileImportBucketTest.bucketName })
     new CfnOutput(this, "connectProfileExportBucket", { value: connectProfileExportBucket.bucketName })
     new CfnOutput(this, "kmsKeyProfileDomain", { value: kmsKeyProfileDomain.keyArn })
 
@@ -588,8 +598,11 @@ export class UCPInfraStack extends Stack {
   buildBusinessObjectPipeline(businessObjectName: string, envName: string, dataLakeAdminRole: iam.Role, glueDb: Database, artifactBucketName: string, accessLogBucket: s3.Bucket, connectProfileImportBucket: s3.Bucket): BusinessObjectPipelineOutput {
     //0-create bucket
     let bucketRaw = new tah_s3.Bucket(this, "ucp" + businessObjectName, accessLogBucket);
+    //we create a test bucket to be able to test  the job run
+    let testBucketRaw = new tah_s3.Bucket(this, "ucp" + businessObjectName + "Test", accessLogBucket);
     //1-Bucket permission
     bucketRaw.grantReadWrite(dataLakeAdminRole)
+    testBucketRaw.grantReadWrite(dataLakeAdminRole)
     //2-Creating workflow to visualize
     let workflow = new CfnWorkflow(this, businessObjectName, {
       name: "ucp" + businessObjectName + envName
@@ -607,19 +620,28 @@ export class UCPInfraStack extends Stack {
       ["SOURCE_TABLE", bucketRaw.toAthenaTable()],
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
       ["BUSINESS_OBJECT", businessObjectName],
-      ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/" + transformScript + ",s3://" + artifactBucketName + "/" + envName + "/etl/autoFlatten.py"],
+      ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
     let industryConnectorJob = this.job(businessObjectName + "FromConnector", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
       // SOURCE_TABLE provided by customer when linking connector
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
       ["BUSINESS_OBJECT", businessObjectName],
-      ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/" + transformScript + ",s3://" + artifactBucketName + "/" + envName + "/etl/autoFlatten.py"],
+      ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
     //6- Job Triggers
     let jobTrigger = this.jobTriggerFromCrawler("ucp" + businessObjectName, envName, [crawler], job, workflow)
     //7-Cfn Output
     new CfnOutput(this, 'customerBucket' + businessObjectName, {
       value: bucketRaw.bucketName
+    });
+    new CfnOutput(this, 'customerTestBucket' + businessObjectName, {
+      value: testBucketRaw.bucketName
+    });
+    new CfnOutput(this, 'customerJobName' + businessObjectName, {
+      value: job.name || "",
+    });
+    new CfnOutput(this, 'industryConnectorJobName' + businessObjectName, {
+      value: job.name || "",
     });
     let output: BusinessObjectPipelineOutput = {
       connectorJobName: industryConnectorJob.name ?? "",

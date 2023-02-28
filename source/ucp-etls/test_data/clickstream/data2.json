@@ -1,0 +1,132 @@
+{
+    "modelVersion": "1.0",
+    "event_type": "SearchExperience",
+    "event_timestamp": "2021-03-29T22:22:19.451829566Z",
+    "arrival_timestamp": 0,
+    "event_version": "",
+    "application": {},
+    "client": {},
+    "device": {
+        "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"
+    },
+    "session": {
+        "id": "b21683f9-6345-40da-a4ea-9aac75f4149e"
+    },
+    "attributes": [
+        {
+            "type": "string",
+            "name": "quantities",
+            "stringValue": "",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": [
+                4.0,
+                2.0,
+                3.0,
+                3.0,
+                2.0,
+                3.0,
+                4.0,
+                1.0,
+                1.0,
+                5.0
+            ]
+        },
+        {
+            "type": "strings",
+            "name": "products",
+            "stringValue": "",
+            "stringValues": [
+                "DBL-BAR",
+                "BKFST",
+                "KING_SUPER_SAVER",
+                "SUITE-BAR",
+                "SUITE-BAR",
+                "BKFST",
+                "KING_SUPER_SAVER",
+                "CHMPGN",
+                "CHMPGN",
+                "KING_SUPER_SAVER"
+            ],
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "destination",
+            "stringValue": "Bakersfield, Texas, Fiji",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "number",
+            "name": "num_nights",
+            "stringValue": "",
+            "stringValues": null,
+            "numValue": 6.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "room_type",
+            "stringValue": "SUITE",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "rate_plan",
+            "stringValue": "BAR",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "checkin_date",
+            "stringValue": "2021-04-28",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "checkout_date",
+            "stringValue": "2021-05-04",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "string",
+            "name": "hotel_code",
+            "stringValue": "SPO05",
+            "stringValues": null,
+            "numValue": 0.0,
+            "numValues": null
+        },
+        {
+            "type": "strings",
+            "name": "hotel_code_list",
+            "stringValue": "",
+            "stringValues": [
+                "TOK04",
+                "PAR18",
+                "SPO01",
+                "ROM09",
+                "TOK19",
+                "TOK05",
+                "LIM15",
+                "PAR01",
+                "LIM17",
+                "TOK14"
+            ],
+            "numValue": 0.0,
+            "numValues": null
+        }
+    ],
+    "endpoint": {},
+    "awsAccountId": ""
+}

@@ -14,13 +14,6 @@ source/.typescript/lambda/layers/aws-nodesdk-custom-config/coverage
 source/.typescript/package-lock.json
 
 #External Dependencies
-source/aws-ind-connector-ui/node_modules
-source/aws-ind-connector-adapter/src/github.com
-source/aws-ind-connector-firehose-adapter/src/github.com
-source/aws-ind-connector-adapter/src/golang.org
-source/aws-ind-connector-firehose-adapter/src/golang.org
-source/aws-ind-connector-infra/node_modules
-source/aws-ind-connector-infra/custom_resource/node_modules
 deployment/tah-connector-code-pipelines/node_modules
 package-lock.json
 
@@ -29,23 +22,10 @@ source/aws-ind-connector-adapter/src/business-logic/model/hapi/reservation.go
 #Potential AWS Account Id Rule 2  
 source/ucp-backend/vendor/github.com/aws/aws-sdk-go/internal/s3shared/arn/outpost_arn.go
 source/ucp-backend/vendor/github.com/aws/aws-sdk-go/service/s3/endpoint.go
-source/ucp-etls/air_booking/testData/PT4UBE.json  
-source/aws-ind-connector-adapter/src/tah-common/common/clickstream.go     
-source/aws-ind-connector-firehose-adapter/src/tah-common/common/clickstream.go  
+source/ucp-etls/e2e/vendor/github.com/*
 source/example/*
 source/schemas/*
 #part of customer profile api
 source/ucp-backend/vendor/github.com/aws/aws-sdk-go/service/customerprofiles/api.go
 #fake test data
-source/aws-ind-connector-adapter/e2e/indConnector.postman_collection.json 
-source/aws-ind-connector-adapter/src/business-logic/adapter/hapi/hapiAdapter_test.go
-source/aws-ind-connector-adapter/src/test_assets/hapiResResponse.json
-source/ucp-etls/air_booking/testData/5M71Q4.json
-source/ucp-etls/air_booking/testData/PT4UBE.json
-source/ucp-etls/air_booking/testData/expectedOutput.py
-source/ucp-etls/guest_profile/testData/expectedOutput.py
-source/ucp-etls/guest_profile/testData/missingData.json
-source/ucp-etls/guest_profile/testData/rawData.json
-source/ucp-etls/hotel_booking/testData/expectedOutput.py
-source/ucp-etls/hotel_booking/testData/missingData.json
-source/ucp-etls/hotel_booking/testData/rawData.json
+source/ucp-etls/test_data/*

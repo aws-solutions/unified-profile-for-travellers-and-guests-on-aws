@@ -169,9 +169,6 @@ export class UCPCodePipelinesStack extends Stack {
     });
 
 
-
-
-
     const onboardingTest = new codebuild.PipelineProject(this, 'testProject' + envName, {
       projectName: "ucp-test-" + envName,
       role: buildProjectRole,
@@ -240,15 +237,25 @@ export class UCPCodePipelinesStack extends Stack {
       buildSpec: codebuild.BuildSpec.fromObject({
         version: '0.2',
         phases: {
+          install: {
+            "runtime-versions": {
+              golang: GO_VERSION
+            }
+          },
           build: {
             commands: [
               'cd source/ucp-etls',
               'echo "Deploy ETL code"',
               'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName,
+              'cd e2e',
+              'sh test.sh ' + envName + " " + artifactBucket.bucketName,
             ],
           },
         }
-      })
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+      },
     });
 
     const feTest = new codebuild.PipelineProject(this, 'feTestProject' + envName, {
@@ -316,6 +323,8 @@ export class UCPCodePipelinesStack extends Stack {
           oauthToken: SecretValue.unsafePlainText(githubtoken.valueAsString),
           branch: branchName,
           owner: owner,
+          //we pevent automated pull as we use code pipeine as a deployment mecanism
+          trigger: codepipeline_actions.GitHubTrigger.NONE,
           output: sourceOutput,
         }),
       ],
@@ -332,13 +341,6 @@ export class UCPCodePipelinesStack extends Stack {
           outputs: [cdkBuildOutputLambda],
         }),
         new codepipeline_actions.CodeBuildAction({
-          actionName: 'deployEtlCode',
-          project: etlProject,
-          input: sourceOutput,
-          runOrder: 2,
-          outputs: [cdkBuildOutputEtl],
-        }),
-        new codepipeline_actions.CodeBuildAction({
           actionName: 'deployInfra',
           project: infraBuild,
           input: sourceOutput,
@@ -349,14 +351,29 @@ export class UCPCodePipelinesStack extends Stack {
     })
     //Test Stage
     stages.push({
-      stageName: 'Test',
+      stageName: 'EndToEndTests',
       actions: [
         new codepipeline_actions.CodeBuildAction({
-          actionName: 'e2eTesting',
+          actionName: 'apiTests',
           project: onboardingTest,
           input: sourceOutput,
           outputs: [cdkBuildOutputTest],
+          runOrder: 1,
         }),
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'runFeTests',
+          project: feTest,
+          input: sourceOutput,
+          runOrder: 1,
+          outputs: [feTestOutput],
+        }),
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'deployEtlCode',
+          project: etlProject,
+          input: sourceOutput,
+          runOrder: 1,
+          outputs: [cdkBuildOutputEtl],
+        })
       ],
     })
     //Deploy Stages
@@ -365,13 +382,6 @@ export class UCPCodePipelinesStack extends Stack {
       actions: [],
     }
     if (deployStage.actions) {
-      deployStage.actions.push(new codepipeline_actions.CodeBuildAction({
-        actionName: 'runFeTests',
-        project: feTest,
-        input: sourceOutput,
-        runOrder: 1,
-        outputs: [feTestOutput],
-      }))
       deployStage.actions.push(new codepipeline_actions.CodeBuildAction({
         actionName: 'deployFrontEnd',
         project: feProject,
