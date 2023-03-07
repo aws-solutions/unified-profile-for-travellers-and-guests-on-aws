@@ -78,8 +78,9 @@ type IngestionErrors struct {
 }
 
 type ObjectMapping struct {
-	Name   string         `json:"name"`
-	Fields []FieldMapping `json:"fields"`
+	Name      string         `json:"name"`
+	Timestamp string         `json:"timestamp"`
+	Fields    []FieldMapping `json:"fields"`
 }
 
 type FieldMapping struct {
@@ -88,6 +89,7 @@ type FieldMapping struct {
 	Target      string   `json:"target"`
 	Indexes     []string `json:"indexes"`
 	Searcheable bool     `json:"searchable"`
+	IsTimestamp bool     `json:"isTimestamp"`
 }
 
 type Integration struct {
@@ -99,4 +101,21 @@ type Integration struct {
 	LastRunStatus  string    `json:"lastRunStatus"`
 	LastRunMessage string    `json:"lastRunMessage"`
 	Trigger        string    `json:"trigger"`
+}
+
+var ERR_TYPE_MISSING_MAPPING_FIELD = "missing_column_mapping"
+var ERR_TYPE_MISSING_INDEX_FIELD = "missing_index_field"
+var ERR_TYPE_MISSING_MANDATORY_FIELD = "missing_column_mandatory_field"
+var ERR_TYPE_MISSING_MANDATORY_FIELD_VALUE = "missing_column_mandatory_field_value"
+var ERR_TYPE_MISSING_INDEX_FIELD_VALUE = "missing_index_field_value"
+var ERR_TYPE_NO_HEADER = "missing_header"
+
+type ValidationError struct {
+	ErrType string
+	File    string
+	Row     int
+	Col     int
+	ColName string
+	Bucket  string
+	Msg     string
 }

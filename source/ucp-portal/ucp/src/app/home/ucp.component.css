@@ -78,6 +78,7 @@ table {
   float: right;
   cursor: pointer;
   color: darkred;
+  z-index: 1000;
 }
 
 .ingestion-error-message {
@@ -158,4 +159,15 @@ table {
 
 .connector-form-group .form-label {
   margin-bottom: 4px;
+}
+
+.no-domain-message {
+  font-size: large;
+  color: black;
+  text-align: center;
+  width: 100%;
+}
+
+.form-button {
+  margin: 3px;
 }

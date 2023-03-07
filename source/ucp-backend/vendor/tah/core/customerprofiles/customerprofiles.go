@@ -31,6 +31,15 @@ const NoOperation = "NO_OP"
 var OBJECT_TYPE_NAME_ORDER = "_order"
 var PROFILE_ID_KEY = "_profileId"
 
+var STANDARD_IDENTIFIER_PROFILE = customerProfileSdk.StandardIdentifierProfile
+var STANDARD_IDENTIFIER_ASSET = customerProfileSdk.StandardIdentifierAsset
+var STANDARD_IDENTIFIER_CASE = customerProfileSdk.StandardIdentifierCase
+var STANDARD_IDENTIFIER_UNIQUE = customerProfileSdk.StandardIdentifierUnique
+var STANDARD_IDENTIFIER_SECONDARY = customerProfileSdk.StandardIdentifierSecondary
+var STANDARD_IDENTIFIER_LOOKUP_ONLY = customerProfileSdk.StandardIdentifierLookupOnly
+var STANDARD_IDENTIFIER_NEW_ONLY = customerProfileSdk.StandardIdentifierNewOnly
+var STANDARD_IDENTIFIER_ORDER = customerProfileSdk.StandardIdentifierOrder
+
 type CustomerProfileConfig struct {
 	Client     *customerProfileSdk.CustomerProfiles
 	DomainName string

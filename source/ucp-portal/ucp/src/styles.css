@@ -28,10 +28,18 @@ body {
     background-color: darkred;
 }
 
+.text-danger {
+    color: darkred;
+}
+
 .mat-button-wrapper {
     color: white;
 }
 
 .notif-warning {
     background-color: darkorange;
+}
+
+.align-center {
+    text-align: center;
 }
