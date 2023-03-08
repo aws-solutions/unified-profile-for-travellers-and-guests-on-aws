@@ -23,7 +23,7 @@ const DataPullModeIncremental = "Incremental"
 const TriggerTypeScheduled = "Scheduled"
 const IntegrationFlowDefinition = "Integration_Flowdefinition_"
 const FlowdefinitionFor = "Flowdefinition for "
-const Projection = "Projection"
+const Projection = "PROJECTION"
 const Map = "Map"
 const Filter = "Filter"
 const NoOperation = "NO_OP"
@@ -580,36 +580,37 @@ func (c CustomerProfileConfig) GetIntegrations() ([]Integration, error) {
 	return integrations, err
 }
 
-func (c CustomerProfileConfig) GetSourceTargetNames(objectname string) ([]string, []string, error) {
+func (c CustomerProfileConfig) GetSourceTargetNames(objectname string) ([]*string, []*string, error) {
 
 	mappings, err := c.GetMapping(objectname)
 	if err != nil {
 		log.Printf("Error getting mapping: %s", objectname)
-		return []string{}, []string{}, err
+		return []*string{}, []*string{}, err
 	}
 	objectFields := mappings.Fields
 	fieldLength := len(objectFields)
-	sourceNames := make([]string, fieldLength)
-	targetNames := make([]string, fieldLength)
+	sourceNames := make([]*string, fieldLength)
+	targetNames := make([]*string, fieldLength)
 	for i, field := range objectFields {
 		//source list
 		source := field.Source
 		sourceSplit := strings.Split(source, ".")
 		sName := sourceSplit[len(sourceSplit)-1]
-		sourceNames[i] = sName
+		sourceNames[i] = &sName
 		//target list
 		target := field.Target
 		targetSplit := strings.Split(target, ".")
 		tName := targetSplit[len(targetSplit)-1]
-		targetNames[i] = tName
+		targetNames[i] = &tName
 	}
 	return sourceNames, targetNames, err
 }
 
-func (c CustomerProfileConfig) GenerateTaskList(objectname string) ([]Task, error) {
-	taskSlice := make([]Task, 0)
-	conOpProj := ConnectorOperator{
-		S3: Projection,
+func (c CustomerProfileConfig) GenerateTaskList(objectname string) ([]*customerProfileSdk.Task, error) {
+	taskSlice := make([]*customerProfileSdk.Task, 0)
+	sProjection := Projection
+	conOpProj := customerProfileSdk.ConnectorOperator{
+		S3: &sProjection,
 	}
 	sourceNames, targetNames, err := c.GetSourceTargetNames(objectname)
 	if err != nil {
@@ -617,21 +618,24 @@ func (c CustomerProfileConfig) GenerateTaskList(objectname string) ([]Task, erro
 		return taskSlice, err
 	}
 	//Filter Task
-	filTask := Task{
-		TaskType:          Filter,
+	sFilter := Filter
+	filTask := &customerProfileSdk.Task{
+		TaskType:          &sFilter,
 		SourceFields:      sourceNames,
-		ConnectorOperator: conOpProj,
+		ConnectorOperator: &conOpProj,
 	}
 	taskSlice = append(taskSlice, filTask)
-	conOpMap := ConnectorOperator{
-		S3: NoOperation,
+	sNoOp := NoOperation
+	conOpMap := customerProfileSdk.ConnectorOperator{
+		S3: &sNoOp,
 	}
+	sMap := Map
 	//Mapping Tasks
 	for i, source := range sourceNames {
-		mapTask := Task{
-			TaskType:          Map,
-			SourceFields:      []string{source},
-			ConnectorOperator: conOpMap,
+		mapTask := &customerProfileSdk.Task{
+			TaskType:          &sMap,
+			SourceFields:      []*string{source},
+			ConnectorOperator: &conOpMap,
 			DestinationField:  targetNames[i],
 		}
 		taskSlice = append(taskSlice, mapTask)
@@ -639,37 +643,8 @@ func (c CustomerProfileConfig) GenerateTaskList(objectname string) ([]Task, erro
 	return taskSlice, err
 }
 
-func (c CustomerProfileConfig) ConvertTaskList(tasks []Task) []*customerProfileSdk.Task {
-	newTaskSlice := make([]*customerProfileSdk.Task, 0)
-
-	for _, t := range tasks {
-		conOpt := customerProfileSdk.ConnectorOperator{
-			S3: &t.ConnectorOperator.S3,
-		}
-		newSourceSlice := make([]*string, 0)
-		for _, sourceName := range t.SourceFields {
-			stcopy := strings.Clone(sourceName)
-			newSourceSlice = append(newSourceSlice, &stcopy)
-		}
-
-		taskType := strings.Clone(t.TaskType)
-		destinationField := strings.Clone(t.DestinationField)
-
-		newTask := &customerProfileSdk.Task{
-			TaskType:          &taskType,
-			SourceFields:      newSourceSlice,
-			ConnectorOperator: &conOpt,
-			DestinationField:  &destinationField,
-		}
-
-		newTaskSlice = append(newTaskSlice, newTask)
-	}
-	return newTaskSlice
-}
-
 func (c CustomerProfileConfig) GenerateFlowDefinition(objectname string, bucketname string, kmsarn string) (customerProfileSdk.FlowDefinition, error) {
-	taskList, err := c.GenerateTaskList(objectname)
-	newTaskList := c.ConvertTaskList(taskList)
+	newTaskList, err := c.GenerateTaskList(objectname)
 	if err != nil {
 		log.Printf("Error generating flow definition for %s", objectname)
 		return customerProfileSdk.FlowDefinition{}, err
