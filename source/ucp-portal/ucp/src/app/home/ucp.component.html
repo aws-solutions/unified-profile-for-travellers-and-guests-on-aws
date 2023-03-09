@@ -6,8 +6,7 @@
         <div class="header">
             <img class="aws-logo" src="assets/1200px-Amazon_Web_Services_Logo.svg.png" />
 
-            <div *ngIf="domains.length>0 && selectedDomain" id="settings-button"
-                class="btn btn-large btn-link settings-button" (click)="showSettings()">
+            <div id="settings-button" class="btn btn-large btn-link settings-button" (click)="goToSettings()">
                 <fa-icon [icon]="faCog"></fa-icon>
                 Settings
             </div>

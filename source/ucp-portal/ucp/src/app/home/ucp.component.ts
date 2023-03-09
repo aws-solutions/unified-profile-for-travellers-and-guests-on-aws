@@ -1,7 +1,8 @@
-import { Component, OnInit, Inject} from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { UcpService } from '../service/ucpService';
 import { UserEngagementService } from '../service/userEngagementService';
 import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { SessionService } from '../service/sessionService';
 import { faCog, faSearch, faTimes, faPlus } from '@fortawesome/free-solid-svg-icons';
@@ -35,9 +36,9 @@ export class UCPComponent implements OnInit {
   ingestionErrors = [];
   totalErrors: number = 0;
   selectedDomain: string;
-  domains: any[];
+  domains: any[] = [];
 
-  constructor(private ucpService: UcpService, public dialog: MatDialog, private userEngSvc: UserEngagementService, private session: SessionService) {
+  constructor(private ucpService: UcpService, public dialog: MatDialog, private userEngSvc: UserEngagementService, private session: SessionService, private router: Router) {
     this.loadDomains()
 
   }
@@ -47,7 +48,10 @@ export class UCPComponent implements OnInit {
       console.log(res)
       this.config = res.config;
       this.domains = res.config.domains
-      this.selectDomain(res.config.domains[0].customerProfileDomain)
+      if (res.config.domains.lenth > 0) {
+        this.selectDomain(res.config.domains[0].customerProfileDomain)
+
+      }
     })
   }
 
@@ -85,22 +89,9 @@ export class UCPComponent implements OnInit {
     });
   }
 
-  showSettings() {
-    const dialogRef = this.dialog.open(UCPSettingsComponent, {
-      width: '90%',
-      data: {
-        selectedDomain: this.selectedDomain
-      }
-    });
-
-    dialogRef.afterClosed().subscribe((name: any) => {
-      console.log('The dialog was closed with value: ', name);
-
-    });
+  goToSettings() {
+    this.router.navigate(["setting"])
   }
-
-
-
 
 
   deleteDomain(domain: string) {
@@ -116,6 +107,7 @@ export class UCPComponent implements OnInit {
       if (confirmed) {
         this.ucpService.deleteDomain(domain).subscribe((res: any) => {
           console.log(res)
+          this.session.unsetDomain()
           this.loadDomains()
         })
       }
@@ -426,214 +418,5 @@ export class UCPProfileErrorsComponent {
 
   public close() {
     this.dialogRef.close()
-  }
-
-
-}
-
-@Component({
-  selector: 'ucp-settings',
-  templateUrl: './ucp.component-settings.html',
-  styleUrls: ['./ucp.component.css']
-})
-export class UCPSettingsComponent {
-  faCog = faCog;
-  domain: any;
-  industryConnectorSolutions: [];
-  industryConnectors: any[] = [
-    {
-      id: "hapi",
-      icon: "https://media-exp1.licdn.com/dms/image/C4E0BAQE38nbk86XEOQ/company-logo_200_200/0/1618338688553?e=2147483647&v=beta&t=32RQL7yl3BxcFrkhVLKiJZEgxrApfj4kJsgC2uhm6Vg",
-      description: "Hapi is a Cloud Data Hub that exposes event streams and transactional APIs from hotel systems at scale",
-      objectType: "hotel booking, guest profile, hotel stay revenue",
-      deploymentStatus: "Not Deployed"
-    },
-    {
-      id: "tealium",
-      icon: "https://miu.sg/wp-content/uploads/tealium.png",
-      description: "Tealium connects data so you can connect with your customers",
-      objectType: "clickstream",
-      deploymentStatus: "Not Deployed"
-    }]
-
-  constructor(public dialogRef: MatDialogRef<UCPSettingsComponent>, public dialog: MatDialog,
-    @Inject(MAT_DIALOG_DATA) public data: any, private session: SessionService, private ucpService: UcpService) {
-    let domain = this.session.getProfileDomain()
-    //this.showDetail({ "unique_id": "906cd43cae044345b1f2027ad9465fdb" })
-    this.ucpService.getConfig(domain).subscribe((res: any) => {
-      console.log(res)
-      this.domain = res.config.domains[0];
-    })
-    this.ucpService.listApplications().subscribe((res: any) => {
-      this.industryConnectorSolutions = res;
-    })
-  }
-
-  public validate() {
-    this.dialogRef.close(true)
-  }
-  public invalidate() {
-    this.dialogRef.close(false)
-  }
-  public openDeployConnectorLink(): void {
-    // TODO: replace with Industry Connector solution deployment link
-    window.open("https://github.com/aws-solutions/travel-and-hospitality-connectors", "_blank", "noopener, noreferrer")
-  }
-  public shouldShowLinkButton(): boolean {
-    return this.industryConnectorSolutions.length > 0 ? true : false
-  }
-  showLinkConnector(connectorId: string) {
-    const dialogRef = this.dialog.open(LinkConnectorComponent, {
-      width: '90%',
-      data: {
-        connectorId: connectorId,
-      }
-    });
-  }
-  public getColorStatus(status: string) {
-    let statusColor: string;
-
-    switch(status) {
-      case "Active": {
-        statusColor = "darkgreen";
-        break;
-      }
-      case "Deleted": {
-        statusColor = "firebrick";
-        break;
-      }
-      case "Errored": {
-        statusColor = "firebrick";
-        break;
-      }
-      case "Suspended": {
-        statusColor = "firebrick";
-        break;
-      }
-      case "Depreciated": {
-        statusColor = "goldenrod";
-        break;
-      }
-      case "Draft": {
-        statusColor = "goldenrod";
-        break;
-      }
-      default: {
-        statusColor = "gray"
-        break;
-      }
-    }
-    return statusColor
-  }
-  public getLastRunColorStatus(status: string) {
-    let statusColor: string;
-    switch(status) {
-      case "Successful": {
-        statusColor = "darkgreen";
-        break;
-      }
-      case "Error": {
-        statusColor = "darkgreen";
-        break;
-      }
-      case "InProgress": {
-        statusColor = "goldenrod";
-        break;
-      }
-      case "": {
-        statusColor = "goldenrod"
-        break;
-      }
-      default: {
-        statusColor = "gray"
-        break;
-      }
-    }
-    return statusColor
-  }
-}
-
-@Component({
-  selector: 'link-connector',
-  templateUrl: './connector/ucp.component-link-connector.html',
-  styleUrls: ['./ucp.component.css']
-})
-export class LinkConnectorComponent {
-  response: any;
-  domain: string;
-  linkConnectorForm = new FormGroup({
-    agwUrl: new FormControl('', Validators.required),
-    tokenEndpoint: new FormControl('', Validators.required),
-    clientId: new FormControl('', Validators.required),
-    clientSecret: new FormControl('', Validators.required),
-    bucketArn: new FormControl('', Validators.required),
-  });
-  buttonDisabled: boolean;
-
-  constructor(public dialogRef: MatDialogRef<LinkConnectorComponent>, private ucpService: UcpService, private session: SessionService, public dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any) {
-    this.domain = this.session.getProfileDomain();
-    let localData = this.session.getConnectorData(this.domain);
-    this.linkConnectorForm.controls['agwUrl'].setValue(localData?.agwUrl ?? "");
-    this.linkConnectorForm.controls['tokenEndpoint'].setValue(localData?.tokenEndpoint ?? "");
-    this.linkConnectorForm.controls['clientId'].setValue(localData?.clientId ?? "");
-    this.linkConnectorForm.controls['clientSecret'].setValue(localData?.clientSecret ?? "");
-    this.linkConnectorForm.controls['bucketArn'].setValue(localData?.bucketArn ?? "");
-    this.buttonDisabled = true;
-  }
-
-  ngOnInit() {
-    this.linkConnectorForm.valueChanges.subscribe(() => {
-      if (this.linkConnectorForm.valid) {
-        this.buttonDisabled = false;
-      } else {
-        this.buttonDisabled = true;
-      }
-    });
-  }
-
-  public link() {
-    this.session.setConnectorData(this.domain, this.linkConnectorForm.value.agwUrl, this.linkConnectorForm.value.tokenEndpoint, this.linkConnectorForm.value.clientId, this.linkConnectorForm.value.clientSecret, this.linkConnectorForm.value.bucketArn);
-    this.ucpService.linkIndustryConnector(this.linkConnectorForm.value.agwUrl, this.linkConnectorForm.value.tokenEndpoint, this.linkConnectorForm.value.clientId, this.linkConnectorForm.value.clientSecret, this.linkConnectorForm.value.bucketArn).subscribe((res: any) => {
-      this.response = res;
-      this.dialogRef.close(null);
-      const dialogRef = this.dialog.open(CreateConnectorCrawler, {
-        width: '90%',
-        data: {
-          bucketPolicy: this.response["BucketPolicy"],
-          glueRoleArn: this.response["GlueRoleArn"],
-          bucketPath: this.linkConnectorForm.controls['bucketArn'].value,
-          connectorId: this.data.connectorId,
-        }
-      });
-    });
-  }
-
-  public cancel() {
-    this.dialogRef.close(null)
-  }
-}
-
-@Component({
-  selector: 'create-connector-crawler',
-  templateUrl: './connector/ucp.component-create-connector-crawler.html',
-  styleUrls: ['./ucp.component.css']
-})
-export class CreateConnectorCrawler {
-  bucketPolicy: string;
-  glueRoleArn: string;
-  bucketPath: string;
-  constructor(public dialogRef: MatDialogRef<CreateConnectorCrawler>, private ucpService: UcpService, @Inject(MAT_DIALOG_DATA) public data: any) {
-    this.bucketPolicy = data.bucketPolicy;
-    this.glueRoleArn = data.glueRoleArn;
-    this.bucketPath = data.bucketPath;
-  }
-
-  public link() {
-    this.ucpService.createConnectorCrawler(this.glueRoleArn, this.bucketPath, this.data.connectorId).subscribe((res: any) => { });
-    this.dialogRef.close(null);
-  }
-
-  public cancel() {
-    this.dialogRef.close(null)
   }
 }

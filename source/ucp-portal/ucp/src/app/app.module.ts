@@ -26,11 +26,16 @@ import { MatInputModule } from '@angular/material/input';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ProfileComponent } from './profile/profile.component';
+import { SettingComponent, LinkConnectorComponent } from './setting/setting.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    LoginComponent
+    LoginComponent,
+    ProfileComponent,
+    SettingComponent,
+    LinkConnectorComponent,
   ],
   imports: [
     UcpModule,

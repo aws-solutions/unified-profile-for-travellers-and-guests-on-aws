@@ -4,61 +4,116 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"tah/core/customerprofiles"
 	"tah/core/s3"
 	common "tah/ucp/src/business-logic/common"
 	model "tah/ucp/src/business-logic/model"
 )
 
-var NUMBER_FILES_TO_VALIDATE = 100
+var VALIDATION_BATCH_SIZE = 10
+var MAX_FILES_TO_VALIDATE = 500
 var MANDATORY_FIELDS = []string{"model_version", "object_type"}
 
 type Usecase struct {
 	Cx *common.Context
 }
 
-func (u Usecase) Validate(bucketName string, path string, mappings []customerprofiles.FieldMapping) ([]model.ValidationError, error) {
-	u.Cx.Log("1-List all objects on the subpath")
-	s3c := s3.Init(bucketName, "", u.Cx.Region)
-	objects, err := s3c.Search(path, NUMBER_FILES_TO_VALIDATE)
+func (u Usecase) ValidateBizObjects(bucketName string, path string) ([]model.ValidationError, error) {
 	allValidationErrors := []model.ValidationError{}
-	if err != nil {
-		return []model.ValidationError{}, errors.New("Could not list files to validate on S3. Error: " + err.Error())
-	}
-	for _, object := range objects {
-		data, err1 := s3c.ParseCsvFromS3(object)
-		if err1 != nil {
-			return []model.ValidationError{}, errors.New(fmt.Sprintf("Could not access file %v to validate on S3. Error: %v", object, err1.Error()))
-		}
-		if len(data) <= 2 {
-			return []model.ValidationError{
-				model.ValidationError{
-					ErrType: model.ERR_TYPE_NO_HEADER,
-					File:    object,
-					Bucket:  bucketName,
-					Row:     0,
-					Col:     0,
-					ColName: "",
-					Msg:     "The CSV file should have at least one header and one row",
-				},
-			}, nil
+	return allValidationErrors, nil
+}
 
+func (u Usecase) ValidateAccpRecords(paginationOptions model.PaginationOptions, bucketName string, path string, mappings []customerprofiles.FieldMapping) ([]model.ValidationError, error) {
+	u.Cx.Log("1-List all objects on the subpath")
+	allValidationErrors := []model.ValidationError{}
+	s3c := s3.Init(bucketName, "", u.Cx.Region)
+	page := paginationOptions.Page
+	pageSize := paginationOptions.PageSize
+	it := 0
+	for len(allValidationErrors) < (page+1)*pageSize && it < MAX_FILES_TO_VALIDATE/VALIDATION_BATCH_SIZE {
+		it++
+		objects, err := s3c.Search(path, VALIDATION_BATCH_SIZE)
+		if err != nil {
+			return []model.ValidationError{}, errors.New("Could not list files to validate on S3. Error: " + err.Error())
 		}
-		valErrs, err2 := u.ValidateHeaderRow(object, bucketName, data[0], mappings)
+		var lastErr error
+		wg := sync.WaitGroup{}
+		wg.Add(len(objects))
+		mu := sync.Mutex{}
+		for _, object := range objects {
+			go func(object string) {
+				valErrs, err := u.ValidateObject(bucketName, object, mappings, s3c)
+				for _, valErr := range valErrs {
+					mu.Lock()
+					allValidationErrors = append(allValidationErrors, valErr)
+					mu.Unlock()
+				}
+				if err != nil {
+					lastErr = err
+				}
+				wg.Done()
+			}(object)
+		}
+		wg.Wait()
+		if lastErr != nil {
+			return allValidationErrors, lastErr
+		}
+		//we queried all the objects in the buckets
+		if len(objects) < VALIDATION_BATCH_SIZE {
+			break
+		}
+	}
+	from := page * pageSize
+	if from >= len(allValidationErrors) {
+		from = len(allValidationErrors) - 1
+		if from < 0 {
+			from = 0
+		}
+	}
+	to := (page + 1) * pageSize
+	if to >= len(allValidationErrors) {
+		to = len(allValidationErrors)
+	}
+	return allValidationErrors[from:to], nil
+}
+
+func (u Usecase) ValidateObject(bucketName string, object string, mappings []customerprofiles.FieldMapping, s3c s3.S3Config) ([]model.ValidationError, error) {
+	allValidationErrors := []model.ValidationError{}
+	data, err1 := s3c.ParseCsvFromS3(object)
+	if err1 != nil {
+		return []model.ValidationError{}, errors.New(fmt.Sprintf("Could not access file %v to validate on S3. Error: %v", object, err1.Error()))
+	}
+	if len(data) < 2 {
+		u.Cx.Log("invalid data: %v", data)
+		return []model.ValidationError{
+			model.ValidationError{
+				ErrType: model.ERR_TYPE_NO_HEADER,
+				File:    object,
+				Object:  parseObjectName(object),
+				Bucket:  bucketName,
+				Row:     0,
+				Col:     0,
+				ColName: "",
+				Msg:     "The CSV file should have at least one header and one row",
+			},
+		}, nil
+
+	}
+	valErrs, err2 := u.ValidateHeaderRow(object, bucketName, data[0], mappings)
+	if err2 != nil {
+		return []model.ValidationError{}, errors.New(fmt.Sprintf("Error validating header row %v", err2))
+	}
+	for _, valErr := range valErrs {
+		allValidationErrors = append(allValidationErrors, valErr)
+	}
+	for rowNum, row := range data[1:] {
+		valErrs, err3 := u.ValidateDataRow(object, bucketName, rowNum, row, data[0], mappings)
 		if err2 != nil {
-			return []model.ValidationError{}, errors.New(fmt.Sprintf("Error validating header row %v", err2))
+			return []model.ValidationError{}, errors.New(fmt.Sprintf("Error validating data row %v", err3))
 		}
 		for _, valErr := range valErrs {
 			allValidationErrors = append(allValidationErrors, valErr)
-		}
-		for rowNum, row := range data[1:] {
-			valErrs, err3 := u.ValidateDataRow(object, bucketName, rowNum, row, data[0], mappings)
-			if err2 != nil {
-				return []model.ValidationError{}, errors.New(fmt.Sprintf("Error validating data row %v", err3))
-			}
-			for _, valErr := range valErrs {
-				allValidationErrors = append(allValidationErrors, valErr)
-			}
 		}
 	}
 	return allValidationErrors, nil
@@ -85,6 +140,7 @@ func (u Usecase) ValidateHeaderRow(object string, bucketName string, fielNames [
 			valErrs = append(valErrs, model.ValidationError{
 				ErrType: model.ERR_TYPE_MISSING_MAPPING_FIELD,
 				File:    object,
+				Object:  parseObjectName(object),
 				Bucket:  bucketName,
 				Row:     0,
 				Col:     0,
@@ -112,6 +168,7 @@ func (u Usecase) ValidateHeaderRow(object string, bucketName string, fielNames [
 		valErrs = append(valErrs, model.ValidationError{
 			ErrType: model.ERR_TYPE_MISSING_INDEX_FIELD,
 			File:    object,
+			Object:  parseObjectName(object),
 			Bucket:  bucketName,
 			Row:     0,
 			Col:     0,
@@ -123,6 +180,7 @@ func (u Usecase) ValidateHeaderRow(object string, bucketName string, fielNames [
 		valErrs = append(valErrs, model.ValidationError{
 			ErrType: model.ERR_TYPE_MISSING_INDEX_FIELD,
 			File:    object,
+			Object:  parseObjectName(object),
 			Bucket:  bucketName,
 			Row:     0,
 			Col:     0,
@@ -134,6 +192,7 @@ func (u Usecase) ValidateHeaderRow(object string, bucketName string, fielNames [
 		valErrs = append(valErrs, model.ValidationError{
 			ErrType: model.ERR_TYPE_MISSING_INDEX_FIELD,
 			File:    object,
+			Object:  parseObjectName(object),
 			Bucket:  bucketName,
 			Row:     0,
 			Col:     0,
@@ -154,6 +213,7 @@ func (u Usecase) ValidateDataRow(object string, bucketName string, rowNum int, r
 			valErrs = append(valErrs, model.ValidationError{
 				ErrType: model.ERR_TYPE_MISSING_INDEX_FIELD_VALUE,
 				File:    object,
+				Object:  parseObjectName(object),
 				Bucket:  bucketName,
 				Row:     rowNum,
 				Col:     colNum,
@@ -165,6 +225,7 @@ func (u Usecase) ValidateDataRow(object string, bucketName string, rowNum int, r
 			valErrs = append(valErrs, model.ValidationError{
 				ErrType: model.ERR_TYPE_MISSING_INDEX_FIELD_VALUE,
 				File:    object,
+				Object:  parseObjectName(object),
 				Bucket:  bucketName,
 				Row:     rowNum,
 				Col:     colNum,
@@ -176,6 +237,7 @@ func (u Usecase) ValidateDataRow(object string, bucketName string, rowNum int, r
 			valErrs = append(valErrs, model.ValidationError{
 				ErrType: model.ERR_TYPE_MISSING_INDEX_FIELD_VALUE,
 				File:    object,
+				Object:  parseObjectName(object),
 				Bucket:  bucketName,
 				Row:     rowNum,
 				Col:     colNum,
@@ -188,6 +250,7 @@ func (u Usecase) ValidateDataRow(object string, bucketName string, rowNum int, r
 				valErrs = append(valErrs, model.ValidationError{
 					ErrType: model.ERR_TYPE_MISSING_MANDATORY_FIELD_VALUE,
 					File:    object,
+					Object:  parseObjectName(object),
 					Bucket:  bucketName,
 					Row:     0,
 					Col:     0,
@@ -217,4 +280,13 @@ func parseSourceFieldName(source string) string {
 		return ""
 	}
 	return parts[1]
+}
+
+//object name is contained in root folder
+func parseObjectName(s3Path string) string {
+	parts := strings.Split(s3Path, "/")
+	if len(parts) < 1 {
+		return ""
+	}
+	return parts[0]
 }

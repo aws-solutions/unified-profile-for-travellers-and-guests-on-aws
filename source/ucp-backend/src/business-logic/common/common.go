@@ -2,6 +2,7 @@ package common
 
 import (
 	"log"
+	"strconv"
 	"tah/core/core"
 )
 
@@ -22,4 +23,13 @@ func (c Context) Log(format string, v ...interface{}) {
 		c.Tx.Log(format, v)
 	}
 	log.Printf("[no_tx] "+format, v)
+}
+
+func (c Context) ParseQueryParamInt(param string) int {
+	i, err := strconv.Atoi(param)
+	if err != nil {
+		c.Log("WARNING invalid query param of type int")
+		return 0
+	}
+	return i
 }

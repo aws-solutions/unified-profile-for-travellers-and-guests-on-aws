@@ -2,6 +2,7 @@ package model
 
 import (
 	core "tah/core/core"
+	"tah/ucp/src/business-logic/common"
 	"time"
 )
 
@@ -32,10 +33,12 @@ type CreateConnectorCrawlerRq struct {
 }
 
 type UCPRequest struct {
-	ID       string
-	SearchRq SearchRq
-	Domain   Domain
-	EnvName  string
+	ID         string
+	Cx         *common.Context
+	SearchRq   SearchRq
+	Domain     Domain
+	EnvName    string
+	Pagination PaginationOptions `json:"pagination"`
 }
 
 type UCPConfig struct {
@@ -56,10 +59,20 @@ type Domain struct {
 type ResWrapper struct {
 	Profiles        []Traveller       `json:"profiles"`
 	IngestionErrors []IngestionErrors `json:"ingestionErrors"`
+	DataValidation  []ValidationError `json:"dataValidation"`
 	TotalErrors     int64             `json:"totalErrors"`
 	UCPConfig       UCPConfig         `json:"config"`
 	Matches         []Match           `json:"matches"`
 	Error           core.ResError     `json:"error"`
+	Pagination      PaginationOptions `json:"pagination"`
+}
+
+var PAGINATION_OPTION_PAGE = "page"
+var PAGINATION_OPTION_PAGE_SIZE = "pageSize"
+
+type PaginationOptions struct {
+	Page     int `json:"page"`
+	PageSize int `json:"pageSize"`
 }
 
 type Match struct {
@@ -111,11 +124,12 @@ var ERR_TYPE_MISSING_INDEX_FIELD_VALUE = "missing_index_field_value"
 var ERR_TYPE_NO_HEADER = "missing_header"
 
 type ValidationError struct {
-	ErrType string
-	File    string
-	Row     int
-	Col     int
-	ColName string
-	Bucket  string
-	Msg     string
+	ErrType string `json:"errType"`
+	Msg     string `json:"msg"`
+	Object  string `json:"object"`
+	File    string `json:"file"`
+	Row     int    `json:"row"`
+	Col     int    `json:"col"`
+	ColName string `json:"field"`
+	Bucket  string `json:"bucket"`
 }

@@ -7,6 +7,7 @@ import (
 	"tah/core/customerprofiles"
 	"tah/core/s3"
 	common "tah/ucp/src/business-logic/common"
+	model "tah/ucp/src/business-logic/model"
 	"testing"
 )
 
@@ -106,8 +107,7 @@ func TestEndToEndValidation(t *testing.T) {
 			Source:      "_source.loyaltyId",
 			Target:      "_profile.AccountNumber",
 			Searcheable: true,
-			//TODO: this index should go on a dedicated customer ID field
-			Indexes: []string{"PROFILE"},
+			Indexes:     []string{"PROFILE"},
 		},
 	}
 	log.Printf("Testing CSV Validation")
@@ -120,12 +120,12 @@ func TestEndToEndValidation(t *testing.T) {
 	if err != nil {
 		t.Errorf("[TestEndToEndValidation] Failed to upload CSV file: %+v", err)
 	}
-	valErrs, err2 := uc.Validate(s3c.Bucket, "bookings", mappings)
+	valErrs, err2 := uc.ValidateAccpRecords(model.PaginationOptions{Page: 0, PageSize: 100}, s3c.Bucket, "bookings", mappings)
 	if err2 != nil {
 		t.Errorf("Error during CSV file validation: %+v", err2)
 	}
 	if len(valErrs) != 4 {
-		t.Errorf("Validator should not return 4 errors for CSV but returns %+v errors: %+v", len(valErrs), valErrs)
+		t.Errorf("Validator should return 4 errors for CSV but returns %+v errors: %+v", len(valErrs), valErrs)
 	}
 	err = s3c.EmptyAndDelete()
 	if err != nil {

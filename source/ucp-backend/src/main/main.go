@@ -12,6 +12,7 @@ import (
 	customerprofiles "tah/core/customerprofiles"
 	glue "tah/core/glue"
 	iam "tah/core/iam"
+	"tah/ucp/src/business-logic/common"
 	model "tah/ucp/src/business-logic/model"
 	usecase "tah/ucp/src/business-logic/usecase"
 
@@ -19,8 +20,8 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
+//Resources
 var LAMBDA_ENV = os.Getenv("LAMBDA_ENV")
-var S3_MULTIMEDIA = os.Getenv("S3_MULTIMEDIA")
 var LAMBDA_ACCOUNT_ID = os.Getenv("LAMBDA_ACCOUNT_ID")
 var LAMBDA_REGION = os.Getenv("AWS_REGION")
 var NAMESPACE_NAME = "cloudRackServiceDiscoveryNamespace" + LAMBDA_ENV
@@ -30,9 +31,20 @@ var CONNECTOR_CRAWLER_QUEUE = os.Getenv("CONNECTOR_CRAWLER_QUEUE")
 var CONNECTOR_CRAWLER_DLQ = os.Getenv("CONNECTOR_CRAWLER_DLQ")
 var GLUE_DB = os.Getenv("GLUE_DB")
 var DATALAKE_ADMIN_ROLE_ARN = os.Getenv("DATALAKE_ADMIN_ROLE_ARN")
+
+//S3 buckets
 var CONNECT_PROFILE_SOURCE_BUCKET = os.Getenv("CONNECT_PROFILE_SOURCE_BUCKET")
+var S3_HOTEL_BOOKING = os.Getenv("S3_HOTEL_BOOKING")
+var S3_AIR_BOOKING = os.Getenv("S3_AIR_BOOKING")
+var S3_GUEST_PROFILE = os.Getenv("S3_GUEST_PROFILE")
+var S3_PAX_PROFILE = os.Getenv("S3_PAX_PROFILE")
+var S3_STAY_REVENUE = os.Getenv("S3_STAY_REVENUE")
+var S3_CLICKSTREAM = os.Getenv("S3_CLICKSTREAM")
+
 var KMS_KEY_PROFILE_DOMAIN = os.Getenv("KMS_KEY_PROFILE_DOMAIN")
 var UCP_CONNECT_DOMAIN = ""
+
+//Use cases
 var FN_RETREIVE_UCP_PROFILE = "retreive_ucp_profile"
 var FN_DELETE_UCP_PROFILE = "delete_ucp_profile"
 var FN_SEARCH_UCP_PROFILES = "search_ucp_profiles"
@@ -42,6 +54,7 @@ var FN_CREATE_UCP_DOMAIN = "create_ucp_domain"
 var FN_DELETE_UCP_DOMAIN = "delete_ucp_domain"
 var FN_MERGE_UCP_PROFILE = "merge_ucp_profile"
 var FN_LIST_CONNECTORS = "list_connectors"
+var FN_GET_DATA_VALIDATION_STATUS = "get_data_validation_status"
 var FN_LINK_INDUSTRY_CONNECTOR = "link_industry_connector"
 var FN_CREATE_CONNECTOR_CRAWLER = "create_connector_crawler"
 var FN_LIST_UCP_INGESTION_ERROR = "list_ucp_ingestion_errors"
@@ -54,6 +67,15 @@ var glueClient = glue.Init(LAMBDA_REGION, GLUE_DB)
 func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	tx := core.NewTransaction("ucp", req.Headers[core.TRANSACTION_ID_HEADER])
 	tx.Log("Received Request %+v with context %+v", req, ctx)
+	txContext := common.Init(&tx, LAMBDA_REGION)
+	rq := model.UCPRequest{
+		EnvName: LAMBDA_ENV,
+		Cx:      txContext,
+		Pagination: model.PaginationOptions{
+			Page:     txContext.ParseQueryParamInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE]),
+			PageSize: txContext.ParseQueryParamInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE_SIZE]),
+		},
+	}
 	resource := req.Resource
 	method := req.HTTPMethod
 	tx.Log("*Resource: %v", resource)
@@ -66,10 +88,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	if subFunction == FN_RETREIVE_UCP_PROFILE {
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{
-				ID:      req.PathParameters["id"],
-				EnvName: LAMBDA_ENV,
-			}
+			rq.ID = req.PathParameters["id"]
 			tx.Log("Retreive request: %+v", rq)
 			err = ValidateUCPRetreiveRequest(rq)
 			if err != nil {
@@ -86,10 +105,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	} else if subFunction == FN_DELETE_UCP_PROFILE {
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{
-				ID:      req.PathParameters["id"],
-				EnvName: LAMBDA_ENV,
-			}
+			rq.ID = req.PathParameters["id"]
 			tx.Log("Delete request: %+v", rq)
 			err = ValidateUCPRetreiveRequest(rq)
 			if err != nil {
@@ -102,12 +118,10 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	} else if subFunction == FN_SEARCH_UCP_PROFILES {
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{SearchRq: model.SearchRq{
-				LastName:  req.QueryStringParameters["lastName"],
-				Phone:     req.QueryStringParameters["phone"],
-				Email:     req.QueryStringParameters["email"],
-				LoyaltyID: req.QueryStringParameters["loyaltyId"],
-			}}
+			rq.SearchRq.LastName = req.QueryStringParameters["lastName"]
+			rq.SearchRq.Phone = req.QueryStringParameters["phone"]
+			rq.SearchRq.Email = req.QueryStringParameters["email"]
+			rq.SearchRq.LoyaltyID = req.QueryStringParameters["loyaltyId"]
 			err = ValidateUCPSearchRequest(rq)
 			if err != nil {
 				tx.Log("Validation error: %v", err)
@@ -124,7 +138,6 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	} else if subFunction == FN_RETREIVE_UCP_CONFIG {
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{}
 			tx.Log("Search request: %+v", rq)
 			ucpRes, err = usecase.RetreiveUCPConfig(rq, profiles)
 			if err == nil {
@@ -136,9 +149,6 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	} else if subFunction == FN_LIST_UCP_DOMAINS {
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{
-				EnvName: LAMBDA_ENV,
-			}
 			tx.Log("Search request: %+v", rq)
 			ucpRes, err = usecase.ListUcpDomains(rq, profiles)
 			if err == nil {
@@ -150,7 +160,6 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	} else if subFunction == FN_CREATE_UCP_DOMAIN {
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{}
 			rq, err = decodeUCPBody(tx, req)
 			rq.EnvName = LAMBDA_ENV
 			tx.Log("Create Domain request: %+v", rq)
@@ -166,11 +175,8 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	} else if subFunction == FN_DELETE_UCP_DOMAIN {
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{
-				Domain: model.Domain{
-					Name: req.PathParameters["id"],
-				},
-				EnvName: LAMBDA_ENV,
+			rq.Domain = model.Domain{
+				Name: req.PathParameters["id"],
 			}
 			tx.Log("Delete request: %+v", rq)
 			ucpRes, err = usecase.DeleteUcpDomain(rq, profiles)
@@ -184,6 +190,32 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
 			ucpRes, err := usecase.ListIndustryConnectors(appregistryClient)
+			if err != nil {
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builResponseError(tx, err), nil
+			}
+			res := events.APIGatewayProxyResponse{
+				StatusCode: 200,
+			}
+			jsonRes, err := json.Marshal(ucpRes)
+			if err != nil {
+				tx.Log("Error while unmarshalling response %v", err)
+				return builResponseError(tx, err), nil
+			}
+			res.Body = string(jsonRes)
+			return res, nil
+		}
+	} else if subFunction == FN_GET_DATA_VALIDATION_STATUS {
+		tx.Log("Selected Use Case %v", subFunction)
+		if err == nil {
+			ucpRes, err := usecase.GetDataValidationnStatus(rq, map[string]string{
+				"S3_HOTEL_BOOKING": S3_HOTEL_BOOKING,
+				"S3_AIR_BOOKING":   S3_AIR_BOOKING,
+				"S3_GUEST_PROFILE": S3_GUEST_PROFILE,
+				"S3_PAX_PROFILE":   S3_PAX_PROFILE,
+				"S3_STAY_REVENUE":  S3_STAY_REVENUE,
+				"S3_CLICKSTREAM":   S3_CLICKSTREAM,
+			}, CONNECT_PROFILE_SOURCE_BUCKET)
 			if err != nil {
 				tx.Log("Use Case %s failed with error: %v", subFunction, err)
 				return builResponseError(tx, err), nil
@@ -228,6 +260,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 			return res, nil
 		}
 	} else if subFunction == FN_CREATE_CONNECTOR_CRAWLER {
+		//TODO: move this inside one use case
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
 			data, err := decodeCreateConnectorCrawlerBody(tx, req)
@@ -260,7 +293,6 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	} else if subFunction == FN_MERGE_UCP_PROFILE {
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{}
 			tx.Log("Search request: %+v", rq)
 			ucpRes, err = usecase.MergeUCPConfig(rq)
 			if err == nil {
@@ -272,7 +304,6 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	} else if subFunction == FN_LIST_UCP_INGESTION_ERROR {
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{}
 			tx.Log("Search request: %+v", rq)
 			ucpRes, err = usecase.ListUCPIngestionError(rq, profiles)
 			if err == nil {
@@ -366,6 +397,9 @@ func identifyUseCase(res string, meth string) string {
 	}
 	if res == "/ucp/error" && meth == "GET" {
 		return FN_LIST_UCP_INGESTION_ERROR
+	}
+	if res == "/ucp/data" && meth == "GET" {
+		return FN_GET_DATA_VALIDATION_STATUS
 	}
 	return ""
 }

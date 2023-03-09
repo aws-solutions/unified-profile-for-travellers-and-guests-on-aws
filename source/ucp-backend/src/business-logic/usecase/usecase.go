@@ -3,8 +3,10 @@ package usecase
 import (
 	"log"
 	"strconv"
+	"sync"
 	customerprofiles "tah/core/customerprofiles"
 	model "tah/ucp/src/business-logic/model"
+	validator "tah/ucp/src/business-logic/validator"
 	"time"
 )
 
@@ -44,7 +46,78 @@ var SEARCH_KEY_PHONE = "PhoneNumber"
 var SEARCH_KEY_ACCOUNT_NUMBER = "AccountNumber"
 var SEARCH_KEY_CONF_NUMBER = "confirmationNumber"
 
+var ACCP_SUB_FOLDER_AIR_BOOKING = "air_booking"
+var ACCP_SUB_FOLDER_EMAIL_HISTORY = "email_history"
+var ACCP_SUB_FOLDER_PHONE_HISTORY = "phone_history"
+var ACCP_SUB_FOLDER_AIR_LOYALTY = "air_loyalty"
+var ACCP_SUB_FOLDER_CLICKSTREAM = "clickstream"
+var ACCP_SUB_FOLDER_GUEST_PROFILE = "guest_profile"
+var ACCP_SUB_FOLDER_HOTEL_LOYALTY = "hotel_loyalty"
+var ACCP_SUB_FOLDER_HOTEL_BOOKING = "hotel_booking"
+var ACCP_SUB_FOLDER_PAX_PROFILE = "pax_profile"
+
 var DOMAIN_TAG_ENV_NAME = "envName"
+
+func GetDataValidationnStatus(rq model.UCPRequest, bizObjectBuckets map[string]string, accpBucket string) (model.ResWrapper, error) {
+	uc := validator.Usecase{Cx: rq.Cx}
+	res := model.ResWrapper{
+		DataValidation: []model.ValidationError{},
+	}
+	folders := []string{
+		ACCP_SUB_FOLDER_AIR_BOOKING,
+		ACCP_SUB_FOLDER_EMAIL_HISTORY,
+		ACCP_SUB_FOLDER_PHONE_HISTORY,
+		ACCP_SUB_FOLDER_AIR_LOYALTY,
+		ACCP_SUB_FOLDER_CLICKSTREAM,
+		ACCP_SUB_FOLDER_GUEST_PROFILE,
+		ACCP_SUB_FOLDER_HOTEL_LOYALTY,
+		ACCP_SUB_FOLDER_HOTEL_BOOKING,
+		ACCP_SUB_FOLDER_PAX_PROFILE,
+	}
+	businessMap := map[string]func() []customerprofiles.FieldMapping{
+		ACCP_SUB_FOLDER_AIR_BOOKING:   buildBookingMapping,
+		ACCP_SUB_FOLDER_EMAIL_HISTORY: buildHotelStayMapping,
+		ACCP_SUB_FOLDER_PHONE_HISTORY: buildClickstreamMapping,
+		ACCP_SUB_FOLDER_AIR_LOYALTY:   buildAirBookingMapping,
+		ACCP_SUB_FOLDER_CLICKSTREAM:   buildGuestProfileMapping,
+		ACCP_SUB_FOLDER_GUEST_PROFILE: buildPassengerProfileMapping,
+		ACCP_SUB_FOLDER_HOTEL_LOYALTY: buildPassengerProfileMapping,
+		ACCP_SUB_FOLDER_HOTEL_BOOKING: buildPassengerProfileMapping,
+		ACCP_SUB_FOLDER_PAX_PROFILE:   buildPassengerProfileMapping,
+	}
+	var lastErr error
+	wg := sync.WaitGroup{}
+	wg.Add(len(folders))
+	mu := sync.Mutex{}
+	for _, path := range folders {
+		go func(filePath string) {
+			valErrs, err := uc.ValidateAccpRecords(rq.Pagination, accpBucket, filePath, businessMap[filePath]())
+			for _, valErr := range valErrs {
+				mu.Lock()
+				res.DataValidation = append(res.DataValidation, valErr)
+				mu.Unlock()
+			}
+			if err != nil {
+				lastErr = err
+			}
+			wg.Done()
+		}(path)
+	}
+	wg.Wait()
+	if lastErr != nil {
+		return res, lastErr
+	}
+	for _, bucketName := range bizObjectBuckets {
+		valErrs, err := uc.ValidateBizObjects(bucketName, "")
+		if err != nil {
+			return res, err
+		}
+		for _, valErr := range valErrs {
+			res.DataValidation = append(res.DataValidation, valErr)
+		}
+	}
+	return res, nil
+}
 
 func RetreiveUCPProfile(rq model.UCPRequest, profilesSvc customerprofiles.CustomerProfileConfig) (model.ResWrapper, error) {
 	profile, err := profilesSvc.GetProfile(rq.ID)

@@ -3,6 +3,7 @@ import 'rxjs/add/operator/map'
 import { Configuration } from '../app.constants';
 import { RestFactory, RestService } from './restFactory';
 import { RestOptions } from '../model/restOptions';
+import { PaginationOptions } from '../model/pagination.model';
 
 @Injectable()
 export class UcpService {
@@ -25,6 +26,9 @@ export class UcpService {
     }
     public listDomains() {
         return this.service.query({}, <RestOptions>{ subEndpoint: "admin" });
+    }
+    public getDataValidationErrors(pagination: PaginationOptions) {
+        return this.service.query(pagination, <RestOptions>{ subEndpoint: "data" });
     }
     public createDomain(name: string) {
         return this.service.post({}, {
