@@ -493,8 +493,8 @@ func (s3c S3Config) GetManyAsText(keys []string) ([]string, error) {
 	return responses, lastErr
 }
 
-//List all obbjects in a S3 bucket. thsi function coul run for a long time if the bucket has many objects
-func (s3c S3Config) Search(prefix string) ([]string, error) {
+//List all obbjects in a S3 bucket. thsi function could run for a long time if the bucket has many objects
+func (s3c S3Config) Search(prefix string, maxRes int) ([]string, error) {
 	s3c.Tx.Log("[S3] listing object with prefix %+v", prefix)
 	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String(s3c.Region)},
@@ -512,6 +512,9 @@ func (s3c S3Config) Search(prefix string) ([]string, error) {
 	for _, obj := range result.Contents {
 		res = append(res, *obj.Key)
 	}
+	if len(res) >= maxRes {
+		return res[0:maxRes], err
+	}
 	for result.IsTruncated != nil && *result.IsTruncated {
 		s3c.Tx.Log("[S3] List is truncated getting next page")
 		input.ContinuationToken = result.NextContinuationToken
@@ -522,6 +525,9 @@ func (s3c S3Config) Search(prefix string) ([]string, error) {
 		for _, obj := range result.Contents {
 			res = append(res, *obj.Key)
 		}
+	}
+	if len(res) >= maxRes {
+		return res[0:maxRes], err
 	}
 	return res, err
 }

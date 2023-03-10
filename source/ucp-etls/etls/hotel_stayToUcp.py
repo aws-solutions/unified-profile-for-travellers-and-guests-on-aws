@@ -1,5 +1,4 @@
 import sys
-import uuid
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
@@ -7,7 +6,9 @@ from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.dynamicframe import DynamicFrame
 from pyspark.sql.functions import explode
+
 from tah_lib.hotel_stayTransform import buildObjectRecord
+from tah_lib.etl_utils import buildS3SubFolder
 
 glueContext = GlueContext(SparkContext.getOrCreate())
 args = getResolvedOptions(
@@ -20,8 +21,18 @@ count = businessObjects.count()
 print("count: ", count)
 businessObjects.printSchema()
 
-accpReccords = Map.apply(frame=businessObjects, f=buildObjectRecord)
+# repartitioning to obtain 500 records per file
+print("nPartitions: ", businessObjects.toDF().rdd.getNumPartitions())
+newNPartitions = max(int(count/500), 1)
+print("repartitionning in : ", newNPartitions)
+businessObjectRepartitionedDF = businessObjects.toDF().coalesce(newNPartitions)
+print("nPartitions after: ", businessObjectRepartitionedDF.rdd.getNumPartitions())
+businessObjectRepartitionedDF
+businessObjectRepartitioned = DynamicFrame.fromDF(
+    businessObjectRepartitionedDF, glueContext, "data")
 
+accpReccords = Map.apply(
+    frame=businessObjectRepartitioned, f=buildObjectRecord)
 accpReccordsDF = accpReccords.toDF()
 
 
@@ -30,7 +41,7 @@ revenue_items = accpReccordsDF.select(
 
 revenue_items.printSchema()
 
-subfolder = str(uuid.uuid1(node=None, clock_seq=None))
+subfolder = buildS3SubFolder()
 
 revenue_items.write.format("csv").option("header", "true").save(
     "s3://"+args["DEST_BUCKET"]+"/hotel_stay_revenue_items/"+subfolder)

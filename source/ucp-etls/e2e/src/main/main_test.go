@@ -233,7 +233,7 @@ func TestMain(t *testing.T) {
 			default: // Default is must to avoid blocking
 			}
 			log.Printf("[%v] 8-Check csv File", c.ObjectName)
-			csvs, err1 := targetBucketHandler.Search(c.TargetPrefix)
+			csvs, err1 := targetBucketHandler.Search(c.TargetPrefix, 500)
 			if err1 != nil {
 				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error listing s3 buckets after ETLs: %v", c.ObjectName, err1))
 				cancel()

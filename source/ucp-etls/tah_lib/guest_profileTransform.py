@@ -12,75 +12,79 @@ def buildObjectRecord(rec):
         cid = str(uuid.uuid1(node=None, clock_seq=None))
         profileRec = {
             'object_type': 'pax_profile',
-            'model_version': rec['modelVersion'],
-            'last_updated_on': rec['lastUpdatedOn'],
-            'created_on': rec['createdOn'],
-            'last_updated_by': rec['lastUpdatedBy'],
-            'created_by': rec['createdBy'],
-            'honorific': rec['honorific'],
-            'first_name': rec['firstName'],
-            'middle_name': rec['middleName'],
-            'last_name': rec['lastName'],
-            'gender': rec['gender'],
-            'pronoun': rec['pronoun'],
-            'date_of_birth': rec['dateOfBirth'],
-            'job_title': rec['jobTitle'],
-            'company': rec['parentCompany'],
+            'model_version': rec.get('modelVersion', ""),
+            'last_updated_on': rec.get('lastUpdatedOn', ""),
+            'created_on': rec.get('createdOn', ""),
+            'last_updated_by': rec.get('lastUpdatedBy', ""),
+            'created_by': rec.get('createdBy', ""),
+            'honorific': rec.get('honorific', ""),
+            'first_name': rec.get('firstName', ""),
+            'middle_name': rec.get('middleName', ""),
+            'last_name': rec.get('lastName', ""),
+            'gender': rec.get('gender', ""),
+            'pronoun': rec.get('pronoun', ""),
+            'date_of_birth': rec.get('dateOfBirth', ""),
+            'job_title': rec.get('jobTitle', ""),
+            'company': rec.get('parentCompany', ""),
         }
         if "nationality" in rec:
-            profileRec["nationality_code"] = rec['nationality']["code"]
-            profileRec["nationality_name"] = rec['nationality']["name"]
+            profileRec["nationality_code"] = rec.get(
+                'nationality', {}).get("code", "")
+            profileRec["nationality_name"] = rec.get(
+                'nationality', {}).get("name", "")
         if "language" in rec:
-            profileRec["language_code"] = rec['language']["code"]
-            profileRec["language_name"] = rec['language']["name"]
+            profileRec["language_code"] = rec.get(
+                'language', {}).get("code", "")
+            profileRec["language_name"] = rec.get(
+                'language', {}).get("name", "")
 
         # Set primary option for phone/email/address
-        setPrimaryEmail(profileRec, rec['emails'])
-        setPrimaryPhone(profileRec, rec['phones'])
-        setPrimaryAddress(profileRec, rec['addresses'])
+        setPrimaryEmail(profileRec, rec.get('emails', []))
+        setPrimaryPhone(profileRec, rec.get('phones', []))
+        setPrimaryAddress(profileRec, rec.get('addresses', []))
         setTravellerId(profileRec, rec, cid)
 
         # Email Addresses
-        for email in rec['emails']:
+        for email in rec.get('emails', []):
             historicalEmail = {
                 'object_type': 'email_history',
-                'model_version': rec['modelVersion'],
-                'last_updated': rec['lastUpdatedOn'],
-                'last_updated_by': rec['lastUpdatedBy'],
-                'address': email['address'],
-                'type': email['type'],
+                'model_version': rec.get('modelVersion', ""),
+                'last_updated': rec.get('lastUpdatedOn', ""),
+                'last_updated_by': rec.get('lastUpdatedBy', ""),
+                'address': email.get('address', ""),
+                'type': email.get('type', ""),
             }
             setTravellerId(historicalEmail, rec, cid)
             emailRecs.append(historicalEmail)
 
         # Phone Numbers
-        for phone in rec['phones']:
+        for phone in rec.get('phones', []):
             historicalPhone = {
                 'object_type': 'phone_history',
-                'model_version': rec['modelVersion'],
-                'last_updated': rec['lastUpdatedOn'],
-                'last_updated_by': rec['lastUpdatedBy'],
-                'number': phone['number'],
-                'country_code': phone['countryCode'],
-                'type': phone['type'],
+                'model_version': rec.get('modelVersion', ""),
+                'last_updated': rec.get('lastUpdatedOn', ""),
+                'last_updated_by': rec.get('lastUpdatedBy', ""),
+                'number': phone.get('number', ""),
+                'country_code': phone.get('countryCode', ""),
+                'type': phone.get('type', ""),
             }
             setTravellerId(historicalPhone, rec, cid)
             phoneRecs.append(historicalPhone)
 
         # Loyalty Programs
-        for loyalty in rec['loyaltyPrograms']:
+        for loyalty in rec.get('loyaltyPrograms', []):
             loyaltyRec = {
                 'object_type': 'air_loyalty',
-                'model_version': rec['modelVersion'],
-                'last_updated': rec['lastUpdatedOn'],
-                'last_updated_by': rec['lastUpdatedBy'],
-                'id': loyalty['id'],
-                'program_name': loyalty['programName'],
-                'points': loyalty['points'],
-                'units': loyalty['pointUnit'],
-                'points_to_next_level': loyalty['pointsToNextLevel'],
-                'level': loyalty['level'],
-                'joined': loyalty['joined']
+                'model_version': rec.get('modelVersion', ""),
+                'last_updated': rec.get('lastUpdatedOn', ""),
+                'last_updated_by': rec.get('lastUpdatedBy', ""),
+                'id': loyalty.get('id', ""),
+                'program_name': loyalty.get('programName', ""),
+                'points': loyalty.get('points', ""),
+                'units': loyalty.get('pointUnit', ""),
+                'points_to_next_level': loyalty.get('pointsToNextLevel', ""),
+                'level': loyalty.get('level', ""),
+                'joined': loyalty.get('joined'),
             }
             setTravellerId(loyaltyRec, rec, cid)
             loyaltyRecs.append(loyaltyRec)
