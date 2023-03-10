@@ -7,16 +7,14 @@ import (
 	"sync"
 	"tah/core/customerprofiles"
 	"tah/core/s3"
-	common "tah/ucp/src/business-logic/common"
-	model "tah/ucp/src/business-logic/model"
+	model "tah/ucp/src/business-logic/model/common"
+	"tah/ucp/src/business-logic/usecase/registry"
 )
 
-var VALIDATION_BATCH_SIZE = 10
-var MAX_FILES_TO_VALIDATE = 500
 var MANDATORY_FIELDS = []string{"model_version", "object_type"}
 
 type Usecase struct {
-	Cx *common.Context
+	Uc registry.Usecase
 }
 
 func (u Usecase) ValidateBizObjects(bucketName string, path string) ([]model.ValidationError, error) {
@@ -25,57 +23,44 @@ func (u Usecase) ValidateBizObjects(bucketName string, path string) ([]model.Val
 }
 
 func (u Usecase) ValidateAccpRecords(paginationOptions model.PaginationOptions, bucketName string, path string, mappings []customerprofiles.FieldMapping) ([]model.ValidationError, error) {
-	u.Cx.Log("1-List all objects on the subpath")
 	allValidationErrors := []model.ValidationError{}
-	s3c := s3.Init(bucketName, "", u.Cx.Region)
+	s3c := s3.Init(bucketName, "", u.Uc.Registry().Region)
 	page := paginationOptions.Page
 	pageSize := paginationOptions.PageSize
-	it := 0
-	for len(allValidationErrors) < (page+1)*pageSize && it < MAX_FILES_TO_VALIDATE/VALIDATION_BATCH_SIZE {
-		it++
-		objects, err := s3c.Search(path, VALIDATION_BATCH_SIZE)
-		if err != nil {
-			return []model.ValidationError{}, errors.New("Could not list files to validate on S3. Error: " + err.Error())
-		}
-		var lastErr error
-		wg := sync.WaitGroup{}
-		wg.Add(len(objects))
-		mu := sync.Mutex{}
-		for _, object := range objects {
-			go func(object string) {
-				valErrs, err := u.ValidateObject(bucketName, object, mappings, s3c)
-				for _, valErr := range valErrs {
-					mu.Lock()
-					allValidationErrors = append(allValidationErrors, valErr)
-					mu.Unlock()
-				}
-				if err != nil {
-					lastErr = err
-				}
-				wg.Done()
-			}(object)
-		}
-		wg.Wait()
-		if lastErr != nil {
-			return allValidationErrors, lastErr
-		}
-		//we queried all the objects in the buckets
-		if len(objects) < VALIDATION_BATCH_SIZE {
-			break
-		}
+	if pageSize == 0 {
+		return []model.ValidationError{}, errors.New("Page size should be greater than 0")
 	}
-	from := page * pageSize
-	if from >= len(allValidationErrors) {
-		from = len(allValidationErrors) - 1
-		if from < 0 {
-			from = 0
-		}
+	u.Uc.Tx().Log("1-List all objects in bucket %s on the subpath %s (Page %v, Page size %v)", bucketName, path, page, pageSize)
+
+	objects, err := s3c.Search(path, pageSize*(page+1))
+	if err != nil {
+		return []model.ValidationError{}, errors.New("Could not list files to validate on S3. Error: " + err.Error())
 	}
-	to := (page + 1) * pageSize
-	if to >= len(allValidationErrors) {
-		to = len(allValidationErrors)
+	var lastErr error
+	wg := sync.WaitGroup{}
+	wg.Add(len(objects))
+	mu := sync.Mutex{}
+	u.Uc.Tx().Log("Found %v objects", len(objects))
+	for _, object := range objects {
+		go func(object string) {
+			u.Uc.Tx().Log("Validating object: s3://%s/%v with mappings %v", bucketName, object, mappings)
+			valErrs, err := u.ValidateObject(bucketName, object, mappings, s3c)
+			for _, valErr := range valErrs {
+				mu.Lock()
+				allValidationErrors = append(allValidationErrors, valErr)
+				mu.Unlock()
+			}
+			if err != nil {
+				lastErr = err
+			}
+			wg.Done()
+		}(object)
 	}
-	return allValidationErrors[from:to], nil
+	wg.Wait()
+	if lastErr != nil {
+		return allValidationErrors, lastErr
+	}
+	return allValidationErrors, nil
 }
 
 func (u Usecase) ValidateObject(bucketName string, object string, mappings []customerprofiles.FieldMapping, s3c s3.S3Config) ([]model.ValidationError, error) {
@@ -85,7 +70,7 @@ func (u Usecase) ValidateObject(bucketName string, object string, mappings []cus
 		return []model.ValidationError{}, errors.New(fmt.Sprintf("Could not access file %v to validate on S3. Error: %v", object, err1.Error()))
 	}
 	if len(data) < 2 {
-		u.Cx.Log("invalid data: %v", data)
+		u.Uc.Tx().Log("invalid data: %v", data)
 		return []model.ValidationError{
 			model.ValidationError{
 				ErrType: model.ERR_TYPE_NO_HEADER,
@@ -130,7 +115,7 @@ func (u Usecase) ValidateHeaderRow(object string, bucketName string, fielNames [
 		fieldNames[fieldName] = true
 		cols[colNum] = fieldName
 	}
-	u.Cx.Log("Checking for source field in ACCP mappings")
+	u.Uc.Tx().Log("Checking for source field in ACCP mappings")
 	for _, mapping := range mappings {
 		sourceFieldName := parseSourceFieldName(mapping.Source)
 		if sourceFieldName == "" {
@@ -149,7 +134,7 @@ func (u Usecase) ValidateHeaderRow(object string, bucketName string, fielNames [
 			})
 		}
 	}
-	u.Cx.Log("Checking for mandatory fields %v", MANDATORY_FIELDS)
+	u.Uc.Tx().Log("Checking for mandatory fields %v", MANDATORY_FIELDS)
 	for _, field := range MANDATORY_FIELDS {
 		if !fieldNames[field] {
 			valErrs = append(valErrs, model.ValidationError{
@@ -163,7 +148,7 @@ func (u Usecase) ValidateHeaderRow(object string, bucketName string, fielNames [
 			})
 		}
 	}
-	u.Cx.Log("Checking for indexes %v", MANDATORY_FIELDS)
+	u.Uc.Tx().Log("Checking for indexes %v", MANDATORY_FIELDS)
 	if uniqueIndex != "" && !fieldNames[uniqueIndex] {
 		valErrs = append(valErrs, model.ValidationError{
 			ErrType: model.ERR_TYPE_MISSING_INDEX_FIELD,

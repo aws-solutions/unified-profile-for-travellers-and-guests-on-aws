@@ -4,6 +4,27 @@ import customerprofiles "tah/core/customerprofiles"
 
 func BuildClickstreamMapping() []customerprofiles.FieldMapping {
 	return []customerprofiles.FieldMapping{
+		// Metadata
+		{
+			Type:   "STRING",
+			Source: "_source.model_version",
+			Target: "_order.Attributes.model_version",
+		},
+		// Profile Data
+		{
+			Type:        "STRING",
+			Source:      "_source.traveller_id",
+			Target:      "_profile.profileId",
+			Searcheable: true,
+			Indexes:     []string{"PROFILE"},
+		},
+		//Order Data
+		{
+			Type:    "STRING",
+			Source:  "_source.timestamp",
+			Target:  "_order.Attributes.timestamp",
+			Indexes: []string{"UNIQUE", "ORDER"},
+		},
 		{
 			Type:   "STRING",
 			Source: "_source.location",
@@ -56,12 +77,6 @@ func BuildClickstreamMapping() []customerprofiles.FieldMapping {
 			Type:   "STRING",
 			Source: "_source.nRooms",
 			Target: "_order.Attributes.nRooms",
-		},
-		{
-			Type:    "STRING",
-			Source:  "_source.timestamp",
-			Target:  "_order.Attributes.timestamp",
-			Indexes: []string{"UNIQUE", "ORDER"},
 		},
 		{
 			Type:   "STRING",

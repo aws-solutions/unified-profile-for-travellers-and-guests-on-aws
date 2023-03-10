@@ -1,0 +1,11 @@
+mode: set
+/Users/rollatgr/Documents/work/travel/aws_solutions/UCP/unified-profile-for-travellers-and-guests-on-aws/source/ucp-backend/src/business-logic/model/accp-mappings/air_loyalty.go:5.63,124.2 1 1
+/Users/rollatgr/Documents/work/travel/aws_solutions/UCP/unified-profile-for-travellers-and-guests-on-aws/source/ucp-backend/src/business-logic/model/accp-mappings/phone_history.go:5.65,54.2 1 1
+/Users/rollatgr/Documents/work/travel/aws_solutions/UCP/unified-profile-for-travellers-and-guests-on-aws/source/ucp-backend/src/business-logic/model/accp-mappings/pax_profile.go:5.69,108.2 1 1
+/Users/rollatgr/Documents/work/travel/aws_solutions/UCP/unified-profile-for-travellers-and-guests-on-aws/source/ucp-backend/src/business-logic/model/accp-mappings/air_booking.go:5.63,114.2 1 1
+/Users/rollatgr/Documents/work/travel/aws_solutions/UCP/unified-profile-for-travellers-and-guests-on-aws/source/ucp-backend/src/business-logic/model/accp-mappings/clickstream.go:5.64,87.2 1 1
+/Users/rollatgr/Documents/work/travel/aws_solutions/UCP/unified-profile-for-travellers-and-guests-on-aws/source/ucp-backend/src/business-logic/model/accp-mappings/email_history.go:5.65,44.2 1 1
+/Users/rollatgr/Documents/work/travel/aws_solutions/UCP/unified-profile-for-travellers-and-guests-on-aws/source/ucp-backend/src/business-logic/model/accp-mappings/guest_profile.go:5.65,108.2 1 1
+/Users/rollatgr/Documents/work/travel/aws_solutions/UCP/unified-profile-for-travellers-and-guests-on-aws/source/ucp-backend/src/business-logic/model/accp-mappings/hotel_booking.go:5.65,254.2 1 1
+/Users/rollatgr/Documents/work/travel/aws_solutions/UCP/unified-profile-for-travellers-and-guests-on-aws/source/ucp-backend/src/business-logic/model/accp-mappings/hotel_loyalty.go:5.65,124.2 1 1
+/Users/rollatgr/Documents/work/travel/aws_solutions/UCP/unified-profile-for-travellers-and-guests-on-aws/source/ucp-backend/src/business-logic/model/accp-mappings/hotel_stay.go:5.62,117.2 1 1

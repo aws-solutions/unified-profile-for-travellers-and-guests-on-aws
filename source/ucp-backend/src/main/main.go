@@ -2,19 +2,15 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"os"
-	"strings"
 	appregistry "tah/core/appregistry"
 	core "tah/core/core"
 	customerprofiles "tah/core/customerprofiles"
 	glue "tah/core/glue"
 	iam "tah/core/iam"
-	"tah/ucp/src/business-logic/common"
-	model "tah/ucp/src/business-logic/model"
-	usecase "tah/ucp/src/business-logic/usecase"
+	"tah/ucp/src/business-logic/usecase/admin"
+	registry "tah/ucp/src/business-logic/usecase/registry"
+	traveller "tah/ucp/src/business-logic/usecase/traveller"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -41,6 +37,14 @@ var S3_PAX_PROFILE = os.Getenv("S3_PAX_PROFILE")
 var S3_STAY_REVENUE = os.Getenv("S3_STAY_REVENUE")
 var S3_CLICKSTREAM = os.Getenv("S3_CLICKSTREAM")
 
+//Job Names
+var HOTEL_BOOKING_JOB_NAME = os.Getenv("HOTEL_BOOKING_JOB_NAME")
+var AIR_BOOKING_JOB_NAME = os.Getenv("AIR_BOOKING_JOB_NAME")
+var GUEST_PROFILE_JOB_NAME = os.Getenv("GUEST_PROFILE_JOB_NAME")
+var PAX_PROFILE_JOB_NAME = os.Getenv("PAX_PROFILE_JOB_NAME")
+var CLICKSTREAM_JOB_NAME = os.Getenv("CLICKSTREAM_JOB_NAME")
+var HOTEL_STAY_JOB_NAME = os.Getenv("HOTEL_STAY_JOB_NAME")
+
 var KMS_KEY_PROFILE_DOMAIN = os.Getenv("KMS_KEY_PROFILE_DOMAIN")
 var UCP_CONNECT_DOMAIN = ""
 
@@ -66,9 +70,58 @@ var glueClient = glue.Init(LAMBDA_REGION, GLUE_DB)
 
 func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	tx := core.NewTransaction("ucp", req.Headers[core.TRANSACTION_ID_HEADER])
+	tx.AddLogObfuscationPattern("Body:", " *{(.|\n)*}", " ")
 	tx.Log("Received Request %+v with context %+v", req, ctx)
-	txContext := common.Init(&tx, LAMBDA_REGION)
-	rq := model.UCPRequest{
+	var profiles = customerprofiles.InitWithDomain(req.Headers[CUSTOMER_PROFILE_DOMAIN_HEADER], LAMBDA_REGION)
+
+	var reg = registry.NewRegistry(LAMBDA_REGION, &appregistryClient, &iamClient, &glueClient, &profiles)
+	reg.SetRegion(LAMBDA_REGION)
+	reg.SetTx(&tx)
+	//Setting environment variables to the registry (this allows to pass CloudFormation created resources)
+	reg.AddEnv("LAMBDA_ENV", LAMBDA_ENV)
+	reg.AddEnv("KMS_KEY_PROFILE_DOMAIN", KMS_KEY_PROFILE_DOMAIN)
+	reg.AddEnv("CONNECT_PROFILE_SOURCE_BUCKET", CONNECT_PROFILE_SOURCE_BUCKET)
+	reg.AddEnv("CONNECTOR_CRAWLER_QUEUE", CONNECTOR_CRAWLER_QUEUE)
+	reg.AddEnv("CONNECTOR_CRAWLER_DLQ", CONNECTOR_CRAWLER_DLQ)
+	reg.AddEnv("AWS_ACCOUNT_ID", LAMBDA_ACCOUNT_ID)
+	reg.AddEnv("DATALAKE_ADMIN_ROLE_ARN", DATALAKE_ADMIN_ROLE_ARN)
+
+	reg.AddEnv("S3_HOTEL_BOOKING", S3_HOTEL_BOOKING)
+	reg.AddEnv("S3_AIR_BOOKING", S3_AIR_BOOKING)
+	reg.AddEnv("S3_GUEST_PROFILE", S3_GUEST_PROFILE)
+	reg.AddEnv("S3_PAX_PROFILE", S3_PAX_PROFILE)
+	reg.AddEnv("S3_STAY_REVENUE", S3_STAY_REVENUE)
+	reg.AddEnv("S3_CLICKSTREAM", S3_CLICKSTREAM)
+
+	reg.AddEnv("HOTEL_BOOKING_JOB_NAME", HOTEL_BOOKING_JOB_NAME)
+	reg.AddEnv("AIR_BOOKING_JOB_NAME", AIR_BOOKING_JOB_NAME)
+	reg.AddEnv("GUEST_PROFILE_JOB_NAME", GUEST_PROFILE_JOB_NAME)
+	reg.AddEnv("PAX_PROFILE_JOB_NAME", PAX_PROFILE_JOB_NAME)
+	reg.AddEnv("CLICKSTREAM_JOB_NAME", CLICKSTREAM_JOB_NAME)
+	reg.AddEnv("HOTEL_STAY_JOB_NAME", HOTEL_STAY_JOB_NAME)
+
+	reg.Register("GET", "/ucp/profile/{id}", traveller.NewRetreiveProfile())
+	reg.Register("DELETE", "/ucp/profile/{id}", traveller.NewDeleteProfile())
+	reg.Register("GET", "/ucp/profile", traveller.NewSearchProfile())
+	reg.Register("POST", "/ucp/merge", traveller.NewMergeProfile())
+	reg.Register("GET", "/ucp/admin/{id}", admin.NewRetreiveConfig())
+	reg.Register("DELETE", "/ucp/admin/{id}", admin.NewDeleteDomain())
+	reg.Register("POST", "/ucp/admin", admin.NewCreateDomain())
+	reg.Register("GET", "/ucp/admin", admin.NewListUcpDomains())
+	reg.Register("GET", "/ucp/connector", admin.NewListConnectors())
+	reg.Register("POST", "/ucp/connector/link", admin.NewLinkIndustryConnector())
+	reg.Register("POST", "/ucp/connector/crawler", admin.NewCreateConnectorCrawler())
+	reg.Register("GET", "/ucp/error", admin.NewListErrors())
+	reg.Register("GET", "/ucp/data", admin.NewGetDataValidationStatus())
+
+	return reg.Run(req)
+}
+
+func main() {
+	lambda.Start(HandleRequest)
+}
+
+/*rq := model.UCPRequest{
 		EnvName: LAMBDA_ENV,
 		Cx:      txContext,
 		Pagination: model.PaginationOptions{
@@ -76,14 +129,6 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 			PageSize: txContext.ParseQueryParamInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE_SIZE]),
 		},
 	}
-	resource := req.Resource
-	method := req.HTTPMethod
-	tx.Log("*Resource: %v", resource)
-	tx.Log("*Method: %v", method)
-	subFunction := identifyUseCase(resource, method)
-	var err error
-	var ucpRes model.ResWrapper
-	var profiles = customerprofiles.InitWithDomain(req.Headers[CUSTOMER_PROFILE_DOMAIN_HEADER], LAMBDA_REGION)
 
 	if subFunction == FN_RETREIVE_UCP_PROFILE {
 		tx.Log("Selected Use Case %v", subFunction)
@@ -158,20 +203,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 		}
 		return builResponseError(tx, err), nil
 	} else if subFunction == FN_CREATE_UCP_DOMAIN {
-		tx.Log("Selected Use Case %v", subFunction)
-		if err == nil {
-			rq, err = decodeUCPBody(tx, req)
-			rq.EnvName = LAMBDA_ENV
-			tx.Log("Create Domain request: %+v", rq)
-			if err == nil {
-				ucpRes, err = usecase.CreateUcpDomain(rq, profiles, KMS_KEY_PROFILE_DOMAIN, CONNECT_PROFILE_SOURCE_BUCKET)
-				if err == nil {
-					tx.Log("Use Case %s failed with error: %v", subFunction, err)
-					return builUCPResponse(tx, ucpRes), nil
-				}
-			}
-		}
-		return builResponseError(tx, err), nil
+
 	} else if subFunction == FN_DELETE_UCP_DOMAIN {
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
@@ -208,14 +240,15 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	} else if subFunction == FN_GET_DATA_VALIDATION_STATUS {
 		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			ucpRes, err := usecase.GetDataValidationnStatus(rq, map[string]string{
+			buckets := map[string]string{
 				"S3_HOTEL_BOOKING": S3_HOTEL_BOOKING,
 				"S3_AIR_BOOKING":   S3_AIR_BOOKING,
 				"S3_GUEST_PROFILE": S3_GUEST_PROFILE,
 				"S3_PAX_PROFILE":   S3_PAX_PROFILE,
 				"S3_STAY_REVENUE":  S3_STAY_REVENUE,
 				"S3_CLICKSTREAM":   S3_CLICKSTREAM,
-			}, CONNECT_PROFILE_SOURCE_BUCKET)
+			}
+			ucpRes, err := usecase.GetDataValidationnStatus(rq, buckets, CONNECT_PROFILE_SOURCE_BUCKET)
 			if err != nil {
 				tx.Log("Use Case %s failed with error: %v", subFunction, err)
 				return builResponseError(tx, err), nil
@@ -440,6 +473,5 @@ func ValidateUCPRetreiveRequest(wrapper model.UCPRequest) error {
 	}
 	return nil
 }
-func main() {
-	lambda.Start(HandleRequest)
-}
+
+*/

@@ -4,16 +4,31 @@ import customerprofiles "tah/core/customerprofiles"
 
 func BuildPassengerProfileMapping() []customerprofiles.FieldMapping {
 	return []customerprofiles.FieldMapping{
+		// Metadata
 		{
 			Type:   "STRING",
-			Source: "_source.creationChannelId",
-			Target: "_order.Name",
+			Source: "_source.model_version",
+			Target: "_order.Attributes.model_version",
 		},
+		// Profile Data
+		{
+			Type:        "STRING",
+			Source:      "_source.traveller_id",
+			Target:      "_profile.profileId",
+			Searcheable: true,
+			Indexes:     []string{"PROFILE"},
+		},
+		//ORDER DATA
 		{
 			Type:    "STRING",
 			Source:  "_source.id",
 			Target:  "_order.Attributes.confirmationNumber",
 			Indexes: []string{"UNIQUE", "ORDER"},
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.creationChannelId",
+			Target: "_order.Name",
 		},
 		{
 			Type:   "STRING",
@@ -82,14 +97,6 @@ func BuildPassengerProfileMapping() []customerprofiles.FieldMapping {
 			Source:      "_source.email",
 			Target:      "_profile.PersonalEmailAddress",
 			Searcheable: true,
-		},
-		{
-			Type:        "STRING",
-			Source:      "_source.loyaltyId",
-			Target:      "_profile.AccountNumber",
-			Searcheable: true,
-			//TODO: this index should go on a dedicated customer ID field
-			Indexes: []string{"PROFILE"},
 		},
 		{
 			Type:        "STRING",
