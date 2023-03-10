@@ -54,10 +54,10 @@ export class SettingComponent implements OnInit {
         console.log(res)
         this.domain = res.config.domains[0];
       })
-      this.ucpService.listApplications().subscribe((res: any) => {
-        this.industryConnectorSolutions = res || [];
-      })
     }
+    this.ucpService.listApplications().subscribe((res: any) => {
+      this.industryConnectorSolutions = (res || {}).connectors;
+    })
     this.fetchValidationErrors()
 
   }
@@ -241,13 +241,13 @@ export class LinkConnectorComponent {
   public link() {
     this.session.setConnectorData(this.domain, this.linkConnectorForm.value.agwUrl, this.linkConnectorForm.value.tokenEndpoint, this.linkConnectorForm.value.clientId, this.linkConnectorForm.value.clientSecret, this.linkConnectorForm.value.bucketArn);
     this.ucpService.linkIndustryConnector(this.linkConnectorForm.value.agwUrl, this.linkConnectorForm.value.tokenEndpoint, this.linkConnectorForm.value.clientId, this.linkConnectorForm.value.clientSecret, this.linkConnectorForm.value.bucketArn).subscribe((res: any) => {
-      this.response = res;
+      this.response = res || {};
       this.dialogRef.close(null);
-      const dialogRef = this.dialog.open(CreateConnectorCrawler, {
+      this.dialog.open(CreateConnectorCrawler, {
         width: '90%',
         data: {
-          bucketPolicy: this.response["BucketPolicy"],
-          glueRoleArn: this.response["GlueRoleArn"],
+          bucketPolicy: this.response.awsResources.tahConnectorBucketPolicy,
+          glueRoleArn: this.response.awsResources.glueRoleArn,
           bucketPath: this.linkConnectorForm.controls['bucketArn'].value,
           connectorId: this.data.connectorId,
         }
