@@ -10,7 +10,6 @@ func BuildPhoneHistoryMapping() []customerprofiles.FieldMapping {
 			Source: "_source.last_updated_by",
 			Target: "_order.Attributes.last_updated_by",
 		},
-
 		{
 			Type:   "STRING",
 			Source: "_source.model_version",
