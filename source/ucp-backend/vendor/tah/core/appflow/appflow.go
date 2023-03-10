@@ -136,6 +136,10 @@ func (c Config) GetFlows(names []string) ([]Flow, error) {
 	return flows, err
 }
 
+// Create a simple test flow to use in unit tests, to test other functions
+// like starting, stopping, and deleting flows.
+//
+// This should not be used in production and therefore is not exported.
 func (c Config) createTestFlow(flowName, bucketName string) error {
 	connectorType := "S3"
 	sourceConfig := appflowSdk.SourceFlowConfig{

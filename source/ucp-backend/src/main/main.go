@@ -2,26 +2,22 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
-	"errors"
-	"log"
 	"os"
-	"strings"
 	appregistry "tah/core/appregistry"
 	core "tah/core/core"
 	customerprofiles "tah/core/customerprofiles"
 	glue "tah/core/glue"
 	iam "tah/core/iam"
-	model "tah/ucp/src/business-logic/model"
-	usecase "tah/ucp/src/business-logic/usecase"
+	"tah/ucp/src/business-logic/usecase/admin"
+	registry "tah/ucp/src/business-logic/usecase/registry"
+	traveller "tah/ucp/src/business-logic/usecase/traveller"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
+//Resources
 var LAMBDA_ENV = os.Getenv("LAMBDA_ENV")
-var S3_MULTIMEDIA = os.Getenv("S3_MULTIMEDIA")
 var LAMBDA_ACCOUNT_ID = os.Getenv("LAMBDA_ACCOUNT_ID")
 var LAMBDA_REGION = os.Getenv("AWS_REGION")
 var NAMESPACE_NAME = "cloudRackServiceDiscoveryNamespace" + LAMBDA_ENV
@@ -31,9 +27,28 @@ var CONNECTOR_CRAWLER_QUEUE = os.Getenv("CONNECTOR_CRAWLER_QUEUE")
 var CONNECTOR_CRAWLER_DLQ = os.Getenv("CONNECTOR_CRAWLER_DLQ")
 var GLUE_DB = os.Getenv("GLUE_DB")
 var DATALAKE_ADMIN_ROLE_ARN = os.Getenv("DATALAKE_ADMIN_ROLE_ARN")
+
+//S3 buckets
 var CONNECT_PROFILE_SOURCE_BUCKET = os.Getenv("CONNECT_PROFILE_SOURCE_BUCKET")
+var S3_HOTEL_BOOKING = os.Getenv("S3_HOTEL_BOOKING")
+var S3_AIR_BOOKING = os.Getenv("S3_AIR_BOOKING")
+var S3_GUEST_PROFILE = os.Getenv("S3_GUEST_PROFILE")
+var S3_PAX_PROFILE = os.Getenv("S3_PAX_PROFILE")
+var S3_STAY_REVENUE = os.Getenv("S3_STAY_REVENUE")
+var S3_CLICKSTREAM = os.Getenv("S3_CLICKSTREAM")
+
+//Job Names
+var HOTEL_BOOKING_JOB_NAME = os.Getenv("HOTEL_BOOKING_JOB_NAME")
+var AIR_BOOKING_JOB_NAME = os.Getenv("AIR_BOOKING_JOB_NAME")
+var GUEST_PROFILE_JOB_NAME = os.Getenv("GUEST_PROFILE_JOB_NAME")
+var PAX_PROFILE_JOB_NAME = os.Getenv("PAX_PROFILE_JOB_NAME")
+var CLICKSTREAM_JOB_NAME = os.Getenv("CLICKSTREAM_JOB_NAME")
+var HOTEL_STAY_JOB_NAME = os.Getenv("HOTEL_STAY_JOB_NAME")
+
 var KMS_KEY_PROFILE_DOMAIN = os.Getenv("KMS_KEY_PROFILE_DOMAIN")
 var UCP_CONNECT_DOMAIN = ""
+
+//Use cases
 var FN_RETREIVE_UCP_PROFILE = "retreive_ucp_profile"
 var FN_DELETE_UCP_PROFILE = "delete_ucp_profile"
 var FN_SEARCH_UCP_PROFILES = "search_ucp_profiles"
@@ -43,6 +58,7 @@ var FN_CREATE_UCP_DOMAIN = "create_ucp_domain"
 var FN_DELETE_UCP_DOMAIN = "delete_ucp_domain"
 var FN_MERGE_UCP_PROFILE = "merge_ucp_profile"
 var FN_LIST_CONNECTORS = "list_connectors"
+var FN_GET_DATA_VALIDATION_STATUS = "get_data_validation_status"
 var FN_LINK_INDUSTRY_CONNECTOR = "link_industry_connector"
 var FN_CREATE_CONNECTOR_CRAWLER = "create_connector_crawler"
 var FN_LIST_UCP_INGESTION_ERROR = "list_ucp_ingestion_errors"
@@ -53,164 +69,213 @@ var iamClient = iam.Init()
 var glueClient = glue.Init(LAMBDA_REGION, GLUE_DB)
 
 func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	log.Printf("Received Request %+v with context %+v", req, ctx)
-	resource := req.Resource
-	method := req.HTTPMethod
-	log.Printf("*Resource: %v", resource)
-	log.Printf("*Method: %v", method)
-	subFunction := identifyUseCase(resource, method)
-	var err error
-	var ucpRes model.ResWrapper
+	tx := core.NewTransaction("ucp", req.Headers[core.TRANSACTION_ID_HEADER])
+	tx.AddLogObfuscationPattern("Body:", " *{(.|\n)*}", " ")
+	tx.Log("Received Request %+v with context %+v", req, ctx)
 	var profiles = customerprofiles.InitWithDomain(req.Headers[CUSTOMER_PROFILE_DOMAIN_HEADER], LAMBDA_REGION)
 
+	var reg = registry.NewRegistry(LAMBDA_REGION, &appregistryClient, &iamClient, &glueClient, &profiles)
+	reg.SetRegion(LAMBDA_REGION)
+	reg.SetTx(&tx)
+	//Setting environment variables to the registry (this allows to pass CloudFormation created resources)
+	reg.AddEnv("LAMBDA_ENV", LAMBDA_ENV)
+	reg.AddEnv("KMS_KEY_PROFILE_DOMAIN", KMS_KEY_PROFILE_DOMAIN)
+	reg.AddEnv("CONNECT_PROFILE_SOURCE_BUCKET", CONNECT_PROFILE_SOURCE_BUCKET)
+	reg.AddEnv("CONNECTOR_CRAWLER_QUEUE", CONNECTOR_CRAWLER_QUEUE)
+	reg.AddEnv("CONNECTOR_CRAWLER_DLQ", CONNECTOR_CRAWLER_DLQ)
+	reg.AddEnv("AWS_ACCOUNT_ID", LAMBDA_ACCOUNT_ID)
+	reg.AddEnv("DATALAKE_ADMIN_ROLE_ARN", DATALAKE_ADMIN_ROLE_ARN)
+
+	reg.AddEnv("S3_HOTEL_BOOKING", S3_HOTEL_BOOKING)
+	reg.AddEnv("S3_AIR_BOOKING", S3_AIR_BOOKING)
+	reg.AddEnv("S3_GUEST_PROFILE", S3_GUEST_PROFILE)
+	reg.AddEnv("S3_PAX_PROFILE", S3_PAX_PROFILE)
+	reg.AddEnv("S3_STAY_REVENUE", S3_STAY_REVENUE)
+	reg.AddEnv("S3_CLICKSTREAM", S3_CLICKSTREAM)
+
+	reg.AddEnv("HOTEL_BOOKING_JOB_NAME", HOTEL_BOOKING_JOB_NAME)
+	reg.AddEnv("AIR_BOOKING_JOB_NAME", AIR_BOOKING_JOB_NAME)
+	reg.AddEnv("GUEST_PROFILE_JOB_NAME", GUEST_PROFILE_JOB_NAME)
+	reg.AddEnv("PAX_PROFILE_JOB_NAME", PAX_PROFILE_JOB_NAME)
+	reg.AddEnv("CLICKSTREAM_JOB_NAME", CLICKSTREAM_JOB_NAME)
+	reg.AddEnv("HOTEL_STAY_JOB_NAME", HOTEL_STAY_JOB_NAME)
+
+	reg.Register("GET", "/ucp/profile/{id}", traveller.NewRetreiveProfile())
+	reg.Register("DELETE", "/ucp/profile/{id}", traveller.NewDeleteProfile())
+	reg.Register("GET", "/ucp/profile", traveller.NewSearchProfile())
+	reg.Register("POST", "/ucp/merge", traveller.NewMergeProfile())
+	reg.Register("GET", "/ucp/admin/{id}", admin.NewRetreiveConfig())
+	reg.Register("DELETE", "/ucp/admin/{id}", admin.NewDeleteDomain())
+	reg.Register("POST", "/ucp/admin", admin.NewCreateDomain())
+	reg.Register("GET", "/ucp/admin", admin.NewListUcpDomains())
+	reg.Register("GET", "/ucp/connector", admin.NewListConnectors())
+	reg.Register("POST", "/ucp/connector/link", admin.NewLinkIndustryConnector())
+	reg.Register("POST", "/ucp/connector/crawler", admin.NewCreateConnectorCrawler())
+	reg.Register("GET", "/ucp/error", admin.NewListErrors())
+	reg.Register("GET", "/ucp/data", admin.NewGetDataValidationStatus())
+
+	return reg.Run(req)
+}
+
+func main() {
+	lambda.Start(HandleRequest)
+}
+
+/*rq := model.UCPRequest{
+		EnvName: LAMBDA_ENV,
+		Cx:      txContext,
+		Pagination: model.PaginationOptions{
+			Page:     txContext.ParseQueryParamInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE]),
+			PageSize: txContext.ParseQueryParamInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE_SIZE]),
+		},
+	}
+
 	if subFunction == FN_RETREIVE_UCP_PROFILE {
-		log.Printf("Selected Use Case %v", subFunction)
+		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{
-				ID:      req.PathParameters["id"],
-				EnvName: LAMBDA_ENV,
-			}
-			log.Printf("Retreive request: %+v", rq)
+			rq.ID = req.PathParameters["id"]
+			tx.Log("Retreive request: %+v", rq)
 			err = ValidateUCPRetreiveRequest(rq)
 			if err != nil {
-				log.Printf("Validation error: %v", err)
-				return builResponseError(err), nil
+				tx.Log("Validation error: %v", err)
+				return builResponseError(tx, err), nil
 			}
 			ucpRes, err = usecase.RetreiveUCPProfile(rq, profiles)
 			if err == nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
-				return builUCPResponse(ucpRes), nil
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builUCPResponse(tx, ucpRes), nil
 			}
 		}
-		return builResponseError(err), nil
+		return builResponseError(tx, err), nil
 	} else if subFunction == FN_DELETE_UCP_PROFILE {
-		log.Printf("Selected Use Case %v", subFunction)
+		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{
-				ID:      req.PathParameters["id"],
-				EnvName: LAMBDA_ENV,
-			}
-			log.Printf("Delete request: %+v", rq)
+			rq.ID = req.PathParameters["id"]
+			tx.Log("Delete request: %+v", rq)
 			err = ValidateUCPRetreiveRequest(rq)
 			if err != nil {
-				log.Printf("Validation error: %v", err)
-				return builResponseError(err), nil
+				tx.Log("Validation error: %v", err)
+				return builResponseError(tx, err), nil
 			}
 			err = usecase.DeleteUCPProfile(rq, profiles)
 		}
-		return builResponseError(err), nil
+		return builResponseError(tx, err), nil
 	} else if subFunction == FN_SEARCH_UCP_PROFILES {
-		log.Printf("Selected Use Case %v", subFunction)
+		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{SearchRq: model.SearchRq{
-				LastName:  req.QueryStringParameters["lastName"],
-				Phone:     req.QueryStringParameters["phone"],
-				Email:     req.QueryStringParameters["email"],
-				LoyaltyID: req.QueryStringParameters["loyaltyId"],
-			}}
+			rq.SearchRq.LastName = req.QueryStringParameters["lastName"]
+			rq.SearchRq.Phone = req.QueryStringParameters["phone"]
+			rq.SearchRq.Email = req.QueryStringParameters["email"]
+			rq.SearchRq.LoyaltyID = req.QueryStringParameters["loyaltyId"]
 			err = ValidateUCPSearchRequest(rq)
 			if err != nil {
-				log.Printf("Validation error: %v", err)
-				return builResponseError(err), nil
+				tx.Log("Validation error: %v", err)
+				return builResponseError(tx, err), nil
 			}
-			log.Printf("Search request: %+v", rq)
+			tx.Log("Search request: %+v", rq)
 			ucpRes, err = usecase.SearchUCPProfile(rq, profiles)
 			if err == nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
-				return builUCPResponse(ucpRes), nil
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builUCPResponse(tx, ucpRes), nil
 			}
 		}
-		return builResponseError(err), nil
+		return builResponseError(tx, err), nil
 	} else if subFunction == FN_RETREIVE_UCP_CONFIG {
-		log.Printf("Selected Use Case %v", subFunction)
+		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{}
-			log.Printf("Search request: %+v", rq)
+			tx.Log("Search request: %+v", rq)
 			ucpRes, err = usecase.RetreiveUCPConfig(rq, profiles)
 			if err == nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
-				return builUCPResponse(ucpRes), nil
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builUCPResponse(tx, ucpRes), nil
 			}
 		}
-		return builResponseError(err), nil
+		return builResponseError(tx, err), nil
 	} else if subFunction == FN_LIST_UCP_DOMAINS {
-		log.Printf("Selected Use Case %v", subFunction)
+		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{
-				EnvName: LAMBDA_ENV,
-			}
-			log.Printf("Search request: %+v", rq)
+			tx.Log("Search request: %+v", rq)
 			ucpRes, err = usecase.ListUcpDomains(rq, profiles)
 			if err == nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
-				return builUCPResponse(ucpRes), nil
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builUCPResponse(tx, ucpRes), nil
 			}
 		}
-		return builResponseError(err), nil
+		return builResponseError(tx, err), nil
 	} else if subFunction == FN_CREATE_UCP_DOMAIN {
-		log.Printf("Selected Use Case %v", subFunction)
-		if err == nil {
-			rq := model.UCPRequest{}
-			rq, err = decodeUCPBody(req)
-			rq.EnvName = LAMBDA_ENV
-			log.Printf("Create Domain request: %+v", rq)
-			if err == nil {
-				ucpRes, err = usecase.CreateUcpDomain(rq, profiles, KMS_KEY_PROFILE_DOMAIN, CONNECT_PROFILE_SOURCE_BUCKET)
-				if err == nil {
-					log.Printf("Use Case %s failed with error: %v", subFunction, err)
-					return builUCPResponse(ucpRes), nil
-				}
-			}
-		}
-		return builResponseError(err), nil
+
 	} else if subFunction == FN_DELETE_UCP_DOMAIN {
-		log.Printf("Selected Use Case %v", subFunction)
+		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{
-				Domain: model.Domain{
-					Name: req.PathParameters["id"],
-				},
-				EnvName: LAMBDA_ENV,
+			rq.Domain = model.Domain{
+				Name: req.PathParameters["id"],
 			}
-			log.Printf("Delete request: %+v", rq)
+			tx.Log("Delete request: %+v", rq)
 			ucpRes, err = usecase.DeleteUcpDomain(rq, profiles)
 			if err == nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
-				return builUCPResponse(ucpRes), nil
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builUCPResponse(tx, ucpRes), nil
 			}
 		}
-		return builResponseError(err), nil
+		return builResponseError(tx, err), nil
 	} else if subFunction == FN_LIST_CONNECTORS {
-		log.Printf("Selected Use Case %v", subFunction)
+		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
 			ucpRes, err := usecase.ListIndustryConnectors(appregistryClient)
 			if err != nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
-				return builResponseError(err), nil
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builResponseError(tx, err), nil
 			}
 			res := events.APIGatewayProxyResponse{
 				StatusCode: 200,
 			}
 			jsonRes, err := json.Marshal(ucpRes)
 			if err != nil {
-				log.Printf("Error while unmarshalling response %v", err)
-				return builResponseError(err), nil
+				tx.Log("Error while unmarshalling response %v", err)
+				return builResponseError(tx, err), nil
+			}
+			res.Body = string(jsonRes)
+			return res, nil
+		}
+	} else if subFunction == FN_GET_DATA_VALIDATION_STATUS {
+		tx.Log("Selected Use Case %v", subFunction)
+		if err == nil {
+			buckets := map[string]string{
+				"S3_HOTEL_BOOKING": S3_HOTEL_BOOKING,
+				"S3_AIR_BOOKING":   S3_AIR_BOOKING,
+				"S3_GUEST_PROFILE": S3_GUEST_PROFILE,
+				"S3_PAX_PROFILE":   S3_PAX_PROFILE,
+				"S3_STAY_REVENUE":  S3_STAY_REVENUE,
+				"S3_CLICKSTREAM":   S3_CLICKSTREAM,
+			}
+			ucpRes, err := usecase.GetDataValidationnStatus(rq, buckets, CONNECT_PROFILE_SOURCE_BUCKET)
+			if err != nil {
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builResponseError(tx, err), nil
+			}
+			res := events.APIGatewayProxyResponse{
+				StatusCode: 200,
+			}
+			jsonRes, err := json.Marshal(ucpRes)
+			if err != nil {
+				tx.Log("Error while unmarshalling response %v", err)
+				return builResponseError(tx, err), nil
 			}
 			res.Body = string(jsonRes)
 			return res, nil
 		}
 	} else if subFunction == FN_LINK_INDUSTRY_CONNECTOR {
-		log.Printf("Selected Use Case %v", subFunction)
+		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			data, err := decodeLinkConnectorBody(req)
+			data, err := decodeLinkConnectorBody(tx, req)
 			if err != nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
-				return builResponseError(err), nil
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builResponseError(tx, err), nil
 			}
 			glueRoleArn, bucketPolicy, err := usecase.LinkIndustryConnector(iamClient, data, LAMBDA_ACCOUNT_ID, LAMBDA_REGION, DATALAKE_ADMIN_ROLE_ARN)
 			if err != nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
-				return builResponseError(err), nil
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builResponseError(tx, err), nil
 			}
 			res := events.APIGatewayProxyResponse{
 				StatusCode: 200,
@@ -221,36 +286,37 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 			}
 			jsonRes, err := json.Marshal(resData)
 			if err != nil {
-				log.Printf("Error while unmarshalling response %v", err)
-				return builResponseError(err), nil
+				tx.Log("Error while unmarshalling response %v", err)
+				return builResponseError(tx, err), nil
 			}
 			res.Body = string(jsonRes)
 			return res, nil
 		}
 	} else if subFunction == FN_CREATE_CONNECTOR_CRAWLER {
-		log.Printf("Selected Use Case %v", subFunction)
+		//TODO: move this inside one use case
+		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			data, err := decodeCreateConnectorCrawlerBody(req)
+			data, err := decodeCreateConnectorCrawlerBody(tx, req)
 			if err != nil {
-				return builResponseError(err), nil
+				return builResponseError(tx, err), nil
 			}
 			split := strings.Split(data.BucketPath, ":")
 			bucketName := split[len(split)-1]
 			err = usecase.CreateConnectorCrawler(glueClient, data.GlueRoleArn, bucketName, LAMBDA_ENV, CONNECTOR_CRAWLER_QUEUE, CONNECTOR_CRAWLER_DLQ)
 			if err != nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
-				return builResponseError(err), nil
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builResponseError(tx, err), nil
 			}
 			var jobNames = []string{}
 			crawlerName := "ucp-connector-crawler-" + LAMBDA_ENV
 			jobNames, err = usecase.CreateConnectorJobTrigger(glueClient, LAMBDA_ACCOUNT_ID, LAMBDA_REGION, data.ConnectorId, crawlerName)
 			if err != nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
-				return builResponseError(err), nil
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builResponseError(tx, err), nil
 			}
 			err = usecase.AddConnectorBucketToJobs(glueClient, bucketName, jobNames)
 			if err != nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
 			}
 			res := events.APIGatewayProxyResponse{
 				StatusCode: 200,
@@ -258,37 +324,35 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 			return res, nil
 		}
 	} else if subFunction == FN_MERGE_UCP_PROFILE {
-		log.Printf("Selected Use Case %v", subFunction)
+		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{}
-			log.Printf("Search request: %+v", rq)
+			tx.Log("Search request: %+v", rq)
 			ucpRes, err = usecase.MergeUCPConfig(rq)
 			if err == nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
-				return builUCPResponse(ucpRes), nil
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builUCPResponse(tx, ucpRes), nil
 			}
 		}
-		return builResponseError(err), nil
+		return builResponseError(tx, err), nil
 	} else if subFunction == FN_LIST_UCP_INGESTION_ERROR {
-		log.Printf("Selected Use Case %v", subFunction)
+		tx.Log("Selected Use Case %v", subFunction)
 		if err == nil {
-			rq := model.UCPRequest{}
-			log.Printf("Search request: %+v", rq)
+			tx.Log("Search request: %+v", rq)
 			ucpRes, err = usecase.ListUCPIngestionError(rq, profiles)
 			if err == nil {
-				log.Printf("Use Case %s failed with error: %v", subFunction, err)
-				return builUCPResponse(ucpRes), nil
+				tx.Log("Use Case %s failed with error: %v", subFunction, err)
+				return builUCPResponse(tx, ucpRes), nil
 			}
 		}
-		return builResponseError(err), nil
+		return builResponseError(tx, err), nil
 	}
 
-	log.Printf("No Use Case Found for %v", method+" "+resource)
+	tx.Log("No Use Case Found for %v", method+" "+resource)
 	err = errors.New("No Use Case Found for " + method + " " + resource)
-	return builResponseError(err), nil
+	return builResponseError(tx, err), nil
 }
 
-func decodeUCPBody(req events.APIGatewayProxyRequest) (model.UCPRequest, error) {
+func decodeUCPBody(tx core.Transaction, req events.APIGatewayProxyRequest) (model.UCPRequest, error) {
 	wrapper := model.UCPRequest{}
 	decodedBody := []byte(req.Body)
 	if req.IsBase64Encoded {
@@ -298,11 +362,11 @@ func decodeUCPBody(req events.APIGatewayProxyRequest) (model.UCPRequest, error) 
 	if err := json.Unmarshal(decodedBody, &wrapper); err != nil {
 		return model.UCPRequest{}, err
 	}
-	log.Printf("Decoded Body %+v", wrapper)
+	tx.Log("Decoded Body %+v", wrapper)
 	return wrapper, nil
 }
 
-func decodeLinkConnectorBody(req events.APIGatewayProxyRequest) (model.LinkIndustryConnectorRq, error) {
+func decodeLinkConnectorBody(tx core.Transaction, req events.APIGatewayProxyRequest) (model.LinkIndustryConnectorRq, error) {
 	wrapper := model.LinkIndustryConnectorRq{}
 	decodedBody := []byte(req.Body)
 	if req.IsBase64Encoded {
@@ -312,11 +376,11 @@ func decodeLinkConnectorBody(req events.APIGatewayProxyRequest) (model.LinkIndus
 	if err := json.Unmarshal(decodedBody, &wrapper); err != nil {
 		return model.LinkIndustryConnectorRq{}, err
 	}
-	log.Printf("Decoded Body %+v", wrapper)
+	tx.Log("Decoded Body %+v", wrapper)
 	return wrapper, nil
 }
 
-func decodeCreateConnectorCrawlerBody(req events.APIGatewayProxyRequest) (model.CreateConnectorCrawlerRq, error) {
+func decodeCreateConnectorCrawlerBody(tx core.Transaction, req events.APIGatewayProxyRequest) (model.CreateConnectorCrawlerRq, error) {
 	wrapper := model.CreateConnectorCrawlerRq{}
 	decodedBody := []byte(req.Body)
 	if req.IsBase64Encoded {
@@ -326,7 +390,7 @@ func decodeCreateConnectorCrawlerBody(req events.APIGatewayProxyRequest) (model.
 	if err := json.Unmarshal(decodedBody, &wrapper); err != nil {
 		return model.CreateConnectorCrawlerRq{}, err
 	}
-	log.Printf("Decoded Body %+v", wrapper)
+	tx.Log("Decoded Body %+v", wrapper)
 	return wrapper, nil
 }
 
@@ -367,24 +431,27 @@ func identifyUseCase(res string, meth string) string {
 	if res == "/ucp/error" && meth == "GET" {
 		return FN_LIST_UCP_INGESTION_ERROR
 	}
+	if res == "/ucp/data" && meth == "GET" {
+		return FN_GET_DATA_VALIDATION_STATUS
+	}
 	return ""
 }
 
-func builUCPResponse(resWrapper model.ResWrapper) events.APIGatewayProxyResponse {
+func builUCPResponse(tx core.Transaction, resWrapper model.ResWrapper) events.APIGatewayProxyResponse {
 	res := events.APIGatewayProxyResponse{
 		StatusCode: 200,
 	}
 	jsonRes, err := json.Marshal(resWrapper)
 	if err != nil {
-		log.Printf("Error while unmarshalling response %v", err)
-		return builResponseError(err)
+		tx.Log("Error while unmarshalling response %v", err)
+		return builResponseError(tx, err)
 	}
 	res.Body = string(jsonRes)
 	return res
 }
 
-func builResponseError(err error) events.APIGatewayProxyResponse {
-	log.Printf("[LOYALTY] Response Error: %v", err)
+func builResponseError(tx core.Transaction, err error) events.APIGatewayProxyResponse {
+	tx.Log("Response Error: %v", err)
 	res := events.APIGatewayProxyResponse{
 		StatusCode: 400,
 	}
@@ -406,6 +473,5 @@ func ValidateUCPRetreiveRequest(wrapper model.UCPRequest) error {
 	}
 	return nil
 }
-func main() {
-	lambda.Start(HandleRequest)
-}
+
+*/

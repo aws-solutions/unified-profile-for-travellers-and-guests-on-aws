@@ -20,6 +20,7 @@ import * as tah_s3 from '../tah-cdk-common/s3';
 import * as tah_glue from '../tah-cdk-common/glue';
 import * as tah_core from '../tah-cdk-common/core';
 
+import { BusinessObjectPipelineOutput } from "./model"
 
 /////////////////////////////////////////////////////////////////////
 //Infrastructure Script for the AWS DynamoDB Blog Demo
@@ -224,10 +225,25 @@ export class UCPInfraStack extends Stack {
         UCP_GUEST360_TABLE_NAME: "",
         UCP_GUEST360_TABLE_PK: "",
         UCP_GUEST360_ATHENA_TABLE: "",
+        S3_HOTEL_BOOKING: hotelBookingOutput.bucket.bucketName,
+        S3_AIR_BOOKING: airBookingOutput.bucket.bucketName,
+        S3_GUEST_PROFILE: guestProfileOutput.bucket.bucketName,
+        S3_PAX_PROFILE: paxProfileOutput.bucket.bucketName,
+        S3_STAY_REVENUE: hotelStayOutput.bucket.bucketName,
+        S3_CLICKSTREAM: clickstreamOutput.bucket.bucketName,
         CONNECT_PROFILE_SOURCE_BUCKET: connectProfileImportBucket.bucketName,
         KMS_KEY_PROFILE_DOMAIN: kmsKeyProfileDomain.keyArn,
       }
     });
+
+    hotelBookingOutput.bucket.grantRead(ucpBackEndLambda)
+    airBookingOutput.bucket.grantRead(ucpBackEndLambda)
+    guestProfileOutput.bucket.grantRead(ucpBackEndLambda)
+    paxProfileOutput.bucket.grantRead(ucpBackEndLambda)
+    hotelStayOutput.bucket.grantRead(ucpBackEndLambda)
+    clickstreamOutput.bucket.grantRead(ucpBackEndLambda)
+    hotelStayOutput.bucket.grantRead(ucpBackEndLambda)
+    connectProfileImportBucket.grantRead(ucpBackEndLambda)
 
     ucpBackEndLambda.addToRolePolicy(new iam.PolicyStatement({
       resources: ["*"],
@@ -361,6 +377,7 @@ export class UCPInfraStack extends Stack {
     const ucpEndpointMerge = "merge"
     const ucpEndpointAdmin = "admin"
     const ucpEndpointIndustryConnector = "connector"
+    const ucpEndpointDataValidation = "data"
     const ucpEndpointErrors = "error"
     const stageName = "api"
     //partner api enpoint
@@ -407,6 +424,16 @@ export class UCPInfraStack extends Stack {
       path: '/' + ucpEndpointName + "/" + ucpEndpointAdmin,
       authorizer: authorizer,
       methods: [HttpMethod.GET, HttpMethod.POST],
+      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationProfileAdmin', ucpBackEndLambda, {
+        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
+      })
+    }).forEach(route => {
+      allRoutes.push(route)
+    });
+    apiV2.addRoutes({
+      path: '/' + ucpEndpointName + "/" + ucpEndpointDataValidation,
+      authorizer: authorizer,
+      methods: [HttpMethod.GET],
       integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationProfileAdmin', ucpBackEndLambda, {
         payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
       })
@@ -643,10 +670,11 @@ export class UCPInfraStack extends Stack {
     new CfnOutput(this, 'industryConnectorJobName' + businessObjectName, {
       value: job.name || "",
     });
-    let output: BusinessObjectPipelineOutput = {
+
+    return {
       connectorJobName: industryConnectorJob.name ?? "",
+      bucket: bucketRaw,
     }
-    return output;
   }
 
   job(prefix: string, envName: string, artifactBucket: string, scriptName: string, glueDb: Database, dataLakeAdminRole: iam.Role, envVar: Map<string, string>): CfnJob {

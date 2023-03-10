@@ -10,6 +10,14 @@ func BuildHotelBookingMapping() []customerprofiles.FieldMapping {
 			Source: "_source.model_version",
 			Target: "_order.Attributes.model_version",
 		},
+		// Profile Data
+		{
+			Type:        "STRING",
+			Source:      "_source.traveller_id",
+			Target:      "_profile.profileId",
+			Searcheable: true,
+			Indexes:     []string{"PROFILE"},
+		},
 
 		// Order Data
 		{
@@ -17,7 +25,7 @@ func BuildHotelBookingMapping() []customerprofiles.FieldMapping {
 			Source:      "_source.booking_id",
 			Target:      "_order.Attributes.booking_id",
 			Searcheable: true,
-			Indexes:     []string{"ORDER"},
+			Indexes:     []string{"UNIQUE", "ORDER"},
 		},
 		{
 			Type:   "STRING",
@@ -66,21 +74,6 @@ func BuildHotelBookingMapping() []customerprofiles.FieldMapping {
 		},
 		{
 			Type:   "STRING",
-			Source: "_source.room_type_code",
-			Target: "_order.Attributes.room_type_code",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.room_type_name",
-			Target: "_order.Attributes.room_type_name",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.room_type_description",
-			Target: "_order.Attributes.room_type_description",
-		},
-		{
-			Type:   "STRING",
 			Source: "_source.attribute_codes",
 			Target: "_order.Attributes.attribute_codes",
 		},
@@ -95,14 +88,6 @@ func BuildHotelBookingMapping() []customerprofiles.FieldMapping {
 			Target: "_order.Attributes.attribute_descriptions",
 		},
 
-		// Profile Data
-		{
-			Type:        "STRING",
-			Source:      "_source.traveller_id",
-			Target:      "_profile.profileId",
-			Searcheable: true,
-			Indexes:     []string{"UNIQUE", "PROFILE"},
-		},
 		{
 			Type:        "STRING",
 			Source:      "_source.email",

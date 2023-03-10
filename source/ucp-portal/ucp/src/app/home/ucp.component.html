@@ -6,7 +6,7 @@
         <div class="header">
             <img class="aws-logo" src="assets/1200px-Amazon_Web_Services_Logo.svg.png" />
 
-            <div id="settings-button" class="btn btn-large btn-link settings-button" (click)="showSettings()">
+            <div id="settings-button" class="btn btn-large btn-link settings-button" (click)="goToSettings()">
                 <fa-icon [icon]="faCog"></fa-icon>
                 Settings
             </div>
@@ -15,16 +15,16 @@
         </div>
         <br />
         <div class="admin-panel">
-            <div class="panel-title">ENVIRONEMENTS</div>
+            <div class="panel-title">ENVIRONMENTS</div>
             <br />
             <div class="row">
                 <div class="col-sm-2" *ngFor="let domain of domains">
-                    <div id="domain-component-name-{{domain.customerProfileDomain}}" 
+                    <div id="domain-component-name-{{domain.customerProfileDomain}}"
                         class="domain {{selectedDomain === domain.customerProfileDomain?'domain-selected':''}}"
                         (click)="selectDomain(domain.customerProfileDomain)">
                         <span class="delete-icon">
-                            <fa-icon id="delete-domain-icon-{{domain.customerProfileDomain}}" 
-                            [icon]="faTimes" (click)="deleteDomain(domain.customerProfileDomain)"></fa-icon>
+                            <fa-icon id="delete-domain-icon-{{domain.customerProfileDomain}}" [icon]="faTimes"
+                                (click)="deleteDomain(domain.customerProfileDomain)"></fa-icon>
                         </span>
                         <b>{{domain.customerProfileDomain}}</b><br />
                         <span class="domain-details">Last
@@ -173,9 +173,13 @@
             </table>
             <br />
         </div>
-        <div *ngIf="!selectedDomain">
-            <span style="color:#aaa;font-size:x-large;text-align:center">Welcome to Travel and Hospitality United Customer Profile!<br>
-            Please Click New Domain to get Started</span>
+        <div *ngIf="domains.length === 0">
+            <div class="row">
+                <div class="col-sm-12 align-center">
+                    <span class="no-domain-message">You first need to create a Unified Profile domain<br>
+                        Click on the <b>New Domain</b> button get Started</span>
+                </div>
+            </div>
         </div>
 
     </div>

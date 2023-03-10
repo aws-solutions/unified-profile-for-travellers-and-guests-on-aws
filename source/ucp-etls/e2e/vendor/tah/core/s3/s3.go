@@ -438,7 +438,6 @@ func (s3c S3Config) Delete(path string, id string) error {
 	return err
 }
 
-//Function to get JSON encode object and unmarshall it
 func (s3c S3Config) GetTextObj(key string) (string, error) {
 	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String(s3c.Region)},

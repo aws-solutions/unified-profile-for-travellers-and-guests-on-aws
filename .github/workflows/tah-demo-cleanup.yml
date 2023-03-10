@@ -24,3 +24,7 @@ jobs:
         uses: aws-actions/aws-codebuild-run-build@v1
         with:
           project-name: ${{ secrets.TAH_UCP_CODEBUILD_DELETE_PROJECT_NAME }}
+          env-vars-for-codebuild: |
+            deleted_branch_name
+        env:
+          deleted_branch_name: $(cat ${{ github.event_path }} | jq --raw-output '.ref')

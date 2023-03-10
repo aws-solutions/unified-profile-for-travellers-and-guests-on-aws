@@ -17,19 +17,17 @@ import (
 	customerProfileSdk "github.com/aws/aws-sdk-go/service/customerprofiles"
 )
 
-const S3 = "S3"
-const ScheduleExpressionOneHour = "rate(1hours)"
-const DataPullModeIncremental = "Incremental"
-const TriggerTypeScheduled = "Scheduled"
-const IntegrationFlowDefinition = "Integration_Flowdefinition_"
-const FlowdefinitionFor = "Flowdefinition for "
-const Projection = "PROJECTION"
-const Map = "Map"
-const Filter = "Filter"
-const NoOperation = "NO_OP"
-
 var OBJECT_TYPE_NAME_ORDER = "_order"
 var PROFILE_ID_KEY = "_profileId"
+
+var STANDARD_IDENTIFIER_PROFILE = customerProfileSdk.StandardIdentifierProfile
+var STANDARD_IDENTIFIER_ASSET = customerProfileSdk.StandardIdentifierAsset
+var STANDARD_IDENTIFIER_CASE = customerProfileSdk.StandardIdentifierCase
+var STANDARD_IDENTIFIER_UNIQUE = customerProfileSdk.StandardIdentifierUnique
+var STANDARD_IDENTIFIER_SECONDARY = customerProfileSdk.StandardIdentifierSecondary
+var STANDARD_IDENTIFIER_LOOKUP_ONLY = customerProfileSdk.StandardIdentifierLookupOnly
+var STANDARD_IDENTIFIER_NEW_ONLY = customerProfileSdk.StandardIdentifierNewOnly
+var STANDARD_IDENTIFIER_ORDER = customerProfileSdk.StandardIdentifierOrder
 
 type CustomerProfileConfig struct {
 	Client     *customerProfileSdk.CustomerProfiles
@@ -443,14 +441,14 @@ func toObjectTypeKeyMap(fieldMappings []FieldMapping) map[string][]*customerProf
 
 		if len(fm.Indexes) > 0 {
 			result[searchKeyName] = []*customerProfileSdk.ObjectTypeKey{
-				&customerProfileSdk.ObjectTypeKey{
+				{
 					FieldNames:          []*string{aws.String(keyName)},
 					StandardIdentifiers: toPointerArray(fm.Indexes),
 				},
 			}
 		} else if fm.Searcheable {
 			result[searchKeyName] = []*customerProfileSdk.ObjectTypeKey{
-				&customerProfileSdk.ObjectTypeKey{
+				{
 					FieldNames: []*string{aws.String(keyName)},
 				},
 			}
@@ -541,6 +539,95 @@ func notIn(id string, matches []Match) bool {
 	return true
 }
 
+func (c CustomerProfileConfig) PutIntegration(objectName, bucketName string, fieldMappings []FieldMapping) error {
+	domain, err := c.GetDomain()
+	if err != nil {
+		return err
+	}
+
+	triggerConfig := customerProfileSdk.TriggerConfig{
+		TriggerProperties: &customerProfileSdk.TriggerProperties{
+			Scheduled: &customerProfileSdk.ScheduledTriggerProperties{
+				ScheduleExpression: aws.String("rate(1hours)"),
+				DataPullMode:       aws.String(customerProfileSdk.DataPullModeIncremental),
+				ScheduleStartTime:  aws.Time(time.Now()),
+			},
+		},
+		TriggerType: aws.String(customerProfileSdk.TriggerTypeScheduled),
+	}
+	sourceFlowConfig := customerProfileSdk.SourceFlowConfig{
+		ConnectorType: aws.String(customerProfileSdk.SourceConnectorTypeS3),
+		SourceConnectorProperties: &customerProfileSdk.SourceConnectorProperties{
+			S3: &customerProfileSdk.S3SourceProperties{
+				BucketName:   &bucketName,
+				BucketPrefix: &objectName,
+			},
+		},
+	}
+	flowDefinition := customerProfileSdk.FlowDefinition{
+		FlowName:         aws.String(objectName + "_" + c.DomainName),
+		Description:      aws.String("Flow definition for " + objectName),
+		KmsArn:           &domain.DefaultEncryptionKey,
+		TriggerConfig:    &triggerConfig,
+		SourceFlowConfig: &sourceFlowConfig,
+		Tasks:            generateTaskList(fieldMappings),
+	}
+	input := customerProfileSdk.PutIntegrationInput{
+		DomainName:     &c.DomainName,
+		FlowDefinition: &flowDefinition,
+		ObjectTypeName: &objectName,
+	}
+
+	_, err = c.Client.PutIntegration(&input)
+	return err
+}
+
+// There are two types of tasks that must be created:
+//
+// 1 - Filter all source fields to be added to the AppFlow flow, meaning each
+// field will be sent to Customer Profile
+//
+// 2 - Mapping specification for AppFlow. Since we handle the actual mapping in
+// Customer Profile, we do a no op mapping here.
+//
+// See more: https://docs.aws.amazon.com/connect/latest/adminguide/customerprofiles-s3-integration.html
+func generateTaskList(fieldMappings []FieldMapping) []*customerProfileSdk.Task {
+	sourceFields := []string{}
+	for _, v := range fieldMappings {
+		// Field mapping source may have a structure like "_source.unique_id"
+		// and we only want to take actual field name (eg. "unique_id")
+		source := strings.Split(v.Source, ".")
+		sourceFields = append(sourceFields, source[len(source)-1])
+	}
+	filterTask := customerProfileSdk.Task{
+		ConnectorOperator: &customerProfileSdk.ConnectorOperator{
+			S3: aws.String(customerProfileSdk.S3ConnectorOperatorProjection),
+		},
+		SourceFields: aws.StringSlice(sourceFields),
+		TaskType:     aws.String(customerProfileSdk.TaskTypeFilter),
+	}
+	mapTasks := []customerProfileSdk.Task{}
+	for _, v := range sourceFields {
+		task := customerProfileSdk.Task{
+			ConnectorOperator: &customerProfileSdk.ConnectorOperator{
+				S3: aws.String(customerProfileSdk.S3ConnectorOperatorNoOp),
+			},
+			SourceFields:     []*string{aws.String(v)},
+			DestinationField: aws.String(v),
+			TaskType:         aws.String(customerProfileSdk.TaskTypeMap),
+		}
+		mapTasks = append(mapTasks, task)
+	}
+	tasks := []customerProfileSdk.Task{}
+	tasks = append(tasks, filterTask)
+	tasks = append(tasks, mapTasks...)
+	taskPointers := make([]*customerProfileSdk.Task, len(tasks))
+	for i := range tasks {
+		taskPointers[i] = &tasks[i]
+	}
+	return taskPointers
+}
+
 func (c CustomerProfileConfig) GetIntegrations() ([]Integration, error) {
 	log.Printf("[core][customerProfiles] Getting integrations for domain %s", c.DomainName)
 	input := &customerProfileSdk.ListIntegrationsInput{
@@ -582,137 +669,6 @@ func (c CustomerProfileConfig) GetIntegrations() ([]Integration, error) {
 	}
 	log.Printf("[core][customerProfiles] Final integration response: %+v", integrations)
 	return integrations, err
-}
-
-func (c CustomerProfileConfig) GetSourceTargetNames(objectname string) ([]*string, []*string, error) {
-
-	mappings, err := c.GetMapping(objectname)
-	if err != nil {
-		log.Printf("Error getting mapping: %s", objectname)
-		return []*string{}, []*string{}, err
-	}
-	objectFields := mappings.Fields
-	fieldLength := len(objectFields)
-	sourceNames := make([]*string, fieldLength)
-	targetNames := make([]*string, fieldLength)
-	for i, field := range objectFields {
-		//source list
-		source := field.Source
-		sourceSplit := strings.Split(source, ".")
-		sName := sourceSplit[len(sourceSplit)-1]
-		sourceNames[i] = &sName
-		//target list
-		target := field.Target
-		targetSplit := strings.Split(target, ".")
-		tName := targetSplit[len(targetSplit)-1]
-		targetNames[i] = &tName
-	}
-	return sourceNames, targetNames, err
-}
-
-func (c CustomerProfileConfig) GenerateTaskList(objectname string) ([]*customerProfileSdk.Task, error) {
-	taskSlice := make([]*customerProfileSdk.Task, 0)
-	sProjection := Projection
-	conOpProj := customerProfileSdk.ConnectorOperator{
-		S3: &sProjection,
-	}
-	sourceNames, targetNames, err := c.GetSourceTargetNames(objectname)
-	if err != nil {
-		log.Printf("Error getting Source and Target Lists for %s", objectname)
-		return taskSlice, err
-	}
-	//Filter Task
-	sFilter := Filter
-	filTask := &customerProfileSdk.Task{
-		TaskType:          &sFilter,
-		SourceFields:      sourceNames,
-		ConnectorOperator: &conOpProj,
-	}
-	taskSlice = append(taskSlice, filTask)
-	sNoOp := NoOperation
-	conOpMap := customerProfileSdk.ConnectorOperator{
-		S3: &sNoOp,
-	}
-	sMap := Map
-	//Mapping Tasks
-	for i, source := range sourceNames {
-		mapTask := &customerProfileSdk.Task{
-			TaskType:          &sMap,
-			SourceFields:      []*string{source},
-			ConnectorOperator: &conOpMap,
-			DestinationField:  targetNames[i],
-		}
-		taskSlice = append(taskSlice, mapTask)
-	}
-	return taskSlice, err
-}
-
-func (c CustomerProfileConfig) GenerateFlowDefinition(objectname string, bucketname string, kmsarn string) (customerProfileSdk.FlowDefinition, error) {
-	newTaskList, err := c.GenerateTaskList(objectname)
-	if err != nil {
-		log.Printf("Error generating flow definition for %s", objectname)
-		return customerProfileSdk.FlowDefinition{}, err
-	}
-	S3 := S3
-	ScheduleExpression := ScheduleExpressionOneHour
-	DataPull := DataPullModeIncremental
-	ScheduleStartTime := time.Now()
-	TriggerType := TriggerTypeScheduled
-	FlowName := IntegrationFlowDefinition + objectname + "_" + c.DomainName
-	Description := FlowdefinitionFor + objectname
-
-	sourceConfig := &customerProfileSdk.SourceFlowConfig{
-		ConnectorType: &S3,
-		SourceConnectorProperties: &customerProfileSdk.SourceConnectorProperties{
-			S3: &customerProfileSdk.S3SourceProperties{
-				BucketName:   &bucketname,
-				BucketPrefix: &objectname,
-			},
-		},
-	}
-	trigConfig := &customerProfileSdk.TriggerConfig{
-		TriggerProperties: &customerProfileSdk.TriggerProperties{
-			Scheduled: &customerProfileSdk.ScheduledTriggerProperties{
-				ScheduleExpression: &ScheduleExpression,
-				DataPullMode:       &DataPull,
-				ScheduleStartTime:  &ScheduleStartTime,
-			},
-		},
-		TriggerType: &TriggerType,
-	}
-	flowDef := customerProfileSdk.FlowDefinition{
-		FlowName:         &FlowName,
-		Description:      &Description,
-		KmsArn:           &kmsarn,
-		TriggerConfig:    trigConfig,
-		SourceFlowConfig: sourceConfig,
-		Tasks:            newTaskList,
-	}
-	return flowDef, nil
-}
-
-func (c CustomerProfileConfig) CreatePutIntegrationInput(objectname string, bucketname string) (customerProfileSdk.PutIntegrationInput, error) {
-	dom, _ := c.GetDomain()
-	flowDef, _ := c.GenerateFlowDefinition(objectname, bucketname, dom.DefaultEncryptionKey)
-
-	configPutIntegrationInput := &customerProfileSdk.PutIntegrationInput{
-		DomainName:     &c.DomainName,
-		FlowDefinition: &flowDef,
-		ObjectTypeName: &objectname,
-	}
-
-	return *configPutIntegrationInput, nil
-}
-
-func (c CustomerProfileConfig) PutIntegration(objectname string, bucketname string) (customerProfileSdk.PutIntegrationOutput, error) {
-	configPutIntegration, _ := c.CreatePutIntegrationInput(objectname, bucketname)
-
-	OutIntegration, err := c.Client.PutIntegration(&configPutIntegration)
-	if err != nil {
-		log.Printf("Error putting integration %s", err)
-	}
-
-	return *OutIntegration, err
 }
 
 func (c CustomerProfileConfig) DeleteIntegration(uri string) (customerProfileSdk.DeleteIntegrationOutput, error) {

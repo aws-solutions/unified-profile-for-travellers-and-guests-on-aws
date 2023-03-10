@@ -1,0 +1,190 @@
+<div class="container-fluid">
+    <br />
+    <div class="d-sm-none">TEST </div>
+    <div class="d-sm-none"> TEST2</div>
+    <div class="inner-container">
+        <div class="header">
+            <img class="aws-logo" src="assets/1200px-Amazon_Web_Services_Logo.svg.png" />
+
+            <div id="settings-button" class="btn btn-large btn-link settings-button" (click)="goHome()">
+                <fa-icon [icon]="faHome"></fa-icon>
+                Home
+            </div>
+
+            <span id="header" class="header-title">Unified Customer Profile for Travellers and Guests </span>
+        </div>
+        <br />
+        <div class="section">
+            <div class="title-3">
+                DOMAIN
+            </div>
+            <div>
+                <span class="helper-text" *ngIf="selectedDomain"> {{selectedDomain}}</span><br />
+                <span class="helper-text" *ngIf="!selectedDomain"> No Domain Selected. Create a domain on the <span
+                        class="inline-btn-link" (click)="goHome()">Home page</span></span><br />
+            </div>
+        </div>
+        <br>
+        <div class="section">
+            <div class="title-3">DATA VALIDATION</div>
+            <span class="helper-text">Source data locations</span><br />
+            <br />
+            <div class="row">
+                <div class="col-sm-12 align-center">
+                    <button class="btn btn-primary btn-sm pagination-button" (click)="validationPageDown()">
+                        <fa-icon [icon]="faBackward"></fa-icon>
+                        Prev</button>
+                    <span
+                        class="pagination-numbers">{{validationPagination.page*validationPagination.pageSize}}-{{(validationPagination.page+1)*validationPagination.pageSize}}
+                        /
+                        {{validationErrors.length}}</span>
+                    <button class="btn btn-primary btn-sm pagination-button" (click)="validationPageUp()">Next
+                        <fa-icon [icon]="faForward"></fa-icon>
+                    </button>
+                    <button class="btn btn-primary btn-sm pagination-button float-right"
+                        (click)="fetchValidationErrors()">
+                        <fa-icon [icon]="faRefresh"></fa-icon></button>
+
+                </div>
+            </div>
+            <br />
+            <div class="row table-header">
+                <div class="col-sm-2 title align-center block-title">
+                    Object
+                </div>
+                <div class="col-sm-1 title align-center block-title">
+                    Field
+                </div>
+                <div class="col-sm-2 title align-center block-title">
+                    Error Type
+                </div>
+                <div class="col-sm-6 title align-center block-title">
+                    Error Message
+                </div>
+                <div class="col-sm-1 title align-center block-title">
+                    Action
+                </div>
+            </div>
+            <div class="row table-row" *ngFor="let valErr of validationErrorsInView">
+                <div class="col-sm-2 title align-center">
+                    {{valErr.object}}
+                </div>
+                <div class="col-sm-1 title align-center">
+                    {{valErr.field}}
+                </div>
+                <div class="col-sm-2 title align-center">
+                    {{valErr.errType}}
+                </div>
+                <div class="col-sm-6 title align-center">
+                    {{valErr.msg}}
+                </div>
+                <div class="col-sm-1 title align-center">
+                    <a target="_blank"
+                        href="https://s3.console.aws.amazon.com/s3/buckets/{{valErr.bucket}}?prefix={{valErr.file}}">View</a>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="section">
+            <div class="title-3">FLOWS</div>
+            <span class="helper-text">List of Business objects integration flows</span><br />
+            <br />
+            <div class="row">
+                <div class="col-sm-2 title align-center block-title">
+                    Business Object
+                </div>
+                <div class="col-sm-2 title align-center block-title">
+                    Status
+                </div>
+                <div class="col-sm-3 title align-center block-title">
+                    Execution Rule
+                </div>
+                <div class="col-sm-3 title align-center block-title">
+                    Last Run
+                </div>
+                <div class="col-sm-2 title align-center block-title">
+                    Last Run Status
+                </div>
+            </div>
+            <div class="row integration-list" *ngFor="let integration of domain.integrations">
+                <div id="business-obj-name-{{integration.target.split('/')[1]}}" class="col-sm-2  align-center">
+                    {{integration.target.split("/")[1]}}
+                </div>
+                <div class="col-sm-2  align-center">
+                    <span class="integration-status"
+                        [ngStyle]="{'background-color': getColorStatus(integration.status)}">{{integration.status}}</span>
+                </div>
+                <div class="col-sm-3  align-center">
+                    {{integration.trigger }}
+                </div>
+                <div class="col-sm-3  align-center">
+                    {{(integration.lastRun != '0001-01-01T00:00:00Z') ? (integration.lastRun | date: 'medium') : "No
+                    Run
+                    Yet"}}
+                </div>
+                <div class="col-sm-2  align-center">
+                    <span class="integration-status"
+                        [ngStyle]="{'background-color': getLastRunColorStatus(integration.lastRunStatus)}">
+                        {{integration.lastRunStatus ? integration.lastRunStatus : "No Last Run Deployed"}}</span>
+                </div>
+            </div>
+        </div>
+        <br />
+        <div class="section">
+            <div class="title-3">CONECTORS</div>
+            <span class="helper-text">List of deployed industry connectors in the account</span><br />
+            <br />
+            <div class="row ">
+                <div class="col-sm-2 title align-center block-title">
+                    Connector
+                </div>
+                <div class="col-sm-3 title align-center block-title">
+                    Decription
+                </div>
+                <div class="col-sm-2 title align-center block-title">
+                    Deployment Status
+                </div>
+                <div class="col-sm-2 title align-center block-title">
+                    Business Object
+                </div>
+                <div class="col-sm-1 title align-center block-title">
+                    Action
+                </div>
+                <div class="col-sm-2 title align-center block-title">
+                    Last Run Status
+                </div>
+            </div>
+            <div class="row integration-list" *ngFor="let conn of industryConnectors">
+                <div class="col-sm-2  align-center "><img width="100px;" src="{{conn.icon}}" /></div>
+                <div class="col-sm-3  align-center "><span style="font-size: small;">{{conn.description}}</span>
+                </div>
+                <div class="col-sm-2  align-center ">
+                    <span *ngIf="conn.deploymentStatus==='Deployed'"
+                        class="integration-last-run-status-success">{{conn.deploymentStatus}}</span>
+                    <span *ngIf="conn.deploymentStatus!=='Deployed'"
+                        class="integration-last-run-status-failure">{{conn.deploymentStatus}}</span>
+                </div>
+                <div class="col-sm-2  align-center "><span>{{conn.objectType}}</span></div>
+                <div class="col-sm-1  align-center ">
+                    <span *ngIf="!shouldShowLinkButton()">
+                        <button class="btn btn-link btn-sm py-0" (click)="openDeployConnectorLink()"><i
+                                class="fa fa-external-link"></i>Deploy</button>
+                        <button class="btn btn-link btn-sm py-0" (click)="showLinkConnector(conn.id)"
+                            title="Link From Another Solution"><i class="fa fa-external-link"></i>Link</button></span>
+                    <span *ngIf="shouldShowLinkButton()">
+                        <button class="btn btn-link" (click)="showLinkConnector(conn.id)"><i
+                                class="fa fa-external-link"></i>Link</button></span>
+                </div>
+                <div class="col-sm-2  align-center ">
+                    <span>Batch: </span>
+                    <span>11:22pm EST</span>
+                    <br />
+                    <span>Live: </span>
+                    <span>N/A</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

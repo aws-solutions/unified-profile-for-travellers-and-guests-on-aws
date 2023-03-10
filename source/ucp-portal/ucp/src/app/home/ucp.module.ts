@@ -1,7 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 
-import { UCPComponent, UCPDetailComponent, UCPCompareComponent, UCPProfileErrorsComponent, DomainCreationModalComponent, UCPProfileDeletionConfirmationComponent, UCPSettingsComponent, LinkConnectorComponent } from './ucp.component';
+import { UCPComponent, UCPDetailComponent, UCPCompareComponent, UCPProfileErrorsComponent, DomainCreationModalComponent, UCPProfileDeletionConfirmationComponent } from './ucp.component';
 
 import { HttpClientModule } from '@angular/common/http';
 
@@ -24,9 +24,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     UCPCompareComponent,
     UCPProfileErrorsComponent,
     DomainCreationModalComponent,
-    UCPProfileDeletionConfirmationComponent,
-    UCPSettingsComponent,
-    LinkConnectorComponent,
+    UCPProfileDeletionConfirmationComponent
   ],
   imports: [
     ReactiveFormsModule,
