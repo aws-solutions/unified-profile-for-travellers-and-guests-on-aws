@@ -9,7 +9,7 @@ from awsglue.dynamicframe import DynamicFrame
 from pyspark.sql.functions import explode
 
 from tah_lib.pax_profileTransform import buildObjectRecord
-from tah_lib.etl_utils import buildS3SubFolder
+from tah_lib.etl_utils import writeToS3
 
 glueContext = GlueContext(SparkContext.getOrCreate())
 args = getResolvedOptions(
@@ -46,13 +46,11 @@ phone = accpRecordsDF.select(
 loyalty = accpRecordsDF.select(
     explode(accpRecordsDF.air_loyalty_recs)).select("col.*")
 
-subfolder = buildS3SubFolder()
-
-profile.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/pax_profile/"+subfolder)
-email.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/email_history/"+subfolder)
-phone.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/phone_history/"+subfolder)
-loyalty.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/air_loyalty/"+subfolder)
+writeToS3(glueContext, profile,
+          args["DEST_BUCKET"], "pax_profile")
+writeToS3(glueContext, email,
+          args["DEST_BUCKET"], "email_history")
+writeToS3(glueContext, phone,
+          args["DEST_BUCKET"], "phone_history")
+writeToS3(glueContext, loyalty,
+          args["DEST_BUCKET"], "air_loyalty")

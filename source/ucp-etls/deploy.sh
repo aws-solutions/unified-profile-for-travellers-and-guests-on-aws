@@ -18,6 +18,8 @@ fi
 echo "Running unit tests"
 python3 -m unittest discover
 if [ $? != 0 ]; then
+    echo "Changes have been detected in the transformation code"
+    echo "To accept these changes, run sh update-test-data.sh"
     exit 1
 fi
 

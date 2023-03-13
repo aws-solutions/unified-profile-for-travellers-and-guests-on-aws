@@ -1,7 +1,9 @@
 
 import uuid
 import traceback
-from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setBillingAddress, setTravellerId, getExternalId, setPaymentInfo, buildSerializedLists
+from datetime import datetime
+
+from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setBillingAddress, setTravellerId, getExternalId, setPaymentInfo, buildSerializedLists, setTimestamp
 
 
 def buildObjectRecord(rec):
@@ -11,17 +13,18 @@ def buildObjectRecord(rec):
         phoneRecs = []
         loyaltyRecs = []
 
-        for seg in rec["segments"]:
+        for seg in rec.get("segments", []):
             cid = str(uuid.uuid1(node=None, clock_seq=None))
-            for product in seg["products"]:
+            for product in seg.get("products", []):
                 addBookingRec(bookingRecs, rec, seg,
-                              product, seg["holder"], cid)
-                addEmailRecs(emailRecs, rec, seg, seg["holder"], cid)
-                addPhoneRecs(phoneRecs, rec, seg, seg["holder"], cid)
-                addLoyaltyRecs(loyaltyRecs, rec, seg, seg["holder"], cid)
-            for addGuest in seg["additionalGuests"]:
+                              product, seg.get("holder", {}), cid)
+                addEmailRecs(emailRecs, rec, seg, seg.get("holder", {}), cid)
+                addPhoneRecs(phoneRecs, rec, seg, seg.get("holder", {}), cid)
+                addLoyaltyRecs(loyaltyRecs, rec, seg,
+                               seg.get("holder", {}), cid)
+            for addGuest in seg.get("additionalGuests", []):
                 cid = str(uuid.uuid1(node=None, clock_seq=None))
-                for product in seg["products"]:
+                for product in seg.get("products", []):
                     addBookingRec(bookingRecs, rec, seg,
                                   product, addGuest, cid)
                     addEmailRecs(emailRecs, rec, seg, addGuest, cid)
@@ -41,115 +44,122 @@ def buildObjectRecord(rec):
 
 def addBookingRec(bookingRecs, rec, seg, product, guest, cid):
     hotelBookingRec = {
-        'model_version': rec["modelVersion"],
+        'model_version': rec.get("modelVersion", ""),
         'object_type': "hotel_booking",
-        'last_updated': rec["lastUpdatedOn"],
-        'last_updated_by': rec["lastUpdatedBy"],
-        'booking_id': rec["id"],
-        'hotel_code': seg["hotelCode"],
-        'n_nights': rec["nNights"],
-        'n_guests': rec["nGuests"],
-        'product_id': product["id"],
-        'check_in_date': rec["startDate"],
-        'honorific': guest['honorific'],
-        'first_name': guest['firstName'],
-        'middle_name': guest['middleName'],
-        'last_name': guest['lastName'],
-        'gender': guest['gender'],
-        'pronoun': guest['pronoun'],
-        'date_of_birth': guest['dateOfBirth'],
-        'job_title': guest['jobTitle'],
-        'company': guest['parentCompany'],
+        'last_updated': rec.get("lastUpdatedOn", ""),
+        'last_updated_by': rec.get("lastUpdatedBy", ""),
+        'booking_id': rec.get("id", ""),
+        'hotel_code': seg.get("hotelCode", ""),
+        'n_nights': rec.get("nNights", ""),
+        'n_guests': rec.get("nGuests", ""),
+        'product_id': product.get("id", ""),
+        'check_in_date': rec.get("startDate", ""),
+        'honorific': guest.get('honorific', ''),
+        'first_name': guest.get('firstName', ''),
+        'middle_name': guest.get('middleName', ''),
+        'last_name': guest.get('lastName', ''),
+        'gender': guest.get('gender', ''),
+        'pronoun': guest.get('pronoun', ''),
+        'date_of_birth': guest.get('dateOfBirth', ''),
+        'job_title': guest.get('jobTitle', ''),
+        'company': guest.get('parentCompany', ''),
     }
-    if "nationality" in rec:
-        hotelBookingRec["nationality_code"] = rec['nationality']["code"]
-        hotelBookingRec["nationality_name"] = rec['nationality']["name"]
-    if "language" in rec:
-        hotelBookingRec["language_code"] = rec['language']["code"]
-        hotelBookingRec["language_name"] = rec['language']["name"]
-
-    if "externalIds" in rec:
-        rec['pms_id'] = getExternalId(rec["externalIds"], "pms")
-        rec['crs_id'] = getExternalId(rec["externalIds"], "crs")
-        rec['gds_id'] = getExternalId(rec["externalIds"], "gds")
-    if "roomType" in rec:
-        hotelBookingRec['room_type_code'] = rec["roomType"]["code"]
-        hotelBookingRec['room_type_name'] = rec["roomType"]["name"]
-        hotelBookingRec['room_type_description'] = rec["roomType"]["description"]
-    if "ratePlan" in rec:
-        hotelBookingRec['room_type_code'] = rec["ratePlan"]["code"]
-        hotelBookingRec['room_type_name'] = rec["ratePlan"]["name"]
-        hotelBookingRec['room_type_description'] = rec["ratePlan"]["description"]
-    if "attributes" in rec:
-        hotelBookingRec['attribute_codes'] = buildSerializedLists(
-            rec["attributes"], "code", "|")
-        hotelBookingRec['attribute_names'] = buildSerializedLists(
-            rec["attributes"], "name", "|")
-        hotelBookingRec['attribute_descriptions'] = buildSerializedLists(
-            rec["attributes"], "description", "|")
-    if "addOns" in rec:
-        hotelBookingRec['attribute_codes'] = buildSerializedLists(
-            rec["addOns"], "code", "|")
-        hotelBookingRec['attribute_names'] = buildSerializedLists(
-            rec["addOns"], "name", "|")
-        hotelBookingRec['attribute_descriptions'] = buildSerializedLists(
-            rec["addOns"], "description", "|")
-
-    if "paymentInformation" in rec:
-        setPaymentInfo(hotelBookingRec, rec["paymentInformation"])
-        setBillingAddress(hotelBookingRec, rec["paymentInformation"])
+    hotelBookingRec["nationality_code"] = rec.get(
+        'nationality', {}).get("code", "")
+    hotelBookingRec["nationality_name"] = rec.get(
+        'nationality', {}).get("name", "")
+    hotelBookingRec["language_code"] = rec.get('language', {}).get("code", "")
+    hotelBookingRec["language_name"] = rec.get(
+        'language', {}).get("name", "")
+    hotelBookingRec['pms_id'] = getExternalId(
+        rec.get("externalIds", []), "pms")
+    hotelBookingRec['crs_id'] = getExternalId(
+        rec.get("externalIds", []), "crs")
+    hotelBookingRec['gds_id'] = getExternalId(
+        rec.get("externalIds", []), "gds")
+    hotelBookingRec['room_type_code'] = rec.get(
+        "roomType", {}).get("code", "")
+    hotelBookingRec['room_type_name'] = rec.get(
+        "roomType", {}).get("name", "")
+    hotelBookingRec['room_type_description'] = rec.get(
+        "roomType", {}).get("description", "")
+    hotelBookingRec['room_type_code'] = rec.get(
+        "ratePlan", {}).get("code", "")
+    hotelBookingRec['room_type_name'] = rec.get(
+        "ratePlan", {}).get("name", "")
+    hotelBookingRec['room_type_description'] = rec.get(
+        "ratePlan", {}).get("description", "")
+    hotelBookingRec['attribute_codes'] = buildSerializedLists(
+        rec.get("attributes", []), "code", "|")
+    hotelBookingRec['attribute_names'] = buildSerializedLists(
+        rec.get("attributes", []), "name", "|")
+    hotelBookingRec['attribute_descriptions'] = buildSerializedLists(
+        rec.get("attributes", []), "description", "|")
+    hotelBookingRec['attribute_codes'] = buildSerializedLists(
+        rec.get("addOns", []), "code", "|")
+    hotelBookingRec['attribute_names'] = buildSerializedLists(
+        rec.get("addOns", []), "name", "|")
+    hotelBookingRec['attribute_descriptions'] = buildSerializedLists(
+        rec.get("addOns", []), "description", "|")
+    setPaymentInfo(hotelBookingRec, rec.get("paymentInformation", {}))
+    setBillingAddress(hotelBookingRec, rec.get("paymentInformation", {}))
     # Set primary option for phone/email/address
-    setPrimaryEmail(hotelBookingRec, guest['emails'])
-    setPrimaryPhone(hotelBookingRec, guest['phones'])
-    setPrimaryAddress(hotelBookingRec, guest['addresses'])
+    setPrimaryEmail(hotelBookingRec, guest.get('emails', []))
+    setPrimaryPhone(hotelBookingRec, guest.get('phones', []))
+    setPrimaryAddress(hotelBookingRec, guest.get('addresses', []))
     # set traveller ID
+    setTravellerId(hotelBookingRec, guest, cid)
+    setTimestamp(hotelBookingRec)
     bookingRecs.append(hotelBookingRec)
 
 
 def addEmailRecs(emailRecs, rec, seg, guest, cid):
-    for email in guest["emails"]:
+    for email in guest.get("emails", []):
         historicalEmail = {
-            'model_version': rec["modelVersion"],
+            'model_version': rec.get("modelVersion", ""),
             'object_type': "email_history",
-            'last_updated': rec["lastUpdatedOn"],
-            'last_updated_by': rec["lastUpdatedBy"],
-            'address': email["address"],
-            'type': email["type"],
+            'last_updated': rec.get("lastUpdatedOn", ""),
+            'last_updated_by': rec.get("lastUpdatedBy", ""),
+            'address': email.get("address", ""),
+            'type': email.get("type", ""),
         }
         setTravellerId(historicalEmail, guest, cid)
+        setTimestamp(historicalEmail)
         emailRecs.append(historicalEmail)
 
 
 def addPhoneRecs(phoneRecs, rec, seg, guest, cid):
-    for phone in guest["phones"]:
+    for phone in guest.get("phones", []):
         historicalPhone = {
-            'model_version': rec["modelVersion"],
+            'model_version': rec.get("modelVersion", ""),
             'object_type': "phone_history",
-            'last_updated': rec["lastUpdatedOn"],
-            'last_updated_by': rec["lastUpdatedBy"],
-            'number': phone["number"],
-            'country_code': phone["countryCode"],
-            'type': phone["type"],
+            'last_updated': rec.get("lastUpdatedOn", ""),
+            'last_updated_by': rec.get("lastUpdatedBy", ""),
+            'number': phone.get("number", ""),
+            'country_code': phone.get("countryCode", ""),
+            'type': phone.get("type", ""),
         }
         setTravellerId(historicalPhone, guest, cid)
+        setTimestamp(historicalPhone)
         phoneRecs.append(historicalPhone)
 
 
 def addLoyaltyRecs(loyaltyRecs, rec, seg, guest, cid):
     if 'loyaltyPrograms' in guest:
-        for loyalty in guest['loyaltyPrograms']:
+        for loyalty in guest.get('loyaltyPrograms', []):
             loyaltyRec = {
                 'object_type': 'hotel_loyalty',
-                'model_version': rec['modelVersion'],
-                'last_updated': rec['lastUpdatedOn'],
-                'last_updated_by': rec['lastUpdatedBy'],
-                'id': loyalty['id'],
-                'program_name': loyalty['programName'],
-                'points': loyalty['points'],
-                'units': loyalty['pointUnit'],
-                'points_to_next_level': loyalty['pointsToNextLevel'],
-                'level': loyalty['level'],
-                'joined': loyalty['joined']
+                'model_version': rec.get('modelVersion', ''),
+                'last_updated': rec.get('lastUpdatedOn', ''),
+                'last_updated_by': rec.get('lastUpdatedBy', ''),
+                'id': loyalty.get('id', ''),
+                'program_name': loyalty.get('programName', ''),
+                'points': loyalty.get('points', ''),
+                'units': loyalty.get('pointUnit', ''),
+                'points_to_next_level': loyalty.get('pointsToNextLevel', ''),
+                'level': loyalty.get('level', ''),
+                'joined': loyalty.get('joined', '')
             }
             setTravellerId(loyaltyRec, guest, cid)
+            setTimestamp(loyaltyRec)
             loyaltyRecs.append(loyaltyRec)

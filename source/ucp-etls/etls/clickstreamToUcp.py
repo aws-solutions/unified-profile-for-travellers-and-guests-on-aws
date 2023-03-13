@@ -8,7 +8,7 @@ from awsglue.dynamicframe import DynamicFrame
 
 # Change import based on business object
 from tah_lib.clickstreamTransform import buildObjectRecord
-from tah_lib.etl_utils import buildS3SubFolder
+from tah_lib.etl_utils import writeToS3
 
 glueContext = GlueContext(SparkContext.getOrCreate())
 args = getResolvedOptions(
@@ -33,7 +33,4 @@ businessObjectRepartitioned = DynamicFrame.fromDF(
 segments = Map.apply(frame=businessObjectRepartitioned, f=buildObjectRecord)
 segments.printSchema()
 
-subfolder = buildS3SubFolder()
-
-segments.toDF().write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/clickstream/"+subfolder)
+writeToS3(glueContext, segments.toDF(), args["DEST_BUCKET"], "clickstream")

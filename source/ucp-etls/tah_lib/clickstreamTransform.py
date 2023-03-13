@@ -1,18 +1,22 @@
 import traceback
-from tah_lib.common import replaceAndjoin
+import uuid
+from datetime import datetime
+from tah_lib.common import replaceAndjoin, setTimestamp
+from tah_lib.common import FIELD_NAME_TRAVELLER_ID, FIELD_NAME_LAST_UPDATED
 
 
 def buildObjectRecord(rec):
     try:
         newRec = {}
         newRec["model_version"] = rec.get("modelVersion", "")
+        newRec["object_type"] = "clickstream_event"
         newRec["event_type"] = rec.get("event_type", "")
         newRec["event_timestamp"] = rec.get("event_timestamp", "")
         newRec["arrival_timestamp"] = rec.get("arrival_timestamp", "")
         newRec["event_version"] = rec.get("event_version", "")
         newRec["user_agent"] = rec.get("device", {}).get("useragent", "")
-        if "session" in rec:
-            newRec["session_id"] = rec.get("session", {}).get("id", "")
+        newRec["session_id"] = rec.get("session", {}).get("id", "")
+        newRec[FIELD_NAME_TRAVELLER_ID] = rec.get("userId", "")
         newRec["custom_event_name"] = getAttr(
             rec.get("attributes", []), "custom_event_name")
         newRec["destination"] = getAttr(
@@ -71,7 +75,15 @@ def buildObjectRecord(rec):
             rec.get("attributes", []), "hotel_code_list")
         newRec["num_nights"] = getAttr(rec.get("attributes", []), "num_nights")
         newRec["aws_account_id"] = rec.get("awsAccountId", "")
-
+        # session ID is a mandatory field
+        if newRec["session_id"] == "":
+            newRec["session_id"] = str(uuid.uuid1(node=None, clock_seq=None))
+        # if there is no usser Id provided by the customer, we use the session ID to group all teh events by session
+        if newRec[FIELD_NAME_TRAVELLER_ID] == "":
+            newRec[FIELD_NAME_TRAVELLER_ID] = newRec["session_id"]
+        newRec[FIELD_NAME_LAST_UPDATED] = newRec["event_timestamp"]
+        # If no timesstamp is provided we set a timestamp for the object
+        setTimestamp(newRec)
         # cleaning up None data
         toDelete = []
         for key in newRec:

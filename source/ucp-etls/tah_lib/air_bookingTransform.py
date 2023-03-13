@@ -1,7 +1,8 @@
 
 import uuid
 import traceback
-from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setBillingAddress, setTravellerId, getExternalId, setPaymentInfo
+from datetime import datetime
+from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setBillingAddress, setTravellerId, getExternalId, setPaymentInfo, setTimestamp
 
 
 def noneToList(val):
@@ -33,6 +34,7 @@ def buildObjectRecord(rec):
                         'type': email.get("type", ""),
                     }
                     setTravellerId(historicalEmail, pax, cid)
+                    setTimestamp(historicalEmail)
                     emailRecs.append(historicalEmail)
                 for phone in pax.get("phones", []):
                     historicalPhone = {
@@ -45,6 +47,7 @@ def buildObjectRecord(rec):
                         'type': phone.get("type", ""),
                     }
                     setTravellerId(historicalPhone, pax, cid)
+                    setTimestamp(historicalPhone)
                     phoneRecs.append(historicalPhone)
                 for loyalty in pax.get("loyaltyPrograms", []):
                     loyaltyRec = {
@@ -54,12 +57,13 @@ def buildObjectRecord(rec):
                         'last_updated_by': rec.get("lastUpdatedBy", ""),
                         "id": loyalty.get("id", ""),
                         "program_name": loyalty.get("programName", ""),
-                        "miles": loyalty.get("id", ""),
+                        "miles": loyalty.get("miles", ""),
                         "miles_to_next_level": loyalty.get("milesToNextLevel", ""),
                         "level": loyalty.get("level", ""),
                         "joined": loyalty.get("joined", "")
                     }
                     setTravellerId(loyaltyRec, pax, cid)
+                    setTimestamp(loyaltyRec)
                     loyaltyRecs.append(loyaltyRec)
 
     except Exception as e:
@@ -102,19 +106,16 @@ def addAirBookingRecord(recs, rec, pax, seg, cid):
         "company": pax.get("parentCompany", ""),
         "price": rec.get("price", {}).get("grandTotal", ""),
     }
-    if "nationality" in rec:
-        airBookingRec["nationality_code"] = rec.get(
-            'nationality', {}).get("code")
-        airBookingRec["nationality_name"] = rec.get(
-            'nationality', {}).get("name")
-    if "language" in rec:
-        airBookingRec["language_code"] = rec.get('language', {}).get("code")
-        airBookingRec["language_name"] = rec.get('language', {}).get("name")
-    if "externalIds" in rec:
-        airBookingRec['pss_id'] = getExternalId(
-            rec.get("externalIds", ""), "pss")
-        airBookingRec['gds_id'] = getExternalId(
-            rec.get("externalIds", ""), "gds")
+    airBookingRec["nationality_code"] = rec.get(
+        'nationality', {}).get("code", "")
+    airBookingRec["nationality_name"] = rec.get(
+        'nationality', {}).get("name", "")
+    airBookingRec["language_code"] = rec.get('language', {}).get("code", "")
+    airBookingRec["language_name"] = rec.get('language', {}).get("name", "")
+    airBookingRec['pss_id'] = getExternalId(
+        rec.get("externalIds", []), "pss")
+    airBookingRec['gds_id'] = getExternalId(
+        rec.get("externalIds", []), "gds")
 
     setPaymentInfo(airBookingRec, rec.get("paymentInformation"))
     setBillingAddress(airBookingRec, rec.get("paymentInformation"))
@@ -123,6 +124,7 @@ def addAirBookingRecord(recs, rec, pax, seg, cid):
     setPrimaryEmail(airBookingRec, pax.get('emails', []))
     setPrimaryPhone(airBookingRec, pax.get('phones', []))
     setTravellerId(airBookingRec, pax, cid)
+    setTimestamp(airBookingRec)
     setPrimaryAddress(airBookingRec, pax.get('addresses', []))
     recs.append(airBookingRec)
 

@@ -8,7 +8,7 @@ from awsglue.dynamicframe import DynamicFrame
 from pyspark.sql.functions import explode
 
 from tah_lib.hotel_stayTransform import buildObjectRecord
-from tah_lib.etl_utils import buildS3SubFolder
+from tah_lib.etl_utils import writeToS3
 
 glueContext = GlueContext(SparkContext.getOrCreate())
 args = getResolvedOptions(
@@ -41,7 +41,5 @@ revenue_items = accpReccordsDF.select(
 
 revenue_items.printSchema()
 
-subfolder = buildS3SubFolder()
-
-revenue_items.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/hotel_stay_revenue_items/"+subfolder)
+writeToS3(glueContext, revenue_items,
+          args["DEST_BUCKET"], "hotel_stay_revenue_items")

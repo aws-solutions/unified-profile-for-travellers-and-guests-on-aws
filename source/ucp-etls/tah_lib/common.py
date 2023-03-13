@@ -1,3 +1,15 @@
+
+from datetime import datetime
+
+SUPPORTED_ADRESS_TYPES = ["", "billing", "business", "mailing"]
+SUPPORTED_ADRESS_FIELDS = ["line1", "line2", "line3",
+                           "line4", "city", "state_province", "postal_code", "country"]
+FIELD_NAME_TRAVELLER_ID = "traveller_id"
+FIELD_NAME_LAST_UPDATED = "last_updated"
+# field added to be used in S3 partitining which requires removing some special char
+FIELD_NAME_LAST_UPDATED_PARTITION = "last_updated_partition"
+# 2021-12-09T07:59:14.873255297Z
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f000Z"
 # this file should eventually contain common functions between all etls
 # this function set the mandatory ACCP traveller ID using the following rule
 # if the guest has an ID provided by customer we use this one
@@ -5,14 +17,28 @@
 
 
 def setTravellerId(rec, guestBizObject, uid):
-    rec["traveller_id"] = guestBizObject.get("id", uid)
+    rec[FIELD_NAME_TRAVELLER_ID] = guestBizObject.get("id", "")
+    if rec[FIELD_NAME_TRAVELLER_ID] == "":
+        rec[FIELD_NAME_TRAVELLER_ID] = uid
 
+
+# seting default timestamp if does not exist
+def setTimestamp(rec):
+    if rec.get(FIELD_NAME_LAST_UPDATED, "") == "":
+        rec[FIELD_NAME_LAST_UPDATED] = datetime.now().strftime(DATETIME_FORMAT)
+    ts = rec[FIELD_NAME_LAST_UPDATED].replace("-", "/")
+    ts = ts.replace("T", "/")
+    ts = ts.replace(":", "/")
+    ts = ts.replace(".", "/")
+    rec[FIELD_NAME_LAST_UPDATED_PARTITION] = ts
 
 # this function set the primary email according to the following logic
 # 1- if one or multiple emails are flagged as Primary, we choose the first one
 # 2- if not we choose the first email in the list.
 # 3- then we use the email type to choose whether we set the biz_email key or 'email' key
 # 3- if the list is empty we set both keys to empty strings to allow creation of the column in the CSV
+
+
 def setPrimaryEmail(rec, emails):
     rec['email_business'] = ""
     rec['email'] = ""
@@ -59,15 +85,13 @@ def setPrimaryPhone(rec, phones):
 
 # this function sets the primary address  using the same logic than the email function
 def setPrimaryAddress(rec, addresses):
-    rec['address_type'] = ""
-    rec['address_line1'] = ""
-    rec['address_line2'] = ""
-    rec['address_line3'] = ""
-    rec['address_line4'] = ""
-    rec['address_city'] = ""
-    rec['address_state_province'] = ""
-    rec['address_postal_code'] = ""
-    rec['address_country'] = ""
+    # initializing all address types if they do not exist on the record
+    for addrType in SUPPORTED_ADRESS_TYPES:
+        if addrType != "":
+            addrType += "_"
+        for field in SUPPORTED_ADRESS_FIELDS:
+            if 'address_'+addrType+field not in rec:
+                rec['address_'+addrType+field] = ""
     if len(addresses) == 0:
         return
     primaryAddress = addresses[0]
@@ -76,11 +100,11 @@ def setPrimaryAddress(rec, addresses):
             primaryAddress = address
             break
     if primaryAddress.get('type', "") == 'business':
-        setAddress(rec, 'business_', primaryAddress)
+        setAddress(rec, 'business', primaryAddress)
     elif primaryAddress.get('type', "") == 'shipping':
-        setAddress(rec, 'shipping_', primaryAddress)
+        setAddress(rec, 'shipping', primaryAddress)
     elif primaryAddress.get('type', "") == 'mailing':
-        setAddress(rec, 'mailing_', primaryAddress)
+        setAddress(rec, 'mailing', primaryAddress)
     else:
         setAddress(rec, '', primaryAddress)
     rec['address_type'] = primaryAddress.get('type', "")
@@ -88,9 +112,9 @@ def setPrimaryAddress(rec, addresses):
 
 def setBillingAddress(rec, paymentInfo):
     if "ccInfo" in paymentInfo and "address" in paymentInfo["ccInfo"]:
-        setAddress(rec, "billing_", paymentInfo["ccInfo"]["address"])
+        setAddress(rec, "billing", paymentInfo["ccInfo"]["address"])
     elif "address" in paymentInfo:
-        setAddress(rec, "billing_", paymentInfo["address"])
+        setAddress(rec, "billing", paymentInfo["address"])
     else:
         rec['address_billing_line1'] = ""
         rec['address_billing_line2'] = ""
@@ -103,15 +127,17 @@ def setBillingAddress(rec, paymentInfo):
 
 
 def setAddress(rec, addType, address):
-    if addType == "":
+    if addType not in SUPPORTED_ADRESS_TYPES:
         return
     if address is None:
         address = {}
+    if addType != "":
+        addType += "_"
     rec["address_" + addType + "line1"] = address.get("line1", "")
     rec["address_" + addType + "line2"] = address.get("line2", "")
     rec["address_" + addType + "line3"] = address.get("line3", "")
     rec["address_" + addType + "line4"] = address.get("line4", "")
-    rec["address_" + addType + "postal_codes"] = address.get("postalCode", "")
+    rec["address_" + addType + "postal_code"] = address.get("postalCode", "")
     rec["address_" + addType + "city"] = address.get("city", "")
     rec["address_" + addType +
         "state_province"] = address.get('stateProvince', {}).get('code', "")
