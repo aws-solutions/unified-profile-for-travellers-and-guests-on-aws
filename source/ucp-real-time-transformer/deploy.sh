@@ -13,7 +13,7 @@ if [ -z "$env" ] || [ -z "$bucket" ]; then
 fi
 
 aws s3 cp s3://$bucket/$env/etl/tah_lib.zip tah_lib.zip
-unzip -d src/ tah_lib.zip
+unzip -d e2e/src/ tah_lib.zip
 
 cd e2e/src
 zip -r ../../main.zip tah_lib index.py
@@ -23,4 +23,5 @@ sh push.sh $env $bucket
 
 rm tah_lib.zip
 rm main.zip
+rm -rf e2e/src/tah_lib
 
