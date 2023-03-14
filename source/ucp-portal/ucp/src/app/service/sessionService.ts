@@ -39,6 +39,9 @@ export class SessionService {
     setProfileDomain(name: string) {
         this.localStorageService.set("customer-profile-domain", name);
     }
+    unsetDomain() {
+        this.localStorageService.clear("customer-profile-domain");
+    }
 
     getProfileDomain(): string {
         return <string>this.localStorageService.get("customer-profile-domain");

@@ -1,0 +1,14 @@
+<div class="container-fluid">
+    <br />
+    <h1>Connect to S3 Bucket</h1>
+    <br />
+    <h3>Bucket Policy</h3>
+    <pre id="json">{{bucketPolicy}}</pre>
+    <p>Copy the bucket policy into {{bucketPath}} and the press Done</p>
+    <div mat-dialog-content>
+        <button type="submit" class="btn btn-primary float-right form-button" (click)="link()">
+            <i class="fa fa-check"></i>Done</button>
+        <button type="submit" class="btn btn-secondary float-right form-button" (click)="cancel()">
+            <i class="fa fa-times"></i>Cancel</button>
+    </div>
+</div>

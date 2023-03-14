@@ -37,7 +37,7 @@ export class LoginPage {
     }
 
     async clickLogin(btn_id: string) {
-        console.log("Click on "+btn_id+" button")
+        console.log("Click on " + btn_id + " button")
         let button = element(by.id(btn_id));
         await browser.executeScript("arguments[0].scrollIntoView();", button.getWebElement());
         return button.click()

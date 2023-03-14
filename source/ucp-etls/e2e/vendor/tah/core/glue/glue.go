@@ -16,6 +16,7 @@ import (
 
 var JOB_RUN_STATUS_NOT_RUNNING = "not_running"
 var JOB_RUN_STATUS_UNKNOWN = "unknown"
+var WAIT_DELAY = 5
 
 type Config struct {
 	Client *glue.Glue
@@ -33,6 +34,10 @@ type Crawler struct {
 	Name            string
 	State           string
 	LastCrawlStatus string
+}
+
+type Table struct {
+	Name string
 }
 
 type Job struct {
@@ -183,18 +188,50 @@ func (c Config) WaitForCrawlerRun(name string, timeoutSeconds int) (string, erro
 	it := 0
 	for crawler.State != glue.CrawlerStateReady {
 		log.Printf("Crawler State: %v Waiting 5 seconds before checking again", crawler.State)
-		time.Sleep(5 * time.Second)
+		time.Sleep(time.Duration(WAIT_DELAY) * time.Second)
 		crawler, err = c.GetCrawler(name)
 		if err != nil {
 			return "", err
 		}
 		it += 1
-		if it*5 >= timeoutSeconds {
-			return "", errors.New(fmt.Sprintf("Crawler wait timed out after %v secconds", it*5))
+		if it*WAIT_DELAY >= timeoutSeconds {
+			return "", errors.New(fmt.Sprintf("Crawler wait timed out after %v seconds", it*5))
 		}
 	}
 	log.Printf("Crawler State: %v. Completed", crawler.State)
 	return crawler.LastCrawlStatus, err
+}
+
+func (c Config) CreateTable(name string) error {
+	_, err := c.Client.CreateTable(&glue.CreateTableInput{
+		DatabaseName: aws.String(c.DbName),
+		TableInput: &glue.TableInput{
+			Name: aws.String(name),
+		},
+	})
+	return err
+}
+
+func (c Config) GetTable(name string) (Table, error) {
+	output, err := c.Client.GetTable(&glue.GetTableInput{
+		DatabaseName: aws.String(c.DbName),
+		Name:         &name,
+	})
+	if err != nil {
+		return Table{}, err
+	}
+	table := Table{
+		Name: *output.Table.Name,
+	}
+	return table, nil
+}
+
+func (c Config) DeleteTable(name string) error {
+	_, err := c.Client.DeleteTable(&glue.DeleteTableInput{
+		DatabaseName: aws.String(c.DbName),
+		Name:         &name,
+	})
+	return err
 }
 
 func ConvertS3Targets(targets []S3Target, queueArn, dlqArn string) []*glue.S3Target {
@@ -256,7 +293,7 @@ func (c Config) WaitForJobRun(name string, timeoutSeconds int) (string, error) {
 	it := 0
 	for status != glue.JobRunStateSucceeded {
 		log.Printf("Job run Status: %v Waiting 5 seconds before checking again", status)
-		time.Sleep(5 * time.Second)
+		time.Sleep(time.Duration(WAIT_DELAY) * time.Second)
 		status, err = c.GetJobRunStatus(name)
 		if err != nil {
 			return JOB_RUN_STATUS_UNKNOWN, err
@@ -266,7 +303,7 @@ func (c Config) WaitForJobRun(name string, timeoutSeconds int) (string, error) {
 			return status, nil
 		}
 		it += 1
-		if it*5 >= timeoutSeconds {
+		if it*WAIT_DELAY >= timeoutSeconds {
 			return JOB_RUN_STATUS_UNKNOWN, errors.New(fmt.Sprintf("Job wait timed out after %v secconds", it*5))
 		}
 	}

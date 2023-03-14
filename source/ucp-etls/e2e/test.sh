@@ -41,6 +41,8 @@ echo "GLUE_JOB_NAME_AIR_BOOKING: $GLUE_JOB_NAME_AIR_BOOKING"
 echo "TEST_BUCKET_AIR_BOOKING: $TEST_BUCKET_AIR_BOOKING"
 echo "TEST_BUCKET_ACCP_IMPORT: $TEST_BUCKET_ACCP_IMPORT"
 
+rm ucp-config.json
+
 echo "2-removing existing executables"
 rm main main.zip
 echo "3-Organizing dependenies"
@@ -57,7 +59,7 @@ fi
 export UCP_REGION=$(aws configure get region)
 go test -v -failfast src/main/*
 rc=$?
-rm -rf src/tah_core
+rm -rf src/tah-core
 if [ $rc -ne 0 ]; then
   echo "Existing Build with status $rc" >&2
   exit $rc

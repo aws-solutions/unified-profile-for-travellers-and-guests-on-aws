@@ -30,6 +30,21 @@ type Flow struct {
 	Trigger        string
 }
 
+type FlowStatusOutput struct {
+	ExecutionId string
+	FlowArn     string
+	FlowStatus  string
+}
+
+const (
+	FLOW_STATUS_ACTIVE     string = "Active"
+	FLOW_STATUS_DEPRECATED string = "Deprecated"
+	FLOW_STATUS_DELETED    string = "Deleted"
+	FLOW_STATUS_DRAFT      string = "Draft"
+	FLOW_STATUS_ERRORED    string = "Errored"
+	FLOW_STATUS_SUSPENDED  string = "Suspended"
+)
+
 func Init() Config {
 	session := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
@@ -50,12 +65,12 @@ func (c Config) GetFlow(flowName string) (Flow, error) {
 		return Flow{}, err
 	}
 	flow := Flow{
-		Name:          *out.FlowName,
-		Description:   *out.Description,
-		Status:        *out.FlowStatus,
-		SourceType:    *out.SourceFlowConfig.ConnectorType,
+		Name:          aws.StringValue(out.FlowName),
+		Description:   aws.StringValue(out.Description),
+		Status:        aws.StringValue(out.FlowStatus),
+		SourceType:    aws.StringValue(out.SourceFlowConfig.ConnectorType),
 		SouceDetails:  buildSourceDetails(*out.SourceFlowConfig),
-		TargetType:    *out.DestinationFlowConfigList[0].ConnectorType,
+		TargetType:    aws.StringValue(out.DestinationFlowConfigList[0].ConnectorType),
 		TargetDetails: buildTargetDetails(*out.DestinationFlowConfigList[0]),
 		Trigger:       buildTriggerDescription(*out.TriggerConfig),
 	}
@@ -73,8 +88,8 @@ func (c Config) GetFlow(flowName string) (Flow, error) {
 }
 
 func buildTriggerDescription(cfg appflowSdk.TriggerConfig) string {
-	if *cfg.TriggerType == "Scheduled" {
-		return "Scheduled on " + (*(cfg.TriggerProperties.Scheduled.ScheduleExpression)) + " starting " + (*(cfg.TriggerProperties.Scheduled.ScheduleStartTime)).Format("Mon Jan 2 15:04:05")
+	if aws.StringValue(cfg.TriggerType) == "Scheduled" {
+		return "Scheduled on " + aws.StringValue(cfg.TriggerProperties.Scheduled.ScheduleExpression) + " starting " + aws.TimeValue(cfg.TriggerProperties.Scheduled.ScheduleStartTime).Format("Mon Jan 2 15:04:05")
 	}
 	return *cfg.TriggerType
 }
@@ -119,4 +134,100 @@ func (c Config) GetFlows(names []string) ([]Flow, error) {
 	wg.Wait()
 	log.Printf("[core][appflow] Flows: %+v", flows)
 	return flows, err
+}
+
+// Create a simple test flow to use in unit tests, to test other functions
+// like starting, stopping, and deleting flows.
+//
+// This should not be used in production and therefore is not exported.
+func (c Config) createTestFlow(flowName, bucketName string) error {
+	connectorType := "S3"
+	sourceConfig := appflowSdk.SourceFlowConfig{
+		ConnectorType: &connectorType,
+		SourceConnectorProperties: &appflowSdk.SourceConnectorProperties{
+			S3: &appflowSdk.S3SourceProperties{
+				BucketName: &bucketName,
+			},
+		},
+	}
+	destinationConfig := appflowSdk.DestinationFlowConfig{
+		ConnectorType: &connectorType,
+		DestinationConnectorProperties: &appflowSdk.DestinationConnectorProperties{
+			S3: &appflowSdk.S3DestinationProperties{
+				BucketName: &bucketName,
+			},
+		},
+	}
+	destinationConfigList := []*appflowSdk.DestinationFlowConfig{
+		&destinationConfig,
+	}
+	field := "test-field"
+	taskType := "Filter"
+	task := appflowSdk.Task{
+		SourceFields: []*string{&field},
+		TaskType:     &taskType,
+	}
+	tasks := []*appflowSdk.Task{&task}
+	triggerType := "Scheduled"
+	pullMode := "Incremental"
+	scheduleExpression := "rate(5minutes)"
+	triggerSchedule := appflowSdk.ScheduledTriggerProperties{
+		DataPullMode:       &pullMode,
+		ScheduleExpression: &scheduleExpression,
+	}
+	input := appflowSdk.CreateFlowInput{
+		FlowName:                  &flowName,
+		SourceFlowConfig:          &sourceConfig,
+		DestinationFlowConfigList: destinationConfigList,
+		Tasks:                     tasks,
+		TriggerConfig: &appflowSdk.TriggerConfig{
+			TriggerType: &triggerType,
+			TriggerProperties: &appflowSdk.TriggerProperties{
+				Scheduled: &triggerSchedule,
+			},
+		},
+	}
+
+	_, err := c.Client.CreateFlow(&input)
+	return err
+}
+
+func (c Config) StartFlow(name string) (FlowStatusOutput, error) {
+	in := appflowSdk.StartFlowInput{
+		FlowName: &name,
+	}
+	out, err := c.Client.StartFlow(&in)
+	if err != nil {
+		return FlowStatusOutput{}, err
+	}
+	status := FlowStatusOutput{
+		ExecutionId: aws.StringValue(out.ExecutionId),
+		FlowArn:     aws.StringValue(out.FlowArn),
+		FlowStatus:  aws.StringValue(out.FlowStatus),
+	}
+	return status, nil
+}
+
+func (c Config) StopFlow(name string) (FlowStatusOutput, error) {
+	in := appflowSdk.StopFlowInput{
+		FlowName: &name,
+	}
+	out, err := c.Client.StopFlow(&in)
+	if err != nil {
+		return FlowStatusOutput{}, err
+	}
+	status := FlowStatusOutput{
+		FlowArn:    aws.StringValue(out.FlowArn),
+		FlowStatus: aws.StringValue(out.FlowStatus),
+	}
+	return status, nil
+}
+
+func (c Config) DeleteFlow(name string, forceDelete bool) error {
+	input := appflowSdk.DeleteFlowInput{
+		FlowName:    &name,
+		ForceDelete: &forceDelete,
+	}
+	_, err := c.Client.DeleteFlow(&input)
+	return err
 }

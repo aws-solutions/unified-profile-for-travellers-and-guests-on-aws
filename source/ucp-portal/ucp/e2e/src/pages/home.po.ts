@@ -12,7 +12,7 @@ export class HomePage {
     }
 
     async clickHome(btn_id: string) {
-        console.log("Click on "+btn_id+" button")
+        console.log("Click on " + btn_id + " button")
         let button = element(by.id(btn_id));
         await browser.executeScript("arguments[0].scrollIntoView();", button.getWebElement());
         return button.click()
@@ -20,7 +20,7 @@ export class HomePage {
 
     waitForFormUpdateDialog(form_element: string) {
         console.log("Waiting for form update")
-        return browser.wait(ExpectedConditions.visibilityOf(element(by.css(form_element))), 5000)
+        return browser.wait(ExpectedConditions.visibilityOf(element(by.css(form_element))), 20000)
     }
 
     waitForFormUpdate(form_element: string) {
@@ -34,7 +34,7 @@ export class HomePage {
     }
 
     fillTextBox(text: string, boxId: string) {
-        console.log("Entering Text "+text)
+        console.log("Entering Text " + text)
         return element(by.id(boxId)).sendKeys(text) as Promise<void>;
     }
 
@@ -53,7 +53,7 @@ export class HomePage {
         return browser.wait(async () => {
             let domain_test = element(by.className('domain domain-selected'))
             let domain_innerText = await domain_test.getText()
-            let domain_new = element(by.id('domain-component-name-'+domain_name))
+            let domain_new = element(by.id('domain-component-name-' + domain_name))
             let domain_new_innerText = await domain_new.getText()
             return (domain_innerText === domain_new_innerText);
         }, 5000) as Promise<boolean>;
