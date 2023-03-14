@@ -27,10 +27,9 @@ fi
 export UCP_REGION=$(aws configure get region)
 go test -v -failfast src/kinesis/*
 rc=$?
-rm -rf src/tah_core/*
+rm -rf src/tah-core
 rm -rf ./ucp-config.json
 if [ $rc -ne 0 ]; then
   echo "Existing Build with status $rc" >&2
   exit $rc
-fi
 fi

@@ -609,7 +609,25 @@ export class UCPInfraStack extends Stack {
     });
 
     const ucpEtlRealTimeLambdaPrefix = "ucpRealTimeTransformer"
+    const ucpEtlRealTimeACCPPrefix = "ucpRealTimeTransformerAccp"
     for (let type of ["", "Test"]) {
+      const kinesisLambdaACCP = new KinesisStreamsToLambda(this, ucpEtlRealTimeACCPPrefix + type + envName, {
+        kinesisEventSourceProps: {
+          startingPosition: lambda.StartingPosition.TRIM_HORIZON,
+          batchSize: 10,
+          maximumRetryAttempts: 0
+        },
+        lambdaFunctionProps: {
+          runtime: lambda.Runtime.GO_1_X,
+          handler: 'index.handler',
+          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeACCPPrefix, 'main.zip'].join("/")),
+          deadLetterQueueEnabled: true,
+          functionName: ucpEtlRealTimeACCPPrefix + type + envName,
+          environment: {
+          }
+        }
+      });
+
       const kinesisLambdaStart = new KinesisStreamsToLambda(this, ucpEtlRealTimeLambdaPrefix + type + envName, {
         kinesisEventSourceProps: {
           startingPosition: lambda.StartingPosition.TRIM_HORIZON,
@@ -623,12 +641,14 @@ export class UCPInfraStack extends Stack {
           deadLetterQueueEnabled: true,
           functionName: ucpEtlRealTimeLambdaPrefix + type + envName,
           environment: {
-            output_stream: outputDataStream.streamName
+            output_stream: outputDataStream.streamName,
+            output_stream_real: kinesisLambdaACCP.kinesisStream.streamName
           }
         }
       });
 
       outputDataStream.grantReadWrite(kinesisLambdaStart.lambdaFunction)
+      kinesisLambdaACCP.kinesisStream.grantReadWrite(kinesisLambdaStart.lambdaFunction)
       const dlqvalue = kinesisLambdaStart.lambdaFunction.deadLetterQueue
       let dlqname = ""
       if (dlqvalue) {

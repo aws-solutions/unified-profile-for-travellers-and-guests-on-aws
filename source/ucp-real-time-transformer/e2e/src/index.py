@@ -12,43 +12,62 @@ sqs_resource = boto3.client("sqs", TAH_REGION)
 output_stream = os.getenv("output_stream")
 dlq_name = os.getenv("dlqname")
 
-#There is an Access Denied exception here, spent way to long trying 
-#to figure out how this works so for now its commented, will try
-#to address later
-#queue = sqs_resource.get_queue_by_name(QueueName = dlq_name)
-
 def handler(event, context):
   for record in event["Records"]:
     try:
       # Decode the kinesis data from base64 to utf-8
-      print(str(record))
-      data = base64.b64decode(record["kinesis"]["data"]).decode("utf-8")
+      kinesisRecord = record.get("kinesis", "")
+      
+      if kinesisRecord == "":
+        put_response = sqs_resource.send_message(
+          QueueUrl=dlq_name,
+          MessageBody="Unable to get kinesis field from record"
+        )
+        print(put_response)
+        continue
+
+      dataRaw = kinesisRecord.get("data", "")
+      if dataRaw == "":
+        put_response = sqs_resource.send_message(
+          QueueUrl=dlq_name,
+          MessageBody="Unable to get data field from kinesis record"
+        )
+        print(put_response)
+        continue
+
+      data = base64.b64decode(dataRaw).decode("utf-8")
       output = data
       json_data = json.loads(data)
-      print(json_data)
 
-      if json_data["objectType"] == "hotel_stay":
+      objectType = json_data.get("objectType", "")
+      inletData = json_data.get("data", "")
+
+      if objectType == "hotel_stay":
         # Apply hotel_stay_revenue transform
-        output = hotel_stayTransform.buildObjectRecord(json_data["data"])
-      elif json_data["objectType"] == "hotel_booking":
+        output = hotel_stayTransform.buildObjectRecord(inletData)
+      elif objectType == "hotel_booking":
         # Apply hotel_booking transform
-        output = hotel_bookingTransform.buildObjectRecord(json_data["data"])
-      elif json_data["objectType"] == "pax_profile":
+        output = hotel_bookingTransform.buildObjectRecord(inletData)
+      elif objectType == "pax_profile":
         # Apply pax_profile transform
-        output = pax_profileTransform.buildObjectRecord(json_data["data"])
-      elif json_data["objectType"] == "air_booking":
+        output = pax_profileTransform.buildObjectRecord(inletData)
+      elif objectType == "air_booking":
         # Apply air_booking transform
-        output = air_bookingTransform.buildObjectRecord(json_data["data"])
-      elif json_data["objectType"] == "guest_profile":
+        output = air_bookingTransform.buildObjectRecord(inletData)
+      elif objectType == "guest_profile":
         # Apply air_booking transform
-        output = guest_profileTransform.buildObjectRecord(json_data["data"])
-      elif json_data["objectType"] == "clickstream":
+        output = guest_profileTransform.buildObjectRecord(inletData)
+      elif objectType == "clickstream":
         # Apply clickstream transform
-        output = clickstreamTransform.buildObjectRecord(json_data["data"])
+        output = clickstreamTransform.buildObjectRecord(inletData)
       else:
-        raise Exception("Invalid input data")
+        put_response = sqs_resource.send_message(
+          QueueUrl=dlq_name,
+          MessageBody="Unable to identify the objectType of the unpacked data"
+        )
+        continue
     
-      partition_key = record["kinesis"]['partitionKey']
+      partition_key = kinesisRecord.get("partitionKey", "")
 
       try:
           put_response = kinesis_client.put_record(
@@ -56,13 +75,13 @@ def handler(event, context):
               Data=json.dumps(output),
               PartitionKey=partition_key
           )
-          print(f'Successfully sent record {data} to output stream.')
+          print(f'Successfully sent record to output stream.')
           print(put_response)
       except Exception as e:
-        print(f'Failed to send record {data} to output stream. Error: {e}')
+        print(f'Failed to send record to output stream. Error: {e}')
     except Exception as ex:
-      print(ex)
-      rec = str(record)
-      print("Error processing data, record is: " + rec)
-      #response = queue.send_message(MessageBody = "Record failed to process. Check Cloudwatch logs. Record: {rec}")
-      #print("Response ID:" + response.get('MessageId'))
+      put_response = sqs_resource.send_message(
+          QueueUrl=dlq_name,
+          MessageBody="Exception thrown in script execution. Error: {ex}"
+        )
+      print(put_response)
