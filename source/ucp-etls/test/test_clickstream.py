@@ -27,3 +27,7 @@ class TestClickstream(unittest.TestCase):
             actual = loadTestRecord(data_path + rec + '.json')
             expected = loadExpectedRecord(data_path + rec + '_expected.json')
             self.assertEqual(actual, expected)
+            self.assertIsNot(actual["traveller_id"], "")
+            self.assertIsNot(actual["model_version"], "")
+            self.assertIsNot(actual["object_type"], "")
+            self.assertIsNot(actual["last_updated"], "")

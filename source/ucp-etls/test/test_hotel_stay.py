@@ -28,3 +28,11 @@ class TestHotelStay(unittest.TestCase):
             actual = loadTestRecord(data_path + rec + '.json')
             expected = loadExpectedRecord(data_path + rec + '_expected.json')
             self.assertEqual(actual, expected)
+            self.assertIsNot(
+                actual["hotel_stay_revenue_items"][0]["traveller_id"], "")
+            self.assertIsNot(actual["hotel_stay_revenue_items"]
+                             [0]["model_version"], "")
+            self.assertIsNot(
+                actual["hotel_stay_revenue_items"][0]["object_type"], "")
+            self.assertIsNot(
+                actual["hotel_stay_revenue_items"][0]["last_updated"], "")

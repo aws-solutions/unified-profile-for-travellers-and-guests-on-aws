@@ -1,3 +1,15 @@
+
+from datetime import datetime
+
+SUPPORTED_ADRESS_TYPES = ["", "billing", "business", "mailing"]
+SUPPORTED_ADRESS_FIELDS = ["line1", "line2", "line3",
+                           "line4", "city", "state_province", "postal_code", "country"]
+FIELD_NAME_TRAVELLER_ID = "traveller_id"
+FIELD_NAME_LAST_UPDATED = "last_updated"
+# field added to be used in S3 partitining which requires removing some special char
+FIELD_NAME_LAST_UPDATED_PARTITION = "last_updated_partition"
+# 2021-12-09T07:59:14.873255297Z
+DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f000Z"
 # this file should eventually contain common functions between all etls
 # this function set the mandatory ACCP traveller ID using the following rule
 # if the guest has an ID provided by customer we use this one
@@ -5,93 +17,104 @@
 
 
 def setTravellerId(rec, guestBizObject, uid):
-    rec["traveller_id"] = guestBizObject["id"]
-    if guestBizObject["id"] == "":
-        rec["traveller_id"] = uid
+    rec[FIELD_NAME_TRAVELLER_ID] = guestBizObject.get("id", "")
+    if rec[FIELD_NAME_TRAVELLER_ID] == "":
+        rec[FIELD_NAME_TRAVELLER_ID] = uid
 
+
+# seting default timestamp if does not exist
+def setTimestamp(rec):
+    if rec.get(FIELD_NAME_LAST_UPDATED, "") == "":
+        rec[FIELD_NAME_LAST_UPDATED] = datetime.now().strftime(DATETIME_FORMAT)
+    ts = rec[FIELD_NAME_LAST_UPDATED].replace("-", "/")
+    ts = ts.replace("T", "/")
+    ts = ts.replace(":", "/")
+    ts = ts.replace(".", "/")
+    rec[FIELD_NAME_LAST_UPDATED_PARTITION] = ts
 
 # this function set the primary email according to the following logic
 # 1- if one or multiple emails are flagged as Primary, we choose the first one
 # 2- if not we choose the first email in the list.
 # 3- then we use the email type to choose whether we set the biz_email key or 'email' key
 # 3- if the list is empty we set both keys to empty strings to allow creation of the column in the CSV
+
+
 def setPrimaryEmail(rec, emails):
+    rec['email_business'] = ""
+    rec['email'] = ""
+    rec['email_type'] = ""
     if len(emails) == 0:
-        rec['email_business'] = ""
-        rec['email'] = ""
         return
     primaryEmail = emails[0]
     for email in emails:
-        if email['primary'] == True:
+        if email.get('primary', False) == True:
             primaryEmail = email
             break
-    if primaryEmail['type'] == 'business':
-        rec['email_business'] = primaryEmail['address']
+    if primaryEmail.get('type', "") == 'business':
+        rec['email_business'] = primaryEmail.get('address', "")
     else:
-        rec['email'] = primaryEmail['address']
+        rec['email'] = primaryEmail.get('address', "")
     # we keep the email type in case the value is outside the enum
-    rec['email_type'] = primaryEmail['type']
+    rec['email_type'] = primaryEmail.get('type', "")
 
 
 # this function sets the primary phone using the same logic than the email function
 # we have 4 types of phones: default, business, mobile and home
 def setPrimaryPhone(rec, phones):
+    rec['phone'] = ""
+    rec['phone_home'] = ""
+    rec['phone_mobile'] = ""
+    rec['phone_business'] = ""
     if len(phones) == 0:
-        rec['phone'] = ""
-        rec['phone_home'] = ""
-        rec['phone_mobile'] = ""
-        rec['phone_business'] = ""
         return
     primaryPhone = phones[0]
     for phone in phones:
-        if phone['primary'] == True:
+        if phone.get('primary', False) == True:
             primaryPhone = phone
             break
     if primaryPhone['type'] == 'business':
-        rec['phone_business'] = primaryPhone['number']
+        rec['phone_business'] = primaryPhone.get('number', "")
     elif primaryPhone['type'] == 'home':
-        rec['phone_home'] = primaryPhone['number']
+        rec['phone_home'] = primaryPhone.get('number', "")
     elif primaryPhone['type'] == 'mobile':
-        rec['phone_business'] = primaryPhone['number']
+        rec['phone_business'] = primaryPhone.get('number', "")
     else:
-        rec['phone'] = primaryPhone['number']
-    rec['phone_type'] = primaryPhone['type']
+        rec['phone'] = primaryPhone.get('number', "")
+    rec['phone_type'] = primaryPhone.get('type', "")
 
 
 # this function sets the primary address  using the same logic than the email function
 def setPrimaryAddress(rec, addresses):
+    # initializing all address types if they do not exist on the record
+    for addrType in SUPPORTED_ADRESS_TYPES:
+        if addrType != "":
+            addrType += "_"
+        for field in SUPPORTED_ADRESS_FIELDS:
+            if 'address_'+addrType+field not in rec:
+                rec['address_'+addrType+field] = ""
     if len(addresses) == 0:
-        rec['address_type'] = ""
-        rec['address_line1'] = ""
-        rec['address_line2'] = ""
-        rec['address_line3'] = ""
-        rec['address_line4'] = ""
-        rec['address_city'] = ""
-        rec['address_state_province'] = ""
-        rec['address_postal_code'] = ""
-        rec['address_country'] = ""
         return
     primaryAddress = addresses[0]
     for address in addresses:
         if address['primary'] == True:
             primaryAddress = address
             break
-    if primaryAddress['type'] == 'business':
-        setAddress(rec, 'business_', primaryAddress)
-    elif primaryAddress['type'] == 'shipping':
-        setAddress(rec, 'shipping_', primaryAddress)
-    elif primaryAddress['type'] == 'mailing':
-        setAddress(rec, 'mailing_', primaryAddress)
+    if primaryAddress.get('type', "") == 'business':
+        setAddress(rec, 'business', primaryAddress)
+    elif primaryAddress.get('type', "") == 'shipping':
+        setAddress(rec, 'shipping', primaryAddress)
+    elif primaryAddress.get('type', "") == 'mailing':
+        setAddress(rec, 'mailing', primaryAddress)
     else:
         setAddress(rec, '', primaryAddress)
-    rec['address_type'] = primaryAddress['type']
+    rec['address_type'] = primaryAddress.get('type', "")
 
 
 def setBillingAddress(rec, paymentInfo):
     if "ccInfo" in paymentInfo and "address" in paymentInfo["ccInfo"]:
-        setAddress(rec, "billing_", paymentInfo["ccInfo"]["address"])
+        setAddress(rec, "billing", paymentInfo["ccInfo"]["address"])
     elif "address" in paymentInfo:
-        setAddress(rec, "billing_", paymentInfo["address"])
+        setAddress(rec, "billing", paymentInfo["address"])
     else:
         rec['address_billing_line1'] = ""
         rec['address_billing_line2'] = ""
@@ -104,33 +127,39 @@ def setBillingAddress(rec, paymentInfo):
 
 
 def setAddress(rec, addType, address):
-    rec["address_" + addType + "line1"] = address["line1"]
-    rec["address_" + addType + "line2"] = address["line2"]
-    rec["address_" + addType + "line3"] = address["line3"]
-    rec["address_" + addType + "line4"] = address["line4"]
-    rec["address_" + addType + "postal_codes"] = address["postalCode"]
-    rec["address_" + addType + "city"] = address["city"]
-    if address['stateProvince']:
-        rec["address_" + addType +
-            "_state_province"] = address['stateProvince']['code']
-    if address['country']:
-        rec["address_" + addType + "_country"] = address['country']['code']
+    if addType not in SUPPORTED_ADRESS_TYPES:
+        return
+    if address is None:
+        address = {}
+    if addType != "":
+        addType += "_"
+    rec["address_" + addType + "line1"] = address.get("line1", "")
+    rec["address_" + addType + "line2"] = address.get("line2", "")
+    rec["address_" + addType + "line3"] = address.get("line3", "")
+    rec["address_" + addType + "line4"] = address.get("line4", "")
+    rec["address_" + addType + "postal_code"] = address.get("postalCode", "")
+    rec["address_" + addType + "city"] = address.get("city", "")
+    rec["address_" + addType +
+        "state_province"] = address.get('stateProvince', {}).get('code', "")
+    rec["address_" + addType +
+        "country"] = address.get('country', {}).get('code', "")
 
 
 def setPaymentInfo(rec, paymentInfo):
-    rec["payment_type"] = paymentInfo["paymentType"]
-    if "ccInfo" in paymentInfo:
-        rec["cc_token"] = paymentInfo["ccInfo"]["token"]
-        rec["cc_type"] = paymentInfo["ccInfo"]["cardType"]
-        rec["cc_exp"] = paymentInfo["ccInfo"]["cardExp"]
-        rec["cc_cvv"] = paymentInfo["ccInfo"]["cardCvv"]
-        rec["cc_name"] = paymentInfo["ccInfo"]["name"]
+    rec["payment_type"] = paymentInfo.get("paymentType", "")
+    rec["cc_token"] = paymentInfo.get("ccInfo", {}).get("token")
+    rec["cc_type"] = paymentInfo.get("ccInfo", {}).get("cardType")
+    rec["cc_exp"] = paymentInfo.get("ccInfo", {}).get("cardExp")
+    rec["cc_cvv"] = paymentInfo.get("ccInfo", {}).get("cardCvv")
+    rec["cc_name"] = paymentInfo.get("ccInfo", {}).get("name")
 
 
 def getExternalId(externalIds, system):
+    if externalIds is None:
+        return ""
     for exId in externalIds:
-        if exId["originatingSystem"] == system:
-            return exId["id"]
+        if exId.get("originatingSystem", "") == system:
+            return exId.get("id", "")
     return ""
 
 

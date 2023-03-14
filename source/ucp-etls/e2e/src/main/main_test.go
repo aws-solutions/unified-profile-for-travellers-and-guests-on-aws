@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 	glue "tah/core/glue"
 	s3 "tah/core/s3"
@@ -233,7 +234,7 @@ func TestMain(t *testing.T) {
 			default: // Default is must to avoid blocking
 			}
 			log.Printf("[%v] 8-Check csv File", c.ObjectName)
-			csvs, err1 := targetBucketHandler.Search(c.TargetPrefix)
+			csvs, err1 := targetBucketHandler.Search(c.TargetPrefix, 500)
 			if err1 != nil {
 				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error listing s3 buckets after ETLs: %v", c.ObjectName, err1))
 				cancel()
@@ -242,43 +243,45 @@ func TestMain(t *testing.T) {
 			log.Printf("[TestGlue][%v] CSVs: %v", c.ObjectName, csvs)
 			if len(csvs) > 0 {
 				for _, csv := range csvs {
-					data, err2 := targetBucketHandler.ParseCsvFromS3(csv)
-					if err2 != nil {
-						testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error listing s3 buckets after ETLs: %v", err2, c.ObjectName))
-						cancel()
-						return
-					}
-					select {
-					case <-ctx.Done():
-						log.Printf("[%v] Error in another test. stopping", c.ObjectName)
-						return // Error somewhere, terminate
-					default: // Default is must to avoid blocking
-					}
-					log.Printf("CSV has %v rows", len(data))
-					log.Printf("CSV data: %v", data)
-					if len(data) == 0 {
-						testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] invalid ETL output: should have at least one row", c.ObjectName))
-						cancel()
-						return
-					}
-					//looking for an error header in the CSV that woudl indicate that an exception has occured in the trasformer
-					for j, col := range data[0] {
-						if col == "error" {
-							testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] invalid ETL output: data has an error column: %v", err2, c.ObjectName))
-							for k, row := range data {
-								if row[j] != "" {
-									testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] Error at row %v and col %v : %v", k, j, row[j], c.ObjectName))
-								}
-							}
+					if strings.HasSuffix(csv, ".csv") {
+						data, err2 := targetBucketHandler.ParseCsvFromS3(csv)
+						if err2 != nil {
+							testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error listing s3 buckets after ETLs: %v", err2, c.ObjectName))
 							cancel()
 							return
 						}
-					}
-					select {
-					case <-ctx.Done():
-						log.Printf("[%v] Error in another test. stopping", c.ObjectName)
-						return // Error somewhere, terminate
-					default: // Default is must to avoid blocking
+						select {
+						case <-ctx.Done():
+							log.Printf("[%v] Error in another test. stopping", c.ObjectName)
+							return // Error somewhere, terminate
+						default: // Default is must to avoid blocking
+						}
+						log.Printf("CSV has %v rows", len(data))
+						log.Printf("CSV data: %v", data)
+						if len(data) == 0 {
+							testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] invalid ETL output: should have at least one row", c.ObjectName))
+							cancel()
+							return
+						}
+						//looking for an error header in the CSV that woudl indicate that an exception has occured in the trasformer
+						for j, col := range data[0] {
+							if col == "error" {
+								testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] invalid ETL output: data has an error column: %v", err2, c.ObjectName))
+								for k, row := range data {
+									if row[j] != "" {
+										testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] Error at row %v and col %v : %v", k, j, row[j], c.ObjectName))
+									}
+								}
+								cancel()
+								return
+							}
+						}
+						select {
+						case <-ctx.Done():
+							log.Printf("[%v] Error in another test. stopping", c.ObjectName)
+							return // Error somewhere, terminate
+						default: // Default is must to avoid blocking
+						}
 					}
 				}
 			} else {

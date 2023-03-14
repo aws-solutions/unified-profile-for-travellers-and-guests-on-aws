@@ -27,3 +27,8 @@ class TestPaxProfile(unittest.TestCase):
             actual = loadTestRecord(data_path + rec + '.json')
             expected = loadExpectedRecord(data_path + rec + '_expected.json')
             self.assertEqual(actual, expected)
+            self.assertIsNot(actual["air_profile_recs"][0]["traveller_id"], "")
+            self.assertIsNot(actual["air_profile_recs"]
+                             [0]["model_version"], "")
+            self.assertIsNot(actual["air_profile_recs"][0]["object_type"], "")
+            self.assertIsNot(actual["air_profile_recs"][0]["last_updated"], "")

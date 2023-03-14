@@ -1,5 +1,4 @@
 import sys
-import uuid
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
@@ -9,23 +8,34 @@ from awsglue.dynamicframe import DynamicFrame
 from pyspark.sql.functions import explode
 # Change import based on business object
 from tah_lib.guest_profileTransform import buildObjectRecord
+from tah_lib.etl_utils import writeToS3
 
 
 glueContext = GlueContext(SparkContext.getOrCreate())
 args = getResolvedOptions(
     sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET'])
 
-businessObjectDYF = glueContext.create_dynamic_frame.from_catalog(
+businessObject = glueContext.create_dynamic_frame.from_catalog(
     database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"])
 
-count = businessObjectDYF.count()
-businessObjectDYF.printSchema()
+count = businessObject.count()
+businessObject.printSchema()
 
-nestedSegments = Map.apply(frame=businessObjectDYF, f=buildObjectRecord)
+# repartitioning to obtain 500 records per file
+print("nPartitions: ", businessObject.toDF().rdd.getNumPartitions())
+newNPartitions = max(int(count/500), 1)
+print("repartitionning in : ", newNPartitions)
+businessObjectRepartitionedDF = businessObject.toDF().coalesce(newNPartitions)
+print("nPartitions after: ", businessObjectRepartitionedDF.rdd.getNumPartitions())
+businessObjectRepartitionedDF
+businessObjectRepartitioned = DynamicFrame.fromDF(
+    businessObjectRepartitionedDF, glueContext, "data")
+
+nestedSegments = Map.apply(
+    frame=businessObjectRepartitioned, f=buildObjectRecord)
 nestedSegmentsDF = nestedSegments.toDF()
 
 nestedSegmentsDF.printSchema()
-nestedSegmentsDF.show(10)
 
 profile = nestedSegmentsDF.select(
     explode(nestedSegmentsDF.guest_profile_recs)).select("col.*")
@@ -41,13 +51,7 @@ email.printSchema()
 phone.printSchema()
 loyalty.printSchema()
 
-subfolder = str(uuid.uuid1(node=None, clock_seq=None))
-
-profile.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/guest_profile/"+subfolder)
-email.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/email_history/"+subfolder)
-phone.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/phone_history/"+subfolder)
-loyalty.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/hotel_loyalty/"+subfolder)
+writeToS3(glueContext, profile, args["DEST_BUCKET"], "guest_profile")
+writeToS3(glueContext, email, args["DEST_BUCKET"], "email_history")
+writeToS3(glueContext, phone, args["DEST_BUCKET"], "phone_history")
+writeToS3(glueContext, loyalty, args["DEST_BUCKET"], "hotel_loyalty")
