@@ -28,7 +28,7 @@ func TestKinesis(t *testing.T) {
 	outcfg.InitConsumer(kinesis.ITERATOR_TYPE_LATEST)
 	log.Printf("E2EDataStream] 1- sending records to kinesis stream %v", KINESIS_NAME_REAL_TIME)
 
-	clickstreamContent, err := os.ReadFile("../../../test_data/clickstream/data1.json")
+	clickstreamContent, err := os.ReadFile("../../../../test_data/clickstream/data1.json")
 	log.Printf("%s", string(clickstreamContent))
 	if err != nil {
 		log.Printf("Error reading JSON file: %s", err)
@@ -58,7 +58,7 @@ func TestKinesis(t *testing.T) {
 		t.Errorf("[E2EDataStream] error sending data to stream: %v. %+v", err, errs)
 	}
 
-	clickstreamContentOutput, err := os.ReadFile("../../../test_data/clickstream/data1_expected.json")
+	clickstreamContentOutput, err := os.ReadFile("../../../../test_data/clickstream/data1_expected.json")
 	if err != nil {
 		log.Printf("Error reading JSON file: %s", err)
 		return
