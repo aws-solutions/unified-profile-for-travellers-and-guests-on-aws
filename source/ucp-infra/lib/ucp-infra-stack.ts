@@ -248,8 +248,9 @@ export class UCPInfraStack extends Stack {
     ucpBackEndLambda.addToRolePolicy(new iam.PolicyStatement({
       resources: ["*"],
       actions: [
-        'appflow:DescribeFlow',
         'appflow:CreateFlow',
+        'appflow:StartFlow',
+        'appflow:DescribeFlow',
         'appflow:DeleteFlow',
         'glue:CreateCrawler',
         'glue:DeleteCrawler',

@@ -2,7 +2,7 @@ package accpmappings
 
 import customerprofiles "tah/core/customerprofiles"
 
-func BuildClickstreamMapping() []customerprofiles.FieldMapping {
+func BuildClickstreamMapping() customerprofiles.FieldMappings {
 	return []customerprofiles.FieldMapping{
 		// Metadata
 		{

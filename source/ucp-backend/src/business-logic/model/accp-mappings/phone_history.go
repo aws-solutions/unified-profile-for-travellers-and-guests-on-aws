@@ -2,7 +2,7 @@ package accpmappings
 
 import customerprofiles "tah/core/customerprofiles"
 
-func BuildPhoneHistoryMapping() []customerprofiles.FieldMapping {
+func BuildPhoneHistoryMapping() customerprofiles.FieldMappings {
 	return []customerprofiles.FieldMapping{
 		//METADATA
 		{
@@ -24,8 +24,8 @@ func BuildPhoneHistoryMapping() []customerprofiles.FieldMapping {
 		},
 		//ORDER DATA
 		{
-			Type: "STRING",
-			Source: "_source.number	",
+			Type:    "STRING",
+			Source:  "_source.number	",
 			Target:  "_order.Attributes.number",
 			Indexes: []string{"UNIQUE", "ORDER"},
 		},
@@ -45,7 +45,7 @@ func BuildPhoneHistoryMapping() []customerprofiles.FieldMapping {
 			Target: "_order.Attributes.country_code",
 		},
 		{
-			Type: "STRING",
+			Type:   "STRING",
 			Source: "_source.type	",
 			Target: "_order.Attributes.type",
 		},

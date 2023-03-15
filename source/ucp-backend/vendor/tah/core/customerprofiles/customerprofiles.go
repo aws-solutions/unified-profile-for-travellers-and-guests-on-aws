@@ -18,7 +18,7 @@ import (
 )
 
 var OBJECT_TYPE_NAME_ORDER = "_order"
-var PROFILE_ID_KEY = "_profileId"
+var PROFILE_ID_KEY = "profile_id"
 
 var STANDARD_IDENTIFIER_PROFILE = customerProfileSdk.StandardIdentifierProfile
 var STANDARD_IDENTIFIER_ASSET = customerProfileSdk.StandardIdentifierAsset
@@ -148,7 +148,10 @@ type FieldMapping struct {
 	Searcheable bool     `json:"searchable"`
 }
 
+type FieldMappings []FieldMapping
+
 type Integration struct {
+	Name           string
 	Source         string
 	Target         string
 	Status         string
@@ -221,25 +224,21 @@ func InitWithDomain(domainName string, region string) CustomerProfileConfig {
 	session := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
-	// Create DynamoDB client
 	return CustomerProfileConfig{
 		Client:     customerProfileSdk.New(session),
 		DomainName: domainName,
 		Region:     region,
 	}
-
 }
 
 func Init(region string) CustomerProfileConfig {
 	session := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
-	// Create DynamoDB client
 	return CustomerProfileConfig{
 		Client: customerProfileSdk.New(session),
 		Region: region,
 	}
-
 }
 
 func (c CustomerProfileConfig) ListDomains() ([]Domain, error) {
@@ -259,7 +258,6 @@ func (c CustomerProfileConfig) ListDomains() ([]Domain, error) {
 		})
 	}
 	return domains, nil
-
 }
 
 func (c *CustomerProfileConfig) CreateDomain(name string, idResolutionOn bool, kmsArn string, tags map[string]string) error {
@@ -443,7 +441,7 @@ func toObjectTypeKeyMap(fieldMappings []FieldMapping) map[string][]*customerProf
 			result[searchKeyName] = []*customerProfileSdk.ObjectTypeKey{
 				{
 					FieldNames:          []*string{aws.String(keyName)},
-					StandardIdentifiers: toPointerArray(fm.Indexes),
+					StandardIdentifiers: aws.StringSlice(fm.Indexes),
 				},
 			}
 		} else if fm.Searcheable {
@@ -474,11 +472,11 @@ func (c CustomerProfileConfig) GetDomain() (Domain, error) {
 		Tags:                 core.ToMapString(out.Tags),
 	}
 	if out.Matching != nil {
-		dom.MatchingEnabled = toBool(out.Matching.Enabled)
+		dom.MatchingEnabled = aws.BoolValue(out.Matching.Enabled)
 	}
 	if out.Stats != nil {
-		dom.NProfiles = toInt64(out.Stats.ProfileCount)
-		dom.NObjects = toInt64(out.Stats.ObjectCount)
+		dom.NProfiles = aws.Int64Value(out.Stats.ProfileCount)
+		dom.NObjects = aws.Int64Value(out.Stats.ObjectCount)
 	}
 	return dom, nil
 
@@ -539,7 +537,17 @@ func notIn(id string, matches []Match) bool {
 	return true
 }
 
-func (c CustomerProfileConfig) PutIntegration(objectName, bucketName string, fieldMappings []FieldMapping) error {
+// Create AppFlow -> Amazon Connect integrations.
+//
+// There are two versions created:
+//
+// 1. Scheduled integration named with the prefix + "_Scheduled"
+//
+// 2. On demand integration named with the prefix + "_OnDemand"
+//
+// These integrations send all fields to Amazon Connect Customer Profile,
+// then Customer Profile handles mapping the data to a given Object Type.
+func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucketName string, fieldMappings []FieldMapping) error {
 	domain, err := c.GetDomain()
 	if err != nil {
 		return err
@@ -564,21 +572,45 @@ func (c CustomerProfileConfig) PutIntegration(objectName, bucketName string, fie
 			},
 		},
 	}
+	flowNameScheduled := flowNamePrefix + "_Scheduled"
 	flowDefinition := customerProfileSdk.FlowDefinition{
-		FlowName:         aws.String(objectName + "_" + c.DomainName),
+		FlowName:         &flowNameScheduled,
 		Description:      aws.String("Flow definition for " + objectName),
 		KmsArn:           &domain.DefaultEncryptionKey,
 		TriggerConfig:    &triggerConfig,
 		SourceFlowConfig: &sourceFlowConfig,
 		Tasks:            generateTaskList(fieldMappings),
 	}
-	input := customerProfileSdk.PutIntegrationInput{
+	scheduledInput := customerProfileSdk.PutIntegrationInput{
 		DomainName:     &c.DomainName,
 		FlowDefinition: &flowDefinition,
 		ObjectTypeName: &objectName,
 	}
 
-	_, err = c.Client.PutIntegration(&input)
+	// Create scheduled flow
+	_, err = c.Client.PutIntegration(&scheduledInput)
+	if err != nil {
+		return err
+	}
+
+	// Create identical on-demand flow, changing only the name and trigger type.
+	flowNameOnDemand := flowNamePrefix + "_OnDemand"
+	flowDefinition.SetFlowName(flowNameOnDemand)
+	flowDefinition.SetTriggerConfig(&customerProfileSdk.TriggerConfig{
+		TriggerType: aws.String(customerProfileSdk.TriggerTypeOnDemand),
+	})
+	onDemandInput := customerProfileSdk.PutIntegrationInput{
+		DomainName:     &c.DomainName,
+		FlowDefinition: &flowDefinition,
+		ObjectTypeName: &objectName,
+	}
+	_, err = c.Client.PutIntegration(&onDemandInput)
+	if err != nil {
+		return err
+	}
+
+	// Start scheduled flow
+	err = startFlow(flowNameScheduled)
 	return err
 }
 
@@ -628,6 +660,12 @@ func generateTaskList(fieldMappings []FieldMapping) []*customerProfileSdk.Task {
 	return taskPointers
 }
 
+func startFlow(flowName string) error {
+	af := appflow.Init()
+	_, err := af.StartFlow(flowName)
+	return err
+}
+
 func (c CustomerProfileConfig) GetIntegrations() ([]Integration, error) {
 	log.Printf("[core][customerProfiles] Getting integrations for domain %s", c.DomainName)
 	input := &customerProfileSdk.ListIntegrationsInput{
@@ -657,6 +695,7 @@ func (c CustomerProfileConfig) GetIntegrations() ([]Integration, error) {
 	integrations := []Integration{}
 	for _, flow := range flows {
 		integrations = append(integrations, Integration{
+			Name:           flow.Name,
 			Source:         flow.SouceDetails,
 			Target:         flow.TargetDetails,
 			Status:         flow.Status,
@@ -767,9 +806,7 @@ func (c CustomerProfileConfig) SearchMultipleProfiles(key string, values []strin
 			if err != nil {
 				errs = append(errs, err)
 			}
-			for _, pro := range profiles {
-				allProfiles = append(allProfiles, pro)
-			}
+			allProfiles = append(allProfiles, profiles...)
 			wg.Done()
 		}(value, i)
 	}
@@ -790,7 +827,7 @@ func (c CustomerProfileConfig) SearchProfiles(key string, values []string) ([]Pr
 	input := &customerProfileSdk.SearchProfilesInput{
 		DomainName: aws.String(c.DomainName),
 		KeyName:    aws.String(key),
-		Values:     toPointerArray(values),
+		Values:     aws.StringSlice(values),
 	}
 	out, err := c.Client.SearchProfiles(input)
 	log.Printf("[core][customerProfiles] Search response: %+v", out)
@@ -825,7 +862,7 @@ func (c CustomerProfileConfig) GetProfile(id string) (Profile, error) {
 		return Profile{}, err
 	}
 	if len(res) == 0 {
-		return Profile{}, errors.New("Profile with id " + id + "not found ")
+		return Profile{}, errors.New("Profile with id " + id + " not found ")
 	}
 	p := res[0]
 	log.Printf("[core][customerProfiles][GetProfile] 2-Get profile objects")
@@ -935,77 +972,113 @@ func parseOrderObject(jsonObject string) (Order, error) {
 
 func toMatchList(item *customerProfileSdk.MatchItem) MatchList {
 	return MatchList{
-		ConfidenceScore: tofloat64(item.ConfidenceScore),
-		ProfileIds:      toStringArray(item.ProfileIds),
+		ConfidenceScore: aws.Float64Value(item.ConfidenceScore),
+		ProfileIds:      aws.StringValueSlice(item.ProfileIds),
 	}
 }
 
 func toProfile(item *customerProfileSdk.Profile) Profile {
 	return Profile{
-		ProfileId:            toString(item.ProfileId),
-		AccountNumber:        toString(item.AccountNumber),
-		FirstName:            toString(item.FirstName),
-		MiddleName:           toString(item.MiddleName),
-		LastName:             toString(item.LastName),
-		BirthDate:            toString(item.BirthDate),
-		Gender:               toString(item.Gender),
-		PhoneNumber:          toString(item.PhoneNumber),
-		MobilePhoneNumber:    toString(item.MobilePhoneNumber),
-		BusinessPhoneNumber:  toString(item.BusinessPhoneNumber),
-		EmailAddress:         toString(item.EmailAddress),
-		PersonalEmailAddress: toString(item.PersonalEmailAddress),
-		BusinessEmailAddress: toString(item.BusinessEmailAddress),
+		ProfileId:            aws.StringValue(item.ProfileId),
+		AccountNumber:        aws.StringValue(item.AccountNumber),
+		FirstName:            aws.StringValue(item.FirstName),
+		MiddleName:           aws.StringValue(item.MiddleName),
+		LastName:             aws.StringValue(item.LastName),
+		BirthDate:            aws.StringValue(item.BirthDate),
+		Gender:               aws.StringValue(item.Gender),
+		PhoneNumber:          aws.StringValue(item.PhoneNumber),
+		MobilePhoneNumber:    aws.StringValue(item.MobilePhoneNumber),
+		BusinessPhoneNumber:  aws.StringValue(item.BusinessPhoneNumber),
+		EmailAddress:         aws.StringValue(item.EmailAddress),
+		PersonalEmailAddress: aws.StringValue(item.PersonalEmailAddress),
+		BusinessEmailAddress: aws.StringValue(item.BusinessEmailAddress),
 		Attributes:           core.ToMapString(item.Attributes),
 	}
 }
 
 func toProfileObject(item *customerProfileSdk.ListProfileObjectsItem) ProfileObject {
 	return ProfileObject{
-		ID:          toString(item.ProfileObjectUniqueKey),
-		Type:        toString(item.ObjectTypeName),
-		JSONContent: toString(item.Object),
+		ID:          aws.StringValue(item.ProfileObjectUniqueKey),
+		Type:        aws.StringValue(item.ObjectTypeName),
+		JSONContent: aws.StringValue(item.Object),
 	}
 }
 
-func toString(in *string) string {
-	if in != nil {
-		return *in
+func (c CustomerProfileConfig) PutProfileObject(object, objectTypeName string) error {
+	input := customerProfileSdk.PutProfileObjectInput{
+		DomainName:     &c.DomainName,
+		Object:         &object,
+		ObjectTypeName: &objectTypeName,
 	}
-	return ""
+	_, err := c.Client.PutProfileObject(&input)
+	return err
 }
 
-func toInt64(in *int64) int64 {
-	if in != nil {
-		return *in
+func (c *CustomerProfileConfig) WaitForMappingCreation(name string) error {
+	maxTries := 10
+	try := 0
+	for try < maxTries {
+		mapping, err := c.GetMapping(name)
+		if err == nil && mapping.Name == name {
+			log.Printf("[CustomerProfiles][WaitForMappingCreation] Mapping creation successful")
+			return nil
+		}
+		log.Printf("[CustomerProfiles][WaitForMappingCreation] Mapping not ready waiting 5 s")
+		time.Sleep(5000)
+		try += 1
 	}
-	return 0
+	return errors.New("creating profile object failed or is taking longer than usual")
 }
-func tofloat64(in *float64) float64 {
-	if in != nil {
-		return *in
+
+func (c *CustomerProfileConfig) WaitForIntegrationCreation(name string) error {
+	maxTries := 10
+	try := 0
+	for try < maxTries {
+		integrations, err := c.GetIntegrations()
+		if err == nil && containsIntegration(integrations, name) {
+			log.Printf("[CustomerProfiles][WaitForIntegrationCreation] Integration creation successful")
+			return nil
+		}
+		log.Printf("[CustomerProfiles][WaitForIntegrationCreation] Integration not ready waiting 5 s")
+		time.Sleep(5000)
+		try += 1
 	}
-	return float64(0.0)
+	return errors.New("creating integration failed or is taking longer than usual")
 }
-func toBool(in *bool) bool {
-	if in != nil {
-		return *in
+
+func containsIntegration(integrations []Integration, expectedName string) bool {
+	for _, v := range integrations {
+		if v.Name == expectedName {
+			return true
+		}
 	}
 	return false
 }
 
-func toPointerArray(in []string) []*string {
-	out := []*string{}
-	for _, val := range in {
-		out = append(out, aws.String(val))
+func (c *CustomerProfileConfig) GetProfileId(profileId string) (string, error) {
+	input := customerProfileSdk.SearchProfilesInput{
+		DomainName: &c.DomainName,
+		KeyName:    &PROFILE_ID_KEY,
+		Values:     aws.StringSlice([]string{profileId}),
 	}
-	return out
+	output, err := c.Client.SearchProfiles(&input)
+	if err != nil {
+		return "", err
+	}
+	if len(output.Items) > 1 {
+		return "", errors.New("multiple profiles found with same id")
+	}
+	if len(output.Items) == 0 {
+		return "", nil
+	}
+	return *output.Items[0].ProfileId, nil
 }
-func toStringArray(in []*string) []string {
-	out := []string{}
-	for _, val := range in {
-		if val != nil {
-			out = append(out, *val)
-		}
+
+func (fms FieldMappings) GetSourceNames() []string {
+	names := []string{}
+	for _, v := range fms {
+		split := strings.Split(v.Source, ".")
+		names = append(names, split[len(split)-1])
 	}
-	return out
+	return names
 }

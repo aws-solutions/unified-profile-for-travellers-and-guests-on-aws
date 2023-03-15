@@ -2,7 +2,7 @@ package accpmappings
 
 import customerprofiles "tah/core/customerprofiles"
 
-func BuildHotelLoyaltyMapping() []customerprofiles.FieldMapping {
+func BuildHotelLoyaltyMapping() customerprofiles.FieldMappings {
 	return []customerprofiles.FieldMapping{
 		// Metadata
 		{

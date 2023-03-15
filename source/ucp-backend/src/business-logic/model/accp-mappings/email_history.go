@@ -2,7 +2,7 @@ package accpmappings
 
 import customerprofiles "tah/core/customerprofiles"
 
-func BuildEmailHistoryMapping() []customerprofiles.FieldMapping {
+func BuildEmailHistoryMapping() customerprofiles.FieldMappings {
 	return []customerprofiles.FieldMapping{
 		// Metadata
 		{

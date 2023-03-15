@@ -2,7 +2,7 @@ package accpmappings
 
 import customerprofiles "tah/core/customerprofiles"
 
-func BuildHotelBookingMapping() []customerprofiles.FieldMapping {
+func BuildHotelBookingMapping() customerprofiles.FieldMappings {
 	return []customerprofiles.FieldMapping{
 		// Metadata
 		{
@@ -10,84 +10,35 @@ func BuildHotelBookingMapping() []customerprofiles.FieldMapping {
 			Source: "_source.model_version",
 			Target: "_order.Attributes.model_version",
 		},
-		// Profile Data
 		{
-			Type:        "STRING",
-			Source:      "_source.traveller_id",
-			Target:      "_profile.profileId",
-			Searcheable: true,
-			Indexes:     []string{"PROFILE"},
-		},
-
-		// Order Data
-		{
-			Type:        "STRING",
-			Source:      "_source.booking_id",
-			Target:      "_order.Attributes.booking_id",
-			Searcheable: true,
-			Indexes:     []string{"UNIQUE", "ORDER"},
+			Type:   "STRING",
+			Source: "_source.object_type",
+			Target: "_order.Attributes.object_type",
 		},
 		{
 			Type:   "STRING",
 			Source: "_source.last_updated",
-			Target: "_order.UpdatedDate",
+			Target: "_order.Attributes.last_updated",
 		},
 		{
 			Type:   "STRING",
-			Source: "_source.hotel_code",
-			Target: "_order.Attributes.hotel_code",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.n_nights",
-			Target: "_order.Attributes.n_nights",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.n_guests",
-			Target: "_order.Attributes.n_guests",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.product_id",
-			Target: "_order.Attributes.product_id",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.check_in_date",
-			Target: "_order.Attributes.check_in_date",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.room_type_code",
-			Target: "_order.Attributes.room_type_code",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.room_type_name",
-			Target: "_order.Attributes.room_type_name",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.room_type_description",
-			Target: "_order.Attributes.room_type_description",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.attribute_codes",
-			Target: "_order.Attributes.attribute_codes",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.attribute_names",
-			Target: "_order.Attributes.attribute_names",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.attribute_descriptions",
-			Target: "_order.Attributes.attribute_descriptions",
+			Source: "_source.last_updated_by",
+			Target: "_order.Attributes.last_updated_by",
 		},
 
+		// Profile Data
+		{
+			Type:        "STRING",
+			Source:      "_source.traveller_id",
+			Target:      "_profile.Attributes.profile_id",
+			Searcheable: true,
+			Indexes:     []string{"PROFILE"},
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.company",
+			Target: "_profile.Attributes.company",
+		},
 		{
 			Type:        "STRING",
 			Source:      "_source.email",
@@ -208,47 +159,257 @@ func BuildHotelBookingMapping() []customerprofiles.FieldMapping {
 			Source: "_source.cc_name",
 			Target: "_profile.Attributes.cc_name",
 		},
-
-		// {
-		// 	Type:   "STRING",
-		// 	Source: "_source.address_billing_line1",
-		// 	Target: "_profile.BillingAddress.Address1",
-		// },
-		// {
-		// 	Type:   "STRING",
-		// 	Source: "_source.address_billing_line2",
-		// 	Target: "_profile.BillingAddress.Address2",
-		// },
-		// {
-		// 	Type:   "STRING",
-		// 	Source: "_source.address_billing_line3",
-		// 	Target: "_profile.BillingAddress.Address3",
-		// },
-		// {
-		// 	Type:   "STRING",
-		// 	Source: "_source.address_billing_line4",
-		// 	Target: "_profile.BillingAddress.Address4",
-		// },
-		// {
-		// 	Type:   "STRING",
-		// 	Source: "_source.address_billing_city",
-		// 	Target: "_profile.BillingAddress.City",
-		// },
-		// {
-		// 	Type:   "STRING",
-		// 	Source: "_source.address_billing_state_province",
+		// Home Address
+		{
+			Type:   "STRING",
+			Source: "_source.address_line1",
+			Target: "_profile.Address.Address1",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_line2",
+			Target: "_profile.Address.Address2",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_line3",
+			Target: "_profile.Address.Address3",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_line4",
+			Target: "_profile.Address.Address4",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_city",
+			Target: "_profile.Address.City",
+		},
 		// TODO: determine when to use state vs province
-		// 	Target: "_profile.BillingAddress.Province",
-		// },
-		// {
-		// 	Type:   "STRING",
-		// 	Source: "_source.address_billing_postal_code",
-		// 	Target: "_profile.BillingAddress.PostalCode",
-		// },
-		// {
-		// 	Type:   "STRING",
-		// 	Source: "_source.address_billing_country",
-		// 	Target: "_profile.BillingAddress.Country",
-		// },
+		{
+			Type:   "STRING",
+			Source: "_source.address_state_province",
+			Target: "_profile.Address.Province",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_postal_code",
+			Target: "_profile.Address.PostalCode",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_country",
+			Target: "_profile.Address.Country",
+		},
+		// Business Address
+		{
+			Type:   "STRING",
+			Source: "_source.address_billing_line1",
+			Target: "_profile.BillingAddress.Address1",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_billing_line2",
+			Target: "_profile.BillingAddress.Address2",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_billing_line3",
+			Target: "_profile.BillingAddress.Address3",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_billing_line4",
+			Target: "_profile.BillingAddress.Address4",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_billing_city",
+			Target: "_profile.BillingAddress.City",
+		},
+		// TODO: determine when to use state vs province
+		{
+			Type:   "STRING",
+			Source: "_source.address_billing_state_province",
+			Target: "_profile.BillingAddress.Province",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_billing_postal_code",
+			Target: "_profile.BillingAddress.PostalCode",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_billing_country",
+			Target: "_profile.BillingAddress.Country",
+		},
+		// Mailing Address
+		{
+			Type:   "STRING",
+			Source: "_source.address_mailing_line1",
+			Target: "_profile.MailingAddress.Address1",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_mailing_line2",
+			Target: "_profile.MailingAddress.Address2",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_mailing_line3",
+			Target: "_profile.MailingAddress.Address3",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_mailing_line4",
+			Target: "_profile.MailingAddress.Address4",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_mailing_city",
+			Target: "_profile.MailingAddress.City",
+		},
+		// TODO: determine when to use state vs province
+		{
+			Type:   "STRING",
+			Source: "_source.address_mailing_state_province",
+			Target: "_profile.MailingAddress.Province",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_mailing_postal_code",
+			Target: "_profile.MailingAddress.PostalCode",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_mailing_country",
+			Target: "_profile.MailingAddress.Country",
+		},
+		// Business
+		{
+			Type:   "STRING",
+			Source: "_source.address_business_line1",
+			Target: "_profile.Attributes.Address1",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_business_line2",
+			Target: "_profile.Attributes.Address2",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_business_line3",
+			Target: "_profile.Attributes.Address3",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_business_line4",
+			Target: "_profile.Attributes.Address4",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_business_city",
+			Target: "_profile.Attributes.City",
+		},
+		// TODO: determine when to use state vs province
+		{
+			Type:   "STRING",
+			Source: "_source.address_business_state_province",
+			Target: "_profile.Attributes.Province",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_business_postal_code",
+			Target: "_profile.Attributes.PostalCode",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.address_business_country",
+			Target: "_profile.Attributes.Country",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.email_business",
+			Target: "_profile.Attributes.email_business",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.phone_home",
+			Target: "_profile.Attributes.phone_home",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.phone_mobile",
+			Target: "_profile.Attributes.phone_mobile",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.phone_business",
+			Target: "_profile.Attributes.phone_business",
+		},
+
+		// Order Data
+		{
+			Type:        "STRING",
+			Source:      "_source.booking_id",
+			Target:      "_order.Attributes.booking_id",
+			Searcheable: true,
+			Indexes:     []string{"UNIQUE", "ORDER"},
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.hotel_code",
+			Target: "_order.Attributes.hotel_code",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.n_nights",
+			Target: "_order.Attributes.n_nights",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.n_guests",
+			Target: "_order.Attributes.n_guests",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.product_id",
+			Target: "_order.Attributes.product_id",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.check_in_date",
+			Target: "_order.Attributes.check_in_date",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.room_type_code",
+			Target: "_order.Attributes.room_type_code",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.room_type_name",
+			Target: "_order.Attributes.room_type_name",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.room_type_description",
+			Target: "_order.Attributes.room_type_description",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.attribute_codes",
+			Target: "_order.Attributes.attribute_codes",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.attribute_names",
+			Target: "_order.Attributes.attribute_names",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.attribute_descriptions",
+			Target: "_order.Attributes.attribute_descriptions",
+		},
 	}
 }

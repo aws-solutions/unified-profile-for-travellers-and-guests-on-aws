@@ -340,6 +340,22 @@ type JSONObject interface {
 }
 
 /********************
+* Utility Functions
+*********************/
+
+func IsEqual[T comparable](a, b []T) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+/********************
 * Pointer Converters
 *********************/
 

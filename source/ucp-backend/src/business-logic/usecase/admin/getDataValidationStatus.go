@@ -68,7 +68,7 @@ func (u *GetDataValidationStatus) Run(req model.RequestWrapper) (model.ResponseW
 		ACCP_SUB_FOLDER_HOTEL_BOOKING,
 		ACCP_SUB_FOLDER_PAX_PROFILE,
 	}
-	businessMap := map[string]func() []customerprofiles.FieldMapping{
+	businessMap := map[string]func() customerprofiles.FieldMappings{
 		ACCP_SUB_FOLDER_AIR_BOOKING:        accpmappings.BuildAirBookingMapping,
 		ACCP_SUB_FOLDER_EMAIL_HISTORY:      accpmappings.BuildEmailHistoryMapping,
 		ACCP_SUB_FOLDER_PHONE_HISTORY:      accpmappings.BuildPhoneHistoryMapping,
