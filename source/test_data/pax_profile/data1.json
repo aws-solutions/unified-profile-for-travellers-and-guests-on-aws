@@ -1,0 +1,63 @@
+{
+  "modelVersion": "1.0",
+  "id": "0049074682",
+  "lastUpdatedOn": "2022-01-24T04:42:27.919547161Z",
+  "createdOn": "2021-09-24T04:42:27.919547161Z",
+  "lastUpdatedBy": "Thaddeus Gusikowski",
+  "createdBy": "Garrett Lemke",
+  "emails": [
+    {
+      "type": "",
+      "address": "travisdurgan@sanford.name",
+      "primary": false
+    },
+    {
+      "type": "",
+      "address": "mathewcorwin@walter.info",
+      "primary": true
+    }
+  ],
+  "phones": [
+    {
+      "type": "business",
+      "number": "465.725.7891",
+      "primary": false,
+      "countryCode": 90
+    },
+    {
+      "type": "business",
+      "number": "1389184526",
+      "primary": true,
+      "countryCode": 85
+    }
+  ],
+  "addresses": [],
+  "honorific": "Sir",
+  "firstName": "Herman",
+  "middleName": "Aglae",
+  "lastName": "Bergnaum",
+  "gender": "other",
+  "pronoun": "they",
+  "dateOfBirth": "1960-12-29",
+  "language": {
+    "code": "ur",
+    "name": ""
+  },
+  "nationality": {
+    "code": "SZ",
+    "name": ""
+  },
+  "jobTitle": "Technician",
+  "parentCompany": "SnapSense",
+  "loyaltyPrograms": [
+    {
+      "id": "2697555871",
+      "programName": "elite",
+      "miles": 292878.0,
+      "milesToNextLevel": 6671.0,
+      "level": "platinium",
+      "joined": "2021-09-24T04:42:27.919547161Z"
+    }
+  ],
+  "identityProofs": null
+}

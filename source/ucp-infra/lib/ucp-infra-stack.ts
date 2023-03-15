@@ -3,6 +3,7 @@
 
 import { Stack, CfnOutput, RemovalPolicy, StackProps, Duration, Tags } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import { KinesisStreamsToLambda } from '@aws-solutions-constructs/aws-kinesisstreams-lambda';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -19,8 +20,8 @@ import { Queue } from 'aws-cdk-lib/aws-sqs';
 import * as tah_s3 from '../tah-cdk-common/s3';
 import * as tah_glue from '../tah-cdk-common/glue';
 import * as tah_core from '../tah-cdk-common/core';
-
 import { BusinessObjectPipelineOutput } from "./model"
+import * as kinesis from 'aws-cdk-lib/aws-kinesis';
 
 /////////////////////////////////////////////////////////////////////
 //Infrastructure Script for the AWS DynamoDB Blog Demo
@@ -615,6 +616,77 @@ export class UCPInfraStack extends Stack {
     tah_core.Output.add(this, "websiteDistributionId", websiteDistribution.distributionId)
     tah_core.Output.add(this, "websiteDomainName", websiteDistribution.distributionDomainName)
 
+    ///////////////////////
+    // KINESIS DATASTREAM FOR REAL TIME FLOW
+    ////////////////////////
+
+    const input_stream_name = "ucp_connector_input_stream" + envName
+    const output_stream_name = "ucp_connector_output_stream" + envName
+
+    let streamKey = new kms.Key(this, 'dataStreamKey', {
+      enableKeyRotation: true,
+    });
+
+    let outputDataStream = new kinesis.Stream(this, 'OutputDataStream', {
+      encryption: kinesis.StreamEncryption.KMS,
+      encryptionKey: streamKey,
+      streamName: output_stream_name,
+    });
+
+    const ucpEtlRealTimeLambdaPrefix = "ucpRealTimeTransformer"
+    const ucpEtlRealTimeACCPPrefix = "ucpRealTimeTransformerAccp"
+    for (let type of ["", "Test"]) {
+      const kinesisLambdaACCP = new KinesisStreamsToLambda(this, ucpEtlRealTimeACCPPrefix + type + envName, {
+        kinesisEventSourceProps: {
+          startingPosition: lambda.StartingPosition.TRIM_HORIZON,
+          batchSize: 10,
+          maximumRetryAttempts: 0
+        },
+        lambdaFunctionProps: {
+          runtime: lambda.Runtime.GO_1_X,
+          handler: 'index.handler',
+          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeACCPPrefix, 'main.zip'].join("/")),
+          deadLetterQueueEnabled: true,
+          functionName: ucpEtlRealTimeACCPPrefix + type + envName,
+          environment: {
+          }
+        }
+      });
+
+      const kinesisLambdaStart = new KinesisStreamsToLambda(this, ucpEtlRealTimeLambdaPrefix + type + envName, {
+        kinesisEventSourceProps: {
+          startingPosition: lambda.StartingPosition.TRIM_HORIZON,
+          batchSize: 10,
+          maximumRetryAttempts: 0
+        },
+        lambdaFunctionProps: {
+          runtime: lambda.Runtime.PYTHON_3_7,
+          handler: 'index.handler',
+          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeLambdaPrefix, 'main.zip'].join("/")),
+          deadLetterQueueEnabled: true,
+          functionName: ucpEtlRealTimeLambdaPrefix + type + envName,
+          environment: {
+            output_stream: outputDataStream.streamName,
+            output_stream_real: kinesisLambdaACCP.kinesisStream.streamName
+          }
+        }
+      });
+
+      outputDataStream.grantReadWrite(kinesisLambdaStart.lambdaFunction)
+      kinesisLambdaACCP.kinesisStream.grantReadWrite(kinesisLambdaStart.lambdaFunction)
+      const dlqvalue = kinesisLambdaStart.lambdaFunction.deadLetterQueue
+      let dlqname = ""
+      if (dlqvalue) {
+        dlqvalue.grantConsumeMessages(kinesisLambdaStart.lambdaFunction)
+        dlqvalue.grantSendMessages(kinesisLambdaStart.lambdaFunction)
+        dlqname = dlqvalue.queueUrl
+      }
+      kinesisLambdaStart.lambdaFunction.addEnvironment("dlqname", dlqname)
+
+      new CfnOutput(this, "lambdaFunctionNameRealTime" + type, {value : kinesisLambdaStart.lambdaFunction.functionName});
+      new CfnOutput(this, "kinesisStreamNameRealTime" + type, {value: kinesisLambdaStart.kinesisStream.streamName});
+      new CfnOutput(this, "kinesisStreamOutputNameRealTime" + type, {value: outputDataStream.streamName})
+    }
   }
 
 
