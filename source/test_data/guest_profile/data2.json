@@ -1,0 +1,58 @@
+{
+  "modelVersion": "1.0",
+  "id": "8586451052",
+  "lastUpdatedOn": "2022-03-24T23:07:59.386436665Z",
+  "createdOn": "2022-01-24T23:07:59.386436665Z",
+  "lastUpdatedBy": "Abbey Little",
+  "createdBy": "Madyson Mueller",
+  "emails": [
+    {
+      "type": "personal",
+      "address": "lelarowe@mclaughlin.com",
+      "primary": true
+    }
+  ],
+  "phones": [
+    {
+      "type": "home",
+      "number": "4626146981",
+      "primary": true,
+      "countryCode": 53
+    },
+    {
+      "type": "personal",
+      "number": "9465488670",
+      "primary": true,
+      "countryCode": 47
+    }
+  ],
+  "addresses": [],
+  "honorific": "Sir",
+  "firstName": "Timmothy",
+  "middleName": "Eliane",
+  "lastName": "Wiza",
+  "gender": "other",
+  "pronoun": "he",
+  "dateOfBirth": "1965-01-13",
+  "language": {
+    "code": "ln",
+    "name": ""
+  },
+  "nationality": {
+    "code": "LU",
+    "name": ""
+  },
+  "jobTitle": "Facilitator",
+  "parentCompany": "PlotWatt",
+  "loyaltyPrograms": [
+    {
+      "id": "7767442999",
+      "programName": "club",
+      "points": 205918.0,
+      "pointUnit": "miles",
+      "pointsToNextLevel": 8302.0,
+      "level": "silver",
+      "joined": "2022-01-24T23:07:59.386436665Z"
+    }
+  ]
+}

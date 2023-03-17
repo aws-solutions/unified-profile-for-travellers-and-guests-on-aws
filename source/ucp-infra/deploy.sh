@@ -73,7 +73,7 @@ else
     customerTestBucketpaxprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBucketpaxprofile'].OutputValue" --output text)
     customerTestBucketclickstream=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBucketclickstream'].OutputValue" --output text)
     customerTestBuckethotelstay=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBuckethotelstay'].OutputValue" --output text)
-    connectProfileImportBucketOut=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileImportBucketOut'].OutputValue" --output text)
+    connectProfileImportBucketOut=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileImportsBucketOut'].OutputValue" --output text)
     connectProfileImportBucketTestOut=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileImportBucketTestOut'].OutputValue" --output text)
     testTableNameairbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNameairbooking'].OutputValue" --output text)
     testTableNameclickstream=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNameclickstream'].OutputValue" --output text)
@@ -81,7 +81,12 @@ else
     testTableNamehotelbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNamehotelbooking'].OutputValue" --output text)
     testTableNamehotelstay=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNamehotelstay'].OutputValue" --output text)
     testTableNamepaxprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNamepaxprofile'].OutputValue" --output text)
-    
+    lambdaFunctionNameRealTime=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='lambdaFunctionNameRealTime'].OutputValue" --output text)
+    kinesisStreamNameRealTime=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='kinesisStreamNameRealTime'].OutputValue" --output text)
+    kinesisStreamOutputNameRealTime=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='kinesisStreamOutputNameRealTime'].OutputValue" --output text)
+    lambdaFunctionNameRealTimeTest=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='lambdaFunctionNameRealTimeTest'].OutputValue" --output text)
+    kinesisStreamNameRealTimeTest=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='kinesisStreamNameRealTimeTest'].OutputValue" --output text)
+    kinesisStreamOutputNameRealTimeTest=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='kinesisStreamOutputNameRealTimeTest'].OutputValue" --output text)
 
     echo "3.2 Creating admin User and getting refresh token"
     RANDOM=$$
@@ -180,6 +185,12 @@ else
          "\"testTableNamehotelbooking\":\"$testTableNamehotelbooking\","\
          "\"testTableNamehotelstay\":\"$testTableNamehotelstay\","\
          "\"testTableNamepaxprofile\":\"$testTableNamepaxprofile\","\
+         "\"lambdaFunctionNameRealTime\":\"$lambdaFunctionNameRealTime\","\
+         "\"kinesisStreamNameRealTime\":\"$kinesisStreamNameRealTime\","\
+         "\"kinesisStreamOutputNameRealTime\":\"$kinesisStreamOutputNameRealTime\","\
+         "\"lambdaFunctionNameRealTimeTest\":\"$lambdaFunctionNameRealTimeTest\","\
+         "\"kinesisStreamNameRealTimeTest\":\"$kinesisStreamNameRealTimeTest\","\
+         "\"kinesisStreamOutputNameRealTimeTest\":\"$kinesisStreamOutputNameRealTimeTest\","\
          "\"region\":\"$OUTRegion\""\
          "}">infra-config-$env.json
     cat infra-config-$env.json

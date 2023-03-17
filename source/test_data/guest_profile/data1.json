@@ -1,0 +1,94 @@
+{
+  "modelVersion": "1.0",
+  "id": "6494295187",
+  "lastUpdatedOn": "2022-03-20T11:58:02.529353371Z",
+  "createdOn": "2021-12-20T11:58:02.529353371Z",
+  "lastUpdatedBy": "Vincent Mueller",
+  "createdBy": "Tyrel Torp",
+  "emails": [],
+  "phones": [],
+  "addresses": [
+    {
+      "type": "shipping",
+      "line1": "56017 New Garden berg",
+      "line2": "more content line 2",
+      "line3": "more content line 3",
+      "line4": "more content line 4",
+      "city": "Dallas",
+      "stateProvince": {
+        "code": "OK",
+        "name": ""
+      },
+      "postalCode": "49528",
+      "country": {
+        "code": "NU",
+        "name": ""
+      },
+      "primary": true
+    },
+    {
+      "type": "shipping",
+      "line1": "4964 North Ville furt",
+      "line2": "more content line 2",
+      "line3": "more content line 3",
+      "line4": "more content line 4",
+      "city": "Jacksonville",
+      "stateProvince": {
+        "code": "NE",
+        "name": ""
+      },
+      "postalCode": "21914",
+      "country": {
+        "code": "BM",
+        "name": ""
+      },
+      "primary": false
+    },
+    {
+      "type": "mailing",
+      "line1": "680 Springs ville",
+      "line2": "more content line 2",
+      "line3": "more content line 3",
+      "line4": "more content line 4",
+      "city": "San Francisco",
+      "stateProvince": {
+        "code": "AA",
+        "name": ""
+      },
+      "postalCode": "54827",
+      "country": {
+        "code": "CG",
+        "name": ""
+      },
+      "primary": false
+    }
+  ],
+  "honorific": "Cllr",
+  "firstName": "Abel",
+  "middleName": "Hoyt",
+  "lastName": "Wilkinson",
+  "gender": "other",
+  "pronoun": "they",
+  "dateOfBirth": "1922-05-17",
+  "language": {
+    "code": "ae",
+    "name": ""
+  },
+  "nationality": {
+    "code": "CR",
+    "name": ""
+  },
+  "jobTitle": "Coordinator",
+  "parentCompany": "Food+Tech Connect",
+  "loyaltyPrograms": [
+    {
+      "id": "7690224677",
+      "programName": "elite",
+      "points": 209188.0,
+      "pointUnit": "miles",
+      "pointsToNextLevel": 585.0,
+      "level": "platinium",
+      "joined": "2021-12-20T11:58:02.529353371Z"
+    }
+  ]
+}
