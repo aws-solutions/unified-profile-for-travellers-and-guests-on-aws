@@ -75,7 +75,13 @@ else
     customerTestBuckethotelstay=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBuckethotelstay'].OutputValue" --output text)
     connectProfileImportBucketOut=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileImportBucketOut'].OutputValue" --output text)
     connectProfileImportBucketTestOut=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileImportBucketTestOut'].OutputValue" --output text)
-  
+    testTableNameairbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNameairbooking'].OutputValue" --output text)
+    testTableNameclickstream=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNameclickstream'].OutputValue" --output text)
+    testTableNameguestprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNameguestprofile'].OutputValue" --output text)
+    testTableNamehotelbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNamehotelbooking'].OutputValue" --output text)
+    testTableNamehotelstay=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNamehotelstay'].OutputValue" --output text)
+    testTableNamepaxprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNamepaxprofile'].OutputValue" --output text)
+    
 
     echo "3.2 Creating admin User and getting refresh token"
     RANDOM=$$
@@ -168,6 +174,12 @@ else
          "\"customerTestBuckethotelstay\":\"$customerTestBuckethotelstay\","\
          "\"connectProfileImportBucketOut\":\"$connectProfileImportBucketOut\","\
          "\"connectProfileImportBucketTestOut\":\"$connectProfileImportBucketTestOut\","\
+         "\"testTableNameairbooking\":\"$testTableNameairbooking\","\
+         "\"testTableNameclickstream\":\"$testTableNameclickstream\","\
+         "\"testTableNameguestprofile\":\"$testTableNameguestprofile\","\
+         "\"testTableNamehotelbooking\":\"$testTableNamehotelbooking\","\
+         "\"testTableNamehotelstay\":\"$testTableNamehotelstay\","\
+         "\"testTableNamepaxprofile\":\"$testTableNamepaxprofile\","\
          "\"region\":\"$OUTRegion\""\
          "}">infra-config-$env.json
     cat infra-config-$env.json

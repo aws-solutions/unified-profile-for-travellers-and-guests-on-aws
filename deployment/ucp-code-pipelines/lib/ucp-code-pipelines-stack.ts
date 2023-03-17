@@ -142,6 +142,34 @@ export class UCPCodePipelinesStack extends Stack {
         buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
       },
     });
+
+    const syncLambdaBuild = new codebuild.PipelineProject(this, 'syncLambdaBuilProject' + envName, {
+      projectName: "ucp-lambda-sync-" + envName,
+      role: buildProjectRole,
+      encryptionKey: codeBuildKmsKey,
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          install: {
+            "runtime-versions": {
+              golang: GO_VERSION
+            }
+          },
+          build: {
+            commands: [
+              'echo "Build and Deploy lambda Function"',
+              'cd source/ucp-sync',
+              'pwd && sh lbuild.sh ' + envName + " " + artifactBucket.bucketName
+            ],
+          },
+        }
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+      },
+    });
+
+
     const firehoselambdaBuild = new codebuild.PipelineProject(this, 'streamLambdaBuilProject' + envName, {
       projectName: "ucp-stream-lambda-" + envName,
       role: buildProjectRole,
@@ -300,6 +328,7 @@ export class UCPCodePipelinesStack extends Stack {
     //Output Artifacts
     const sourceOutput = new codepipeline.Artifact();
     const cdkBuildOutputLambda = new codepipeline.Artifact('CdkBuildOutputLambda');
+    const cdkBuildOutputLambdaSync = new codepipeline.Artifact('cdkBuildOutputLambdaSync');
     const cdkBuildOutputEtl = new codepipeline.Artifact('CdkBuildOutputEtl');
     const cdkBuildOutputFirehoseLambda = new codepipeline.Artifact('CdkBuildOutputFirehoseLambda');
     const cdkBuildOutputInfra = new codepipeline.Artifact('CdkBuildOutputInfra');
@@ -339,6 +368,13 @@ export class UCPCodePipelinesStack extends Stack {
           input: sourceOutput,
           runOrder: 2,
           outputs: [cdkBuildOutputLambda],
+        }),
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'buildSyncLambdaCode',
+          project: syncLambdaBuild,
+          input: sourceOutput,
+          runOrder: 2,
+          outputs: [cdkBuildOutputLambdaSync],
         }),
         new codepipeline_actions.CodeBuildAction({
           actionName: 'deployInfra',
