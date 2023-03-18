@@ -831,10 +831,6 @@ export class UCPInfraStack extends Stack {
     //1-Bucket permission
     bucketRaw.grantReadWrite(dataLakeAdminRole)
     testBucketRaw.grantReadWrite(dataLakeAdminRole)
-    //2-Creating workflow to visualize
-    let workflow = new CfnWorkflow(this, businessObjectName, {
-      name: "ucp" + businessObjectName + envName
-    })
 
     //3-Creating Glue Tables
     let table = this.table(this, businessObjectName, envName, glueDb, glueSchemas, bucketRaw)
@@ -855,7 +851,7 @@ export class UCPInfraStack extends Stack {
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
     //6- Job Triggers
-    this.scheduledJobTrigger("ucp" + businessObjectName, envName, job, "cron(0 * * * ? *)", workflow)
+    this.scheduledJobTrigger("ucp" + businessObjectName, envName, job, "cron(0 * * * ? *)")
     //7-Cfn Output
     new CfnOutput(this, 'customerBucket' + businessObjectName, {
       value: bucketRaw.bucketName
@@ -1067,8 +1063,6 @@ export class UCPInfraStack extends Stack {
   scheduledJobTrigger(prefix: string, envName: string, job: CfnJob, cron: string, workflow?: CfnWorkflow): CfnTrigger {
     let trigger = new CfnTrigger(this, prefix + "scheduledJobTrigger" + envName, {
       type: "SCHEDULED",
-      name: prefix + "scheduledJobTrigger" + envName,
-      //every hour:  "cron(10 * * * ? *)"
       schedule: cron,
       startOnCreation: true,
       actions: [

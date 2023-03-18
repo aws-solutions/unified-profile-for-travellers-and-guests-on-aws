@@ -18,6 +18,7 @@ const GO_VERSION = 1.18
 const NODEJS_VERSION = 16
 const UI_NODEJS_VERSION = 16
 const RUBY_VERSION = 3.1
+const PYTHON_VERSION = 3.9
 
 export class UCPCodePipelinesStack extends Stack {
 
@@ -169,6 +170,32 @@ export class UCPCodePipelinesStack extends Stack {
       },
     });
 
+    const realTimeLambdaBuild = new codebuild.PipelineProject(this, 'realTimeLambdaBuild' + envName, {
+      projectName: "ucp-lambda-real-time-" + envName,
+      role: buildProjectRole,
+      encryptionKey: codeBuildKmsKey,
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          install: {
+            "runtime-versions": {
+              python: PYTHON_VERSION
+            }
+          },
+          build: {
+            commands: [
+              'echo "Build and Deploy lambda Function"',
+              'cd source/ucp-real-time-transformer',
+              'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName
+            ],
+          },
+        }
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+      },
+    });
+
 
     const firehoselambdaBuild = new codebuild.PipelineProject(this, 'streamLambdaBuilProject' + envName, {
       projectName: "ucp-stream-lambda-" + envName,
@@ -274,7 +301,32 @@ export class UCPCodePipelinesStack extends Stack {
             commands: [
               'cd source/ucp-etls',
               'echo "Deploy ETL code"',
-              'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName,
+              'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName
+            ],
+          },
+        }
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+      },
+    });
+
+    const etlTestProject = new codebuild.PipelineProject(this, 'etlTestDeployProject' + envName, {
+      projectName: "ucp-etl-test-" + envName,
+      role: buildProjectRole,
+      encryptionKey: codeBuildKmsKey,
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          install: {
+            "runtime-versions": {
+              golang: GO_VERSION
+            }
+          },
+          build: {
+            commands: [
+              'cd source/ucp-etls',
+              'echo "Testing ETLs"',
               'cd e2e',
               'sh test.sh ' + envName + " " + artifactBucket.bucketName,
             ],
@@ -329,7 +381,9 @@ export class UCPCodePipelinesStack extends Stack {
     const sourceOutput = new codepipeline.Artifact();
     const cdkBuildOutputLambda = new codepipeline.Artifact('CdkBuildOutputLambda');
     const cdkBuildOutputLambdaSync = new codepipeline.Artifact('cdkBuildOutputLambdaSync');
+    const cdkBuildOutputLambdaRealTime = new codepipeline.Artifact('cdkBuildOutputLambdaRealTime');
     const cdkBuildOutputEtl = new codepipeline.Artifact('CdkBuildOutputEtl');
+    const cdkBuildOutputEtlTest = new codepipeline.Artifact('CdkBuildOutputEtlTest');
     const cdkBuildOutputFirehoseLambda = new codepipeline.Artifact('CdkBuildOutputFirehoseLambda');
     const cdkBuildOutputInfra = new codepipeline.Artifact('CdkBuildOutputInfra');
     const cdkBuildOutputTest = new codepipeline.Artifact('CdkBuildOutputTest');
@@ -363,6 +417,13 @@ export class UCPCodePipelinesStack extends Stack {
       stageName: 'Build',
       actions: [
         new codepipeline_actions.CodeBuildAction({
+          actionName: 'deployEtlCode',
+          project: etlProject,
+          input: sourceOutput,
+          runOrder: 1,
+          outputs: [cdkBuildOutputEtl],
+        }),
+        new codepipeline_actions.CodeBuildAction({
           actionName: 'buildLambdaCode',
           project: lambdaBuild,
           input: sourceOutput,
@@ -375,6 +436,13 @@ export class UCPCodePipelinesStack extends Stack {
           input: sourceOutput,
           runOrder: 2,
           outputs: [cdkBuildOutputLambdaSync],
+        }),
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'buildRealTimeLambdaCode',
+          project: realTimeLambdaBuild,
+          input: sourceOutput,
+          runOrder: 2,
+          outputs: [cdkBuildOutputLambdaRealTime],
         }),
         new codepipeline_actions.CodeBuildAction({
           actionName: 'deployInfra',
@@ -404,11 +472,11 @@ export class UCPCodePipelinesStack extends Stack {
           outputs: [feTestOutput],
         }),
         new codepipeline_actions.CodeBuildAction({
-          actionName: 'deployEtlCode',
-          project: etlProject,
+          actionName: 'testEtlCode',
+          project: etlTestProject,
           input: sourceOutput,
           runOrder: 1,
-          outputs: [cdkBuildOutputEtl],
+          outputs: [cdkBuildOutputEtlTest],
         })
       ],
     })
