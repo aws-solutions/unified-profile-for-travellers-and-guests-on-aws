@@ -16,7 +16,7 @@ DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f000Z"
 # if not we will use the unique generated UUID for all ACCP records associated with this guest
 
 
-# resilient flooat parsing to be used to avoid case where both int and float wouold come ine whoch wouold lead to
+# resilient float parsing to be used to avoid cases where both int and float would come in for the same value which would lead to
 # CSV data source does not support struct<int:int,double:double> data type.
 # pyspark.sql.utils.AnalysisException: CSV data source does not support struct<int:int,double:double> data type.
 def parseNumber(num):

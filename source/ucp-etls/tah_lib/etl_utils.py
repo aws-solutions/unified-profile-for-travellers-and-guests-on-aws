@@ -19,6 +19,7 @@ def writeToS3(glueContext, dataFrame, bucketName: str, folder: str):
     # We use the partitionOverwriteMode=dynamic to only overwrite new partitions.
     spark = glueContext.spark_session
     spark.conf.set('spark.sql.sources.partitionOverwriteMode', 'dynamic')
+    # addressing similar issue then the one mentioned at
     # https://stackoverflow.com/questions/36164914/prevent-dataframe-partitionby-from-removing-partitioned-columns-from-schema
     duplicated = dataFrame.withColumn("_model_version", dataFrame["model_version"]).withColumn(
         "_traveller_id", dataFrame["traveller_id"])
