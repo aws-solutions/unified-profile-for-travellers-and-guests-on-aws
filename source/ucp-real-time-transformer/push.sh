@@ -15,4 +15,8 @@ echo "Publishing new function code"
 aws s3 cp main.zip s3://$bucket/$env/ucpRealTimeTransformer/main.zip
 aws lambda update-function-code --function-name ucpRealTimeTransformer$env --zip-file fileb://main.zip
 aws lambda update-function-code --function-name ucpRealTimeTransformerTest$env --zip-file fileb://main.zip
+
+aws s3 cp mainAccp.zip s3://$bucket/$env/ucpRealTimeTransformerAccp/mainAccp.zip
+aws lambda update-function-code --function-name ucpRealTimeTransformerAccp$env --zip-file fileb://mainAccp.zip
+aws lambda update-function-code --function-name ucpRealTimeTransformerAccpTest$env --zip-file fileb://mainAccp.zip
 fi
