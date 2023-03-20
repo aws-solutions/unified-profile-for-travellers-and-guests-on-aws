@@ -1,7 +1,7 @@
 import traceback
 import uuid
 from datetime import datetime
-from tah_lib.common import replaceAndjoin, setTimestamp
+from tah_lib.common import replaceAndjoin, setTimestamp, parseNumber
 from tah_lib.common import FIELD_NAME_TRAVELLER_ID, FIELD_NAME_LAST_UPDATED
 
 
@@ -113,10 +113,7 @@ def getAttr(attributes, name):
                 arr.append(str(val))
             return replaceAndjoin(arr, "|")
         elif selectedAtt["type"] == "number":
-            try:
-                return float(selectedAtt["numValue"])
-            except Exception as e:
-                return 0.0
+            return parseNumber(selectedAtt["numValue"])
         elif selectedAtt["type"] == "numbers":
             arr = []
             for val in selectedAtt["numValues"]:

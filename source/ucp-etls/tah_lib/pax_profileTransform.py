@@ -2,7 +2,7 @@ import uuid
 import traceback
 from datetime import datetime
 
-from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setTravellerId, setTimestamp
+from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setTravellerId, setTimestamp, parseNumber
 
 
 def buildObjectRecord(rec):
