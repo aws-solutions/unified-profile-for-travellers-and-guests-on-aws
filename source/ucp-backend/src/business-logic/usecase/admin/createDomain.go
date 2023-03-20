@@ -68,7 +68,7 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 		return model.ResponseWrapper{}, err
 	}
 
-	businessMap := map[string]func() []customerprofiles.FieldMapping{
+	businessMap := map[string]func() customerprofiles.FieldMappings{
 		ACCP_SUB_FOLDER_AIR_BOOKING:        accpmappings.BuildAirBookingMapping,
 		ACCP_SUB_FOLDER_EMAIL_HISTORY:      accpmappings.BuildEmailHistoryMapping,
 		ACCP_SUB_FOLDER_PHONE_HISTORY:      accpmappings.BuildPhoneHistoryMapping,
@@ -91,7 +91,8 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 			}
 			return model.ResponseWrapper{}, err
 		}
-		err = u.reg.Accp.PutIntegration(keyBusiness, accpSourceBucket, businessMap[keyBusiness]())
+		integrationName := keyBusiness + "_" + req.Domain.Name
+		err = u.reg.Accp.PutIntegration(integrationName, keyBusiness, accpSourceBucket, businessMap[keyBusiness]())
 		if err != nil {
 			u.tx.Log("Error creating integration %s", err)
 			return model.ResponseWrapper{}, err
