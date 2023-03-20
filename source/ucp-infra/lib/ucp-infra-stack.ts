@@ -6,21 +6,34 @@ import { Construct } from 'constructs';
 import { KinesisStreamsToLambda } from '@aws-solutions-constructs/aws-kinesisstreams-lambda';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as glue from 'aws-cdk-lib/aws-glue';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as kms from 'aws-cdk-lib/aws-kms';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as athena from 'aws-cdk-lib/aws-athena';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as aws_events from 'aws-cdk-lib/aws-events';
+import * as aws_events_targets from 'aws-cdk-lib/aws-events-targets';
 
 import { CorsHttpMethod, HttpApi, HttpMethod, HttpRoute, HttpStage, PayloadFormatVersion } from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpUserPoolAuthorizer } from '@aws-cdk/aws-apigatewayv2-authorizers-alpha';
 import { HttpLambdaIntegration, } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
-import { Database } from '@aws-cdk/aws-glue-alpha';
+import { Database, Table, DataFormat, Schema } from '@aws-cdk/aws-glue-alpha';
 import { CfnCrawler, CfnJob, CfnTrigger, CfnWorkflow } from 'aws-cdk-lib/aws-glue';
 import { Queue } from 'aws-cdk-lib/aws-sqs';
 import * as tah_s3 from '../tah-cdk-common/s3';
-import * as tah_glue from '../tah-cdk-common/glue';
 import * as tah_core from '../tah-cdk-common/core';
-import { BusinessObjectPipelineOutput } from "./model"
+import { BusinessObjectPipelineOutput, GlueSchema } from "./model"
+
+//importing object schemas
+import glueSchemaStay from '../tah-common-glue-schemas/hotel_stay_revenue.glue.json';
+import glueSchemaHotelBooking from '../tah-common-glue-schemas/hotel_booking.glue.json';
+import glueSchemaAirBooking from '../tah-common-glue-schemas/air_booking.glue.json';
+import glueSchemaPaxProfile from '../tah-common-glue-schemas/pax_profile.glue.json';
+import glueSchemaClickEvent from '../tah-common-glue-schemas/clickevent.glue.json';
+import glueSchemaGuestProfile from '../tah-common-glue-schemas/guest_profile.glue.json';
+
 import * as kinesis from 'aws-cdk-lib/aws-kinesis';
 
 /////////////////////////////////////////////////////////////////////
@@ -48,9 +61,9 @@ export class UCPInfraStack extends Stack {
       throw new Error('No account ID provided for stack');
     }
 
-    /*************
-     * Datalake admin Role
-     */
+    //////////////////////
+    // Datalake admin Role
+    /////////////////////
     const datalakeAdminRole = new iam.Role(this, "ucp-data-admin-role-" + envName, {
       assumedBy: new iam.ServicePrincipal("glue.amazonaws.com"),
       description: "Glue role for UCP data",
@@ -110,6 +123,25 @@ export class UCPInfraStack extends Stack {
     new CfnOutput(this, 'glueDBname', {
       value: glueDb.databaseName
     });
+
+
+    ////////////////////
+    //Athena Workgroup
+    ////////////////////////
+    const athenaResultsBucket = new tah_s3.Bucket(this, "ucp-athena-output", accessLogBucket)
+    let athenaWorkgroupName = "ucp-athena-workgroup-" + envName
+    let athenaWorkgroup = new athena.CfnWorkGroup(this, "ucp-athena-workgroup", {
+      name: athenaWorkgroupName,
+      workGroupConfiguration: {
+        publishCloudWatchMetricsEnabled: true,
+        resultConfiguration: {
+          encryptionConfiguration: {
+            encryptionOption: "SSE_S3"
+          },
+          outputLocation: "s3://" + athenaResultsBucket.bucketName
+        }
+      }
+    })
 
     /***************************
    * Data Buckets for temporary processing
@@ -196,6 +228,18 @@ export class UCPInfraStack extends Stack {
     new CfnOutput(this, "connectProfileExportBucket", { value: connectProfileExportBucket.bucketName })
     new CfnOutput(this, "kmsKeyProfileDomain", { value: kmsKeyProfileDomain.keyArn })
 
+    //////////////////////////////////////
+    // DYNAMO DB
+    /////////////////////////////////////
+    const dynamo_pk = "item_id"
+    const dynamo_sk = "item_type"
+    const configTable = new dynamodb.Table(this, "ucpConfigTable", {
+      tableName: "ucp-config-table-" + envName,
+      partitionKey: { name: dynamo_pk, type: dynamodb.AttributeType.STRING },
+      sortKey: { name: dynamo_sk, type: dynamodb.AttributeType.STRING },
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
     //////////////////////////
     //LAMBDA FUNCTION
     /////////////////////////
@@ -219,6 +263,12 @@ export class UCPInfraStack extends Stack {
         PAX_PROFILE_JOB_NAME: paxProfileOutput.connectorJobName,
         CLICKSTREAM_JOB_NAME: clickstreamOutput.connectorJobName,
         HOTEL_STAY_JOB_NAME: hotelStayOutput.connectorJobName,
+        HOTEL_BOOKING_JOB_NAME_CUSTOMER: hotelBookingOutput.customerJobName,
+        AIR_BOOKING_JOB_NAME_CUSTOMER: airBookingOutput.customerJobName,
+        GUEST_PROFILE_JOB_NAME_CUSTOMER: guestProfileOutput.customerJobName,
+        PAX_PROFILE_JOB_NAME_CUSTOMER: paxProfileOutput.customerJobName,
+        CLICKSTREAM_JOB_NAME_CUSTOMER: clickstreamOutput.customerJobName,
+        HOTEL_STAY_JOB_NAME_CUSTOMER: hotelStayOutput.customerJobName,
         CONNECTOR_CRAWLER_QUEUE: connectorCrawlerQueue.queueArn,
         CONNECTOR_CRAWLER_DLQ: connectorCrawlerDlq.queueArn,
         GLUE_DB: glueDb.databaseName,
@@ -261,6 +311,7 @@ export class UCPInfraStack extends Stack {
         'glue:GetTags',
         'glue:TagResource',
         'glue:GetJob',
+        'glue:GetJobRuns',
         'glue:UpdateJob',
         'kms:GenerateDataKey',
         'kms:Decrypt',
@@ -307,6 +358,76 @@ export class UCPInfraStack extends Stack {
         'sqs:GetQueueAttributes',
         'sqs:DeleteQueue']
     }));
+
+
+    const ucpSyncLambdaPrefix = 'ucpSync'
+    const ucpSyncLambda = new lambda.Function(this, 'ucpSync' + envName, {
+      code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpSyncLambdaPrefix, 'main.zip'].join("/")),
+      functionName: ucpSyncLambdaPrefix + envName,
+      handler: 'main',
+      runtime: lambda.Runtime.GO_1_X,
+      tracing: lambda.Tracing.ACTIVE,
+      timeout: Duration.seconds(900),
+      environment: {
+        LAMBDA_ACCOUNT_ID: account,
+        LAMBDA_ENV: envName,
+        LAMBDA_REGION: region || "",
+        ATHENA_DB: glueDb.databaseName,
+        ATHENA_WORKGROUP: athenaWorkgroupName,
+
+        DYNAMO_TABLE: configTable.tableName,
+        DYNAMO_PK: dynamo_pk,
+        DYNAMO_SK: dynamo_sk,
+
+        HOTEL_BOOKING_TABLE_NAME_CUSTOMER: hotelBookingOutput.tableName,
+        AIR_BOOKING_TABLE_NAME_CUSTOMER: airBookingOutput.tableName,
+        GUEST_PROFILE_TABLE_NAME_CUSTOMER: guestProfileOutput.tableName,
+        PAX_PROFILE_TABLE_NAME_CUSTOMER: paxProfileOutput.tableName,
+        CLICKSTREAM_TABLE_NAME_CUSTOMER: clickstreamOutput.tableName,
+        HOTEL_STAY_TABLE_NAME_CUSTOMER: hotelStayOutput.tableName,
+
+        S3_HOTEL_BOOKING: hotelBookingOutput.bucket.bucketName,
+        S3_AIR_BOOKING: airBookingOutput.bucket.bucketName,
+        S3_GUEST_PROFILE: guestProfileOutput.bucket.bucketName,
+        S3_PAX_PROFILE: paxProfileOutput.bucket.bucketName,
+        S3_STAY_REVENUE: hotelStayOutput.bucket.bucketName,
+        S3_CLICKSTREAM: clickstreamOutput.bucket.bucketName,
+      }
+    });
+
+    const rule = new aws_events.Rule(this, 'ucpSyncJob', {
+      ruleName: "ucp_sync_job",
+      schedule: aws_events.Schedule.expression('rate(1 hour)'),
+      eventPattern: {}
+    });
+    rule.addTarget(new aws_events_targets.LambdaFunction(ucpSyncLambda, {}));
+    //TODO: narrow this down to the business object tables
+    ucpSyncLambda.addToRolePolicy(new iam.PolicyStatement({
+      resources: ["*"],
+      actions: [
+        'athena:StartQueryExecution',
+        'athena:GetQueryExecution',
+        "athena:GetQueryResults",
+        "glue:GetTable",
+        "glue:GetDatabase",
+        "glue:GetPartition",
+        "glue:GetPartitions",
+        "glue:BatchCreatePartition",
+        "glue:CreatePartition",
+      ]
+    }));
+    //granting permission to read and write on the athena result bucket thus allowing lambda function
+    //to successfully execute athena queries using the workgroup created in this stack
+    athenaResultsBucket.grantReadWrite(ucpSyncLambda);
+    hotelBookingOutput.bucket.grantReadWrite(ucpSyncLambda)
+    airBookingOutput.bucket.grantReadWrite(ucpSyncLambda)
+    guestProfileOutput.bucket.grantReadWrite(ucpSyncLambda)
+    paxProfileOutput.bucket.grantReadWrite(ucpSyncLambda)
+    hotelStayOutput.bucket.grantReadWrite(ucpSyncLambda)
+    clickstreamOutput.bucket.grantReadWrite(ucpSyncLambda)
+
+    configTable.grantReadWriteData(ucpSyncLambda)
+
 
     //////////////////////////
     // COGNITO USER POOL
@@ -683,9 +804,9 @@ export class UCPInfraStack extends Stack {
       }
       kinesisLambdaStart.lambdaFunction.addEnvironment("dlqname", dlqname)
 
-      new CfnOutput(this, "lambdaFunctionNameRealTime" + type, {value : kinesisLambdaStart.lambdaFunction.functionName});
-      new CfnOutput(this, "kinesisStreamNameRealTime" + type, {value: kinesisLambdaStart.kinesisStream.streamName});
-      new CfnOutput(this, "kinesisStreamOutputNameRealTime" + type, {value: outputDataStream.streamName})
+      new CfnOutput(this, "lambdaFunctionNameRealTime" + type, { value: kinesisLambdaStart.lambdaFunction.functionName });
+      new CfnOutput(this, "kinesisStreamNameRealTime" + type, { value: kinesisLambdaStart.kinesisStream.streamName });
+      new CfnOutput(this, "kinesisStreamOutputNameRealTime" + type, { value: outputDataStream.streamName })
     }
   }
 
@@ -695,6 +816,14 @@ export class UCPInfraStack extends Stack {
   ******************/
 
   buildBusinessObjectPipeline(businessObjectName: string, envName: string, dataLakeAdminRole: iam.Role, glueDb: Database, artifactBucketName: string, accessLogBucket: s3.Bucket, connectProfileImportBucket: s3.Bucket): BusinessObjectPipelineOutput {
+    const glueSchemas = new Map<string, GlueSchema>();
+    glueSchemas.set("hotel-booking", glueSchemaHotelBooking)
+    glueSchemas.set("air_booking", glueSchemaAirBooking)
+    glueSchemas.set("guest-profile", glueSchemaGuestProfile)
+    glueSchemas.set("pax-profile", glueSchemaPaxProfile)
+    glueSchemas.set("clickstream", glueSchemaClickEvent)
+    glueSchemas.set("hotel-stay", glueSchemaStay)
+
     //0-create bucket
     let bucketRaw = new tah_s3.Bucket(this, "ucp" + businessObjectName, accessLogBucket);
     //we create a test bucket to be able to test  the job run
@@ -702,21 +831,15 @@ export class UCPInfraStack extends Stack {
     //1-Bucket permission
     bucketRaw.grantReadWrite(dataLakeAdminRole)
     testBucketRaw.grantReadWrite(dataLakeAdminRole)
-    //2-Creating workflow to visualize
-    let workflow = new CfnWorkflow(this, businessObjectName, {
-      name: "ucp" + businessObjectName + envName
-    })
-    //3-Raw Data Crawlers
-    let crawler = new tah_glue.S3Crawler(this, "ucp" + businessObjectName + envName, glueDb, bucketRaw, dataLakeAdminRole)
-    //4-Raw Data Crawler Triggers
-    this.scheduledCrawlerTrigger("ucp" + businessObjectName, envName, crawler, "cron(0 * * * ? *)", workflow)
-    this.crawlerOnDemandTrigger("ucp" + businessObjectName, envName, crawler)
-    //5- Jobs
 
+    //3-Creating Glue Tables
+    let table = this.table(this, businessObjectName, envName, glueDb, glueSchemas, bucketRaw)
+    let testTable = this.table(this, businessObjectName, "Test" + envName, glueDb, glueSchemas, testBucketRaw)
+
+    //4- Creating Jobs
     let toUcpScript = businessObjectName.replace('-', '_') + "ToUcp"
-    let transformScript = businessObjectName.replace('-', '_') + "Transform.py"
     let job = this.job(businessObjectName + "FromCustomer", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
-      ["SOURCE_TABLE", bucketRaw.toAthenaTable()],
+      ["SOURCE_TABLE", table.tableName],
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
       ["BUSINESS_OBJECT", businessObjectName],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
@@ -728,13 +851,19 @@ export class UCPInfraStack extends Stack {
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
     //6- Job Triggers
-    let jobTrigger = this.jobTriggerFromCrawler("ucp" + businessObjectName, envName, [crawler], job, workflow)
+    this.scheduledJobTrigger("ucp" + businessObjectName, envName, job, "cron(0 * * * ? *)")
     //7-Cfn Output
     new CfnOutput(this, 'customerBucket' + businessObjectName, {
       value: bucketRaw.bucketName
     });
     new CfnOutput(this, 'customerTestBucket' + businessObjectName, {
       value: testBucketRaw.bucketName
+    });
+    new CfnOutput(this, 'tableName' + businessObjectName, {
+      value: table.tableName
+    });
+    new CfnOutput(this, 'testTableName' + businessObjectName, {
+      value: testTable.tableName
     });
     new CfnOutput(this, 'customerJobName' + businessObjectName, {
       value: job.name || "",
@@ -745,7 +874,9 @@ export class UCPInfraStack extends Stack {
 
     return {
       connectorJobName: industryConnectorJob.name ?? "",
+      customerJobName: job.name ?? "",
       bucket: bucketRaw,
+      tableName: table.tableName,
     }
   }
 
@@ -755,7 +886,7 @@ export class UCPInfraStack extends Stack {
         name: "glueetl",
         scriptLocation: "s3://" + artifactBucket + "/" + envName + "/etl/" + scriptName + ".py"
       },
-      glueVersion: "2.0",
+      glueVersion: "4.0",
       defaultArguments: {
         '--enable-continuous-cloudwatch-log': 'true',
         "--job-bookmark-option": "job-bookmark-enable",
@@ -775,11 +906,59 @@ export class UCPInfraStack extends Stack {
     return job
   }
 
+  table(scope: Construct, businessObjectName: string, envName: string, glueDb: Database, glueSchemas: Map<string, GlueSchema>, bucketRaw: s3.IBucket): Table {
+    return new Table(scope, "ucpTable" + businessObjectName + envName, {
+      database: glueDb,
+      columns: glueSchemas.get(businessObjectName)?.columns || [],
+      partitionKeys: [
+        {
+          name: 'year',
+          type: Schema.SMALL_INT,
+        },
+        {
+          name: 'month',
+          type: Schema.SMALL_INT,
+        },
+        {
+          name: 'day',
+          type: Schema.SMALL_INT,
+        }
+      ],
+      partitionIndexes: [{ keyNames: ['year', 'month', 'day'], indexName: "last_updated" }],
+      dataFormat: DataFormat.JSON,
+      bucket: bucketRaw,
+    })
+  }
 
+
+  crawler(scope: Construct, id: string, glueDb: Database, table: Table, dataLakeAdminRole: iam.Role): glue.CfnCrawler {
+    return new glue.CfnCrawler(scope, id, {
+      role: dataLakeAdminRole.roleArn,
+      name: id,
+      description: `Glue crawler for ${table.tableName} (${id})`,
+      targets: {
+        catalogTargets: [{
+          databaseName: glueDb.databaseName,
+          tables: [table.tableName]
+        }]
+      },
+      schemaChangePolicy: {
+        deleteBehavior: "LOG",
+        updateBehavior: 'LOG',
+      },
+      configuration: `{
+        "Version": 1.0,
+        "CrawlerOutput": {
+            "Partitions": { "AddOrUpdateBehavior": "InheritFromTable" }
+         }
+     }`,
+      databaseName: glueDb.databaseName
+    })
+  }
 
 
   jobTriggerFromCrawler(prefix: string, envName: string, crawlers: Array<CfnCrawler>, job: CfnJob, workflow?: CfnWorkflow): CfnTrigger {
-    let conditions = []
+    let conditions: CfnTrigger.ConditionProperty[] = []
     for (let crawler of crawlers) {
       conditions.push({
         crawlerName: crawler.name,
@@ -806,8 +985,8 @@ export class UCPInfraStack extends Stack {
     return trigger
   }
 
-  jobOnDemandTrigger(prefix: string, envName: string, jobs: Array<CfnJob>, workflow?: CfnWorkflow) {
-    let actions = []
+  jobOnDemandTrigger(prefix: string, envName: string, jobs: Array<CfnJob>, workflow?: CfnWorkflow): glue.CfnTrigger {
+    let actions: glue.CfnTrigger.ActionProperty[] = []
     for (let job of jobs) {
       actions.push({ jobName: job.name })
     }
@@ -823,7 +1002,7 @@ export class UCPInfraStack extends Stack {
     return trigger
   }
 
-  crawlerOnDemandTrigger(prefix: string, envName: string, crawler: CfnCrawler, workflow?: CfnWorkflow) {
+  crawlerOnDemandTrigger(prefix: string, envName: string, crawler: CfnCrawler, workflow?: CfnWorkflow): glue.CfnTrigger {
     let trigger = new CfnTrigger(this, prefix + "crawlerOnDemandTrigger" + envName, {
       type: "ON_DEMAND",
       name: crawler.name + "crawlerOnDemandTrigger" + envName,
@@ -884,8 +1063,6 @@ export class UCPInfraStack extends Stack {
   scheduledJobTrigger(prefix: string, envName: string, job: CfnJob, cron: string, workflow?: CfnWorkflow): CfnTrigger {
     let trigger = new CfnTrigger(this, prefix + "scheduledJobTrigger" + envName, {
       type: "SCHEDULED",
-      name: prefix + "scheduledJobTrigger" + envName,
-      //every hour:  "cron(10 * * * ? *)"
       schedule: cron,
       startOnCreation: true,
       actions: [

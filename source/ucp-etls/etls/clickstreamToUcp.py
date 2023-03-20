@@ -6,6 +6,7 @@ from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.dynamicframe import DynamicFrame
 
+
 # Change import based on business object
 from tah_lib.clickstreamTransform import buildObjectRecord
 from tah_lib.etl_utils import writeToS3
@@ -15,7 +16,7 @@ args = getResolvedOptions(
     sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET'])
 
 businessObject = glueContext.create_dynamic_frame.from_catalog(
-    database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"])
+    database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"], additional_options={"recurse": True})
 
 count = businessObject.count()
 businessObject.printSchema()

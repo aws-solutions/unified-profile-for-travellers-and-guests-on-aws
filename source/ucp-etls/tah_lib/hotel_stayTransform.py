@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from tah_lib.common import setTimestamp
+from tah_lib.common import setTimestamp, parseNumber
 
 
 def buildObjectRecord(rec):
@@ -29,7 +29,7 @@ def buildObjectRecord(rec):
             newRec["hotel_code"] = rec.get("hotelCode", "")
             newRec["type"] = item.get("type", "")
             newRec["description"] = item.get("description", "")
-            newRec["amount"] = item.get("amount", "")
+            newRec["amount"] = parseNumber(item.get("amount", ""))
             newRec["date"] = item.get("date", "")
             if newRec["traveller_id"] == "":
                 newRec["traveller_id"] = str(

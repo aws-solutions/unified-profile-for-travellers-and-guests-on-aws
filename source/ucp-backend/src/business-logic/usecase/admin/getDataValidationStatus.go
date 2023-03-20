@@ -120,7 +120,58 @@ func (u *GetDataValidationStatus) Run(req model.RequestWrapper) (model.ResponseW
 			res.DataValidation = append(res.DataValidation, valErr)
 		}
 	}
-	return res, nil
+
+	//Adding resources to return to the front end
+	s3BucketsToReturn := map[string]string{}
+	for key, bucket := range bizObjectBuckets {
+		s3BucketsToReturn[key] = bucket
+	}
+	s3BucketsToReturn["CONNECT_PROFILE_SOURCE_BUCKET"] = u.reg.Env["CONNECT_PROFILE_SOURCE_BUCKET"]
+
+	jobNames := []string{
+		u.reg.Env["HOTEL_BOOKING_JOB_NAME"],
+		u.reg.Env["AIR_BOOKING_JOB_NAME"],
+		u.reg.Env["GUEST_PROFILE_JOB_NAME"],
+		u.reg.Env["PAX_PROFILE_JOB_NAME"],
+		u.reg.Env["CLICKSTREAM_JOB_NAME"],
+		u.reg.Env["HOTEL_STAY_JOB_NAME"],
+		u.reg.Env["HOTEL_BOOKING_JOB_NAME_CUSTOMER"],
+		u.reg.Env["AIR_BOOKING_JOB_NAME_CUSTOMER"],
+		u.reg.Env["GUEST_PROFILE_JOB_NAME_CUSTOMER"],
+		u.reg.Env["PAX_PROFILE_JOB_NAME_CUSTOMER"],
+		u.reg.Env["CLICKSTREAM_JOB_NAME_CUSTOMER"],
+		u.reg.Env["HOTEL_STAY_JOB_NAME_CUSTOMER"],
+	}
+	wg = sync.WaitGroup{}
+	jobs := []model.JobSummary{}
+	wg.Add(len(jobNames))
+	var jobStatusErr error
+	for _, jobName := range jobNames {
+		go func(name string) {
+			lastRun, status, err := u.reg.Glue.GetJobRunStatus(name)
+			if err != nil {
+				u.tx.Log("Error getting job run status %v => %v", name, err)
+				jobStatusErr = err
+			}
+
+			mu.Lock()
+			jobs = append(jobs, model.JobSummary{
+				JobName:     name,
+				LastRunTime: lastRun,
+				Status:      status,
+			})
+			mu.Unlock()
+			wg.Done()
+		}(jobName)
+	}
+	wg.Wait()
+
+	res.AwsResources = model.AwsResources{
+		S3Buckets: s3BucketsToReturn,
+		Jobs:      jobs,
+	}
+
+	return res, jobStatusErr
 }
 
 func (u *GetDataValidationStatus) CreateResponse(res model.ResponseWrapper) (events.APIGatewayProxyResponse, error) {

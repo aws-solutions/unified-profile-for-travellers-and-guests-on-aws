@@ -3,7 +3,7 @@ import { UcpService } from '../service/ucpService';
 import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { SessionService } from '../service/sessionService';
-import { faCog, faBackward, faForward, faHome, faRefresh } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faBackward, faForward, faHome, faRefresh, faPlane, faUser, faExternalLink, faUsd, faHotel, faMousePointer } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
 import { PaginationOptions } from '../model/pagination.model'
 @Component({
@@ -17,6 +17,7 @@ export class SettingComponent implements OnInit {
   faBackward = faBackward;
   faForward = faForward;
   faRefresh = faRefresh;
+  faExternalLink = faExternalLink;
   domain: any = {};
   validationPagination: PaginationOptions = {
     page: 0,
@@ -24,13 +25,23 @@ export class SettingComponent implements OnInit {
   }
   validationPaginationSeverSide: PaginationOptions = {
     page: 0,
-    pageSize: 20
+    pageSize: 10
   }
   validationErrorsInView = [];
   industryConnectorSolutions: [];
-
+  dataSourceLocations = [];
+  jobs = []
   selectedDomain: any;
   validationErrors = []
+  objectBucketNameMappning = {
+    CONNECT_PROFILE_SOURCE_BUCKET: { text: "Traveller Profile Records", icon: faUser },
+    S3_AIR_BOOKING: { text: "Air Booking", icon: faPlane },
+    S3_CLICKSTREAM: { text: "Clickstream", icon: faMousePointer },
+    S3_GUEST_PROFILE: { text: "Guest Profiles", icon: faUser },
+    S3_HOTEL_BOOKING: { text: "Hotel Booking", icon: faHotel },
+    S3_PAX_PROFILE: { text: "Passenger Profiles", icon: faUser },
+    S3_STAY_REVENUE: { text: "Stay Revenue", icon: faUsd },
+  }
   industryConnectors: any[] = [
     {
       id: "hapi",
@@ -67,6 +78,22 @@ export class SettingComponent implements OnInit {
       console.log(res)
       Array.prototype.push.apply(this.validationErrors, res.dataValidation)
       this.updateValidationTable()
+      this.dataSourceLocations = []
+      for (let obj of Object.keys(res.awsResources.S3Buckets)) {
+        this.dataSourceLocations.push({
+          "objectName": this.objectBucketNameMappning[obj].text,
+          "bucketName": res.awsResources.S3Buckets[obj],
+          "icon": this.objectBucketNameMappning[obj].icon
+        })
+      }
+      this.jobs = []
+      for (let job of res.awsResources.jobs) {
+        this.jobs.push({
+          "name": job.jobName,
+          "lastRunTime": job.lastRunTime,
+          "status": job.status
+        })
+      }
     })
   }
 

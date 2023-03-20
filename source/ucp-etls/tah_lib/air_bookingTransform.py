@@ -2,7 +2,7 @@
 import uuid
 import traceback
 from datetime import datetime
-from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setBillingAddress, setTravellerId, getExternalId, setPaymentInfo, setTimestamp
+from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setBillingAddress, setTravellerId, getExternalId, setPaymentInfo, setTimestamp, parseNumber
 
 
 def noneToList(val):
@@ -57,8 +57,8 @@ def buildObjectRecord(rec):
                         'last_updated_by': rec.get("lastUpdatedBy", ""),
                         "id": loyalty.get("id", ""),
                         "program_name": loyalty.get("programName", ""),
-                        "miles": loyalty.get("miles", ""),
-                        "miles_to_next_level": loyalty.get("milesToNextLevel", ""),
+                        "miles": parseNumber(loyalty.get("miles", "")),
+                        "miles_to_next_level": parseNumber(loyalty.get("milesToNextLevel", "")),
                         "level": loyalty.get("level", ""),
                         "joined": loyalty.get("joined", "")
                     }
@@ -104,7 +104,7 @@ def addAirBookingRecord(recs, rec, pax, seg, cid):
         "date_of_birth": pax.get("dateOfBirth", ""),
         "job_title": pax.get("jobTitle", ""),
         "company": pax.get("parentCompany", ""),
-        "price": rec.get("price", {}).get("grandTotal", ""),
+        "price": parseNumber(rec.get("price", {}).get("grandTotal", "")),
     }
     airBookingRec["nationality_code"] = rec.get(
         'nationality', {}).get("code", "")

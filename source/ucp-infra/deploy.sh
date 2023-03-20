@@ -75,6 +75,12 @@ else
     customerTestBuckethotelstay=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBuckethotelstay'].OutputValue" --output text)
     connectProfileImportBucketOut=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileImportsBucketOut'].OutputValue" --output text)
     connectProfileImportBucketTestOut=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='connectProfileImportBucketTestOut'].OutputValue" --output text)
+    testTableNameairbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNameairbooking'].OutputValue" --output text)
+    testTableNameclickstream=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNameclickstream'].OutputValue" --output text)
+    testTableNameguestprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNameguestprofile'].OutputValue" --output text)
+    testTableNamehotelbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNamehotelbooking'].OutputValue" --output text)
+    testTableNamehotelstay=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNamehotelstay'].OutputValue" --output text)
+    testTableNamepaxprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='testTableNamepaxprofile'].OutputValue" --output text)
     lambdaFunctionNameRealTime=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='lambdaFunctionNameRealTime'].OutputValue" --output text)
     kinesisStreamNameRealTime=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='kinesisStreamNameRealTime'].OutputValue" --output text)
     kinesisStreamOutputNameRealTime=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='kinesisStreamOutputNameRealTime'].OutputValue" --output text)
@@ -173,6 +179,12 @@ else
          "\"customerTestBuckethotelstay\":\"$customerTestBuckethotelstay\","\
          "\"connectProfileImportBucketOut\":\"$connectProfileImportBucketOut\","\
          "\"connectProfileImportBucketTestOut\":\"$connectProfileImportBucketTestOut\","\
+         "\"testTableNameairbooking\":\"$testTableNameairbooking\","\
+         "\"testTableNameclickstream\":\"$testTableNameclickstream\","\
+         "\"testTableNameguestprofile\":\"$testTableNameguestprofile\","\
+         "\"testTableNamehotelbooking\":\"$testTableNamehotelbooking\","\
+         "\"testTableNamehotelstay\":\"$testTableNamehotelstay\","\
+         "\"testTableNamepaxprofile\":\"$testTableNamepaxprofile\","\
          "\"lambdaFunctionNameRealTime\":\"$lambdaFunctionNameRealTime\","\
          "\"kinesisStreamNameRealTime\":\"$kinesisStreamNameRealTime\","\
          "\"kinesisStreamOutputNameRealTime\":\"$kinesisStreamOutputNameRealTime\","\

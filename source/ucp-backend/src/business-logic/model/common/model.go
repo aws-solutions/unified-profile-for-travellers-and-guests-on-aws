@@ -58,10 +58,17 @@ type ResponseWrapper struct {
 	AwsResources    AwsResources               `json:"awsResources"`
 }
 
+type JobSummary struct {
+	JobName     string    `json:"jobName"`
+	LastRunTime time.Time `json:"lastRunTime"`
+	Status      string    `json:"status"`
+}
+
 type AwsResources struct {
 	GlueRoleArn              string            `json:"glueRoleArn"`
 	TahConnectorBucketPolicy string            `json:"tahConnectorBucketPolicy"`
 	S3Buckets                map[string]string `json:"S3Buckets"`
+	Jobs                     []JobSummary      `json:"jobs"`
 }
 
 type Connector struct {
@@ -138,6 +145,7 @@ var ERR_TYPE_MISSING_MANDATORY_FIELD = "missing_column_mandatory_field"
 var ERR_TYPE_MISSING_MANDATORY_FIELD_VALUE = "missing_column_mandatory_field_value"
 var ERR_TYPE_MISSING_INDEX_FIELD_VALUE = "missing_index_field_value"
 var ERR_TYPE_NO_HEADER = "missing_header"
+var ERR_TYPE_ACCESSS_ERROR = "no_object_access"
 
 type ValidationError struct {
 	ErrType string `json:"errType"`
