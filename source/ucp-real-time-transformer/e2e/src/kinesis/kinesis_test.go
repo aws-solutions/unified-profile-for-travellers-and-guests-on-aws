@@ -5,7 +5,9 @@ import (
 	"log"
 	"os"
 	"reflect"
+	customerprofiles "tah/core/customerprofiles"
 	kinesis "tah/core/kinesis"
+	kms "tah/core/kms"
 	"testing"
 )
 
@@ -13,6 +15,7 @@ var KINESIS_NAME_REAL_TIME = os.Getenv("KINESIS_NAME_REAL_TIME")
 var LAMBDA_NAME_REAL_TIME = os.Getenv("LAMBDA_NAME_REAL_TIME")
 var KINESIS_NAME_OUTPUT_REAL_TIME = os.Getenv("KINESIS_NAME_OUTPUT_REAL_TIME")
 var UCP_REGION = getRegion()
+var profile_id string = "id-123"
 
 type businessObjectRecord struct {
 	ObjectType   string      `json:"objectType"`
@@ -24,6 +27,15 @@ func TestKinesis(t *testing.T) {
 	log.Printf("E2EDataStream] Running E2E test for data stream")
 	incfg := kinesis.Init(KINESIS_NAME_REAL_TIME, UCP_REGION)
 	outcfg := kinesis.Init(KINESIS_NAME_OUTPUT_REAL_TIME, UCP_REGION)
+
+	kmsc := kms.Init(UCP_REGION)
+	keyArn, err1 := kmsc.CreateKey("kinesis-unit-test-key")
+	if err1 != nil {
+		t.Errorf("Could not create KMS key to unit test UCP %v", err1)
+	}
+	customCfg := customerprofiles.Init(UCP_REGION)
+	domainName := "test-domain"
+	err := customCfg.CreateDomain(domainName, true, keyArn, map[string]string{"key": "value"})
 
 	outcfg.InitConsumer(kinesis.ITERATOR_TYPE_LATEST)
 	log.Printf("E2EDataStream] 1- sending records to kinesis stream %v", KINESIS_NAME_REAL_TIME)
@@ -85,6 +97,20 @@ func TestKinesis(t *testing.T) {
 			t.Errorf("[E2EDataStream] first record should be %v and second %v", string(first), recs[0].Data)
 		}
 	}
+
+	accpProfileID, err3 := customCfg.GetProfileId(profile_id)
+	if err3 != nil {
+		t.Errorf("Error getting profile, exception thrown")
+	}
+	if accpProfileID == "" {
+		t.Errorf("Error getting profile or profile does not exist")
+	}
+
+	err4 := customCfg.DeleteDomain()
+	if err4 != nil {
+		t.Errorf("Error deleting domain")
+	}
+
 }
 
 func getRegion() string {

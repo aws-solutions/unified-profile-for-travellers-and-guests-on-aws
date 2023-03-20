@@ -644,8 +644,8 @@ export class UCPInfraStack extends Stack {
         },
         lambdaFunctionProps: {
           runtime: lambda.Runtime.GO_1_X,
-          handler: 'index.handler',
-          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeACCPPrefix, 'main.zip'].join("/")),
+          handler: 'main',
+          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeACCPPrefix, 'mainAccp.zip'].join("/")),
           deadLetterQueueEnabled: true,
           functionName: ucpEtlRealTimeACCPPrefix + type + envName,
           environment: {
@@ -666,8 +666,8 @@ export class UCPInfraStack extends Stack {
           deadLetterQueueEnabled: true,
           functionName: ucpEtlRealTimeLambdaPrefix + type + envName,
           environment: {
-            output_stream: outputDataStream.streamName,
-            output_stream_real: kinesisLambdaACCP.kinesisStream.streamName
+            output_stream_real: outputDataStream.streamName,
+            output_stream: kinesisLambdaACCP.kinesisStream.streamName
           }
         }
       });
@@ -675,13 +675,21 @@ export class UCPInfraStack extends Stack {
       outputDataStream.grantReadWrite(kinesisLambdaStart.lambdaFunction)
       kinesisLambdaACCP.kinesisStream.grantReadWrite(kinesisLambdaStart.lambdaFunction)
       const dlqvalue = kinesisLambdaStart.lambdaFunction.deadLetterQueue
+      const dlqvalueACCP = kinesisLambdaACCP.lambdaFunction.deadLetterQueue
       let dlqname = ""
+      let dlqnameACCP = ""
       if (dlqvalue) {
         dlqvalue.grantConsumeMessages(kinesisLambdaStart.lambdaFunction)
         dlqvalue.grantSendMessages(kinesisLambdaStart.lambdaFunction)
         dlqname = dlqvalue.queueUrl
       }
+      if (dlqvalueACCP) {
+        dlqvalueACCP.grantConsumeMessages(kinesisLambdaACCP.lambdaFunction)
+        dlqvalueACCP.grantSendMessages(kinesisLambdaACCP.lambdaFunction)
+        dlqnameACCP = dlqvalueACCP.queueUrl
+      }
       kinesisLambdaStart.lambdaFunction.addEnvironment("dlqname", dlqname)
+      kinesisLambdaACCP.lambdaFunction.addEnvironment("dlqname", dlqnameACCP)
 
       new CfnOutput(this, "lambdaFunctionNameRealTime" + type, {value : kinesisLambdaStart.lambdaFunction.functionName});
       new CfnOutput(this, "kinesisStreamNameRealTime" + type, {value: kinesisLambdaStart.kinesisStream.streamName});
