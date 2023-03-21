@@ -620,19 +620,6 @@ export class UCPInfraStack extends Stack {
     // KINESIS DATASTREAM FOR REAL TIME FLOW
     ////////////////////////
 
-    const input_stream_name = "ucp_connector_input_stream" + envName
-    const output_stream_name = "ucp_connector_output_stream" + envName
-
-    let streamKey = new kms.Key(this, 'dataStreamKey', {
-      enableKeyRotation: true,
-    });
-
-    let outputDataStream = new kinesis.Stream(this, 'OutputDataStream', {
-      encryption: kinesis.StreamEncryption.KMS,
-      encryptionKey: streamKey,
-      streamName: output_stream_name,
-    });
-
     const ucpEtlRealTimeLambdaPrefix = "ucpRealTimeTransformer"
     const ucpEtlRealTimeACCPPrefix = "ucpRealTimeTransformerAccp"
     for (let type of ["", "Test"]) {
@@ -666,13 +653,11 @@ export class UCPInfraStack extends Stack {
           deadLetterQueueEnabled: true,
           functionName: ucpEtlRealTimeLambdaPrefix + type + envName,
           environment: {
-            output_stream_real: outputDataStream.streamName,
             output_stream: kinesisLambdaACCP.kinesisStream.streamName
           }
         }
       });
 
-      outputDataStream.grantReadWrite(kinesisLambdaStart.lambdaFunction)
       kinesisLambdaACCP.kinesisStream.grantReadWrite(kinesisLambdaStart.lambdaFunction)
       const dlqvalue = kinesisLambdaStart.lambdaFunction.deadLetterQueue
       const dlqvalueACCP = kinesisLambdaACCP.lambdaFunction.deadLetterQueue
