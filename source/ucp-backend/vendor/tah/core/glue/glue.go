@@ -18,6 +18,12 @@ var JOB_RUN_STATUS_NOT_RUNNING = "not_running"
 var JOB_RUN_STATUS_UNKNOWN = "unknown"
 var WAIT_DELAY = 5
 
+//Glue allows 100 partitions in batch create
+var GLUE_PARTITION_BATCH_SIZE = 100
+
+//Glue allows 25 partitions in batch delete
+var GLUE_PARTITION_DELETE_BATCH_SIZE = 25
+
 type Config struct {
 	Client *glue.Glue
 	Region string
@@ -34,6 +40,11 @@ type Crawler struct {
 	Name            string
 	State           string
 	LastCrawlStatus string
+}
+
+type Partition struct {
+	Values   []string
+	Location string
 }
 
 type Table struct {
@@ -202,14 +213,106 @@ func (c Config) WaitForCrawlerRun(name string, timeoutSeconds int) (string, erro
 	return crawler.LastCrawlStatus, err
 }
 
-func (c Config) CreateTable(name string) error {
+func (c Config) CreateTable(name string, bucketName string, partitionKeys map[string]string) error {
+	pKeys := []*glue.Column{}
+	for key, keyType := range partitionKeys {
+		pKeys = append(pKeys, &glue.Column{
+			Name: aws.String(key),
+			Type: aws.String(keyType),
+		})
+	}
 	_, err := c.Client.CreateTable(&glue.CreateTableInput{
 		DatabaseName: aws.String(c.DbName),
 		TableInput: &glue.TableInput{
 			Name: aws.String(name),
+			StorageDescriptor: &glue.StorageDescriptor{
+				Location: aws.String("s3://bucketName"),
+			},
+			PartitionKeys: pKeys,
 		},
 	})
 	return err
+}
+
+func (c Config) AddPartitionsToTable(tableName string, partitions []Partition) []error {
+	errs := []error{}
+	log.Printf("Total Number of Partitions to create: %v", len(partitions))
+	batchedPartitions := core.Chunk(core.InterfaceSlice(partitions), GLUE_PARTITION_BATCH_SIZE)
+	for i, batch := range batchedPartitions {
+		partitionInputs := []*glue.PartitionInput{}
+		for _, ifce := range batch {
+			part := ifce.(Partition)
+			partitionInputs = append(partitionInputs, &glue.PartitionInput{
+				Values: aws.StringSlice(part.Values),
+				StorageDescriptor: &glue.StorageDescriptor{
+					Location:     aws.String(part.Location),
+					InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
+					OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
+					Compressed:   aws.Bool(false),
+					SerdeInfo: &glue.SerDeInfo{
+						SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
+					},
+				},
+			})
+		}
+		log.Printf("[batch-%d] Number of Partitions to create: %v", i, len(partitionInputs))
+		out, err := c.Client.BatchCreatePartition(&glue.BatchCreatePartitionInput{
+			DatabaseName:       aws.String(c.DbName),
+			TableName:          aws.String(tableName),
+			PartitionInputList: partitionInputs,
+		})
+		if err != nil {
+			errs = append(errs, err)
+		}
+		for _, creationErr := range out.Errors {
+			if creationErr.ErrorDetail != nil && creationErr.ErrorDetail.ErrorMessage != nil {
+				part := ""
+				for _, val := range creationErr.PartitionValues {
+					part += *val + "/"
+				}
+				errs = append(errs, errors.New(fmt.Sprintf("[partition_create_error][%s] %v", part, *creationErr.ErrorDetail.ErrorMessage)))
+			} else {
+				errs = append(errs, errors.New("unknown partition creation error"))
+			}
+		}
+	}
+	return errs
+}
+
+func (c Config) RemovePartitionsFromTable(tableName string, partitions []Partition) []error {
+	errs := []error{}
+	log.Printf("Total Number of Partitions to delete: %v", len(partitions))
+	batchedPartitions := core.Chunk(core.InterfaceSlice(partitions), GLUE_PARTITION_DELETE_BATCH_SIZE)
+	for i, batch := range batchedPartitions {
+		partitionInputs := []*glue.PartitionValueList{}
+		for _, ifce := range batch {
+			part := ifce.(Partition)
+			partitionInputs = append(partitionInputs, &glue.PartitionValueList{
+				Values: aws.StringSlice(part.Values),
+			})
+		}
+		log.Printf("[batch-%d] Number of Partitions to delete: %v", i, len(partitionInputs))
+		out, err := c.Client.BatchDeletePartition(&glue.BatchDeletePartitionInput{
+			DatabaseName:       aws.String(c.DbName),
+			TableName:          aws.String(tableName),
+			PartitionsToDelete: partitionInputs,
+		})
+		if err != nil {
+			errs = append(errs, err)
+		}
+		for _, creationErr := range out.Errors {
+			if creationErr.ErrorDetail != nil && creationErr.ErrorDetail.ErrorMessage != nil {
+				part := ""
+				for _, val := range creationErr.PartitionValues {
+					part += *val + "/"
+				}
+				errs = append(errs, errors.New(fmt.Sprintf("[partition_delete_error][%s] %v", part, *creationErr.ErrorDetail.ErrorMessage)))
+			} else {
+				errs = append(errs, errors.New("unknown partition deletion error"))
+			}
+		}
+	}
+	return errs
 }
 
 func (c Config) GetTable(name string) (Table, error) {

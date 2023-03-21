@@ -10,108 +10,119 @@ func BuildHotelStayMapping() customerprofiles.FieldMappings {
 			Source: "_source.model_version",
 			Target: "_order.Attributes.model_version",
 		},
+		{
+			Type:   "STRING",
+			Source: "_source.object_type",
+			Target: "_order.Attributes.object_type",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.last_updated",
+			Target: "_order.Attributes.last_updated",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.last_updated_by",
+			Target: "_order.Attributes.last_updated_by",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.created_on",
+			Target: "_order.Attributes.created_on",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.created_by",
+			Target: "_order.Attributes.created_by",
+		},
+
 		// Profile Data
 		{
 			Type:        "STRING",
 			Source:      "_source.traveller_id",
-			Target:      "_profile.profileId",
+			Target:      "_profile.Attributes.profile_id",
 			Searcheable: true,
 			Indexes:     []string{"PROFILE"},
 		},
+
 		//Order Data
 		{
-			Type:    "STRING",
-			Source:  "_source.id",
-			Target:  "_order.Attributes.confirmationNumber",
-			Indexes: []string{"UNIQUE", "ORDER"},
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.creationChannelId",
-			Target: "_order.Name",
-		},
-
-		{
-			Type:   "STRING",
-			Source: "_source.nGuests",
-			Target: "_order.Attributes.nGuests",
+			Type:        "STRING",
+			Source:      "_source.id",
+			Target:      "_order.Attributes.id",
+			Searcheable: true,
+			Indexes:     []string{"UNIQUE", "ORDER"},
 		},
 		{
 			Type:        "STRING",
-			Source:      "_source.lastName",
-			Target:      "_profile.LastName",
+			Source:      "_source.booking_id",
 			Searcheable: true,
+			Target:      "_order.Attributes.booking_id",
 		},
 		{
 			Type:   "STRING",
-			Source: "_source.hotel_name",
-			Target: "_order.Attributes.hotelName",
+			Source: "_source.currency_code",
+			Target: "_order.Attributes.currency_code",
 		},
 		{
 			Type:   "STRING",
-			Source: "_source.city",
-			Target: "_profile.Address.City",
-		},
-		{
-			Type:        "STRING",
-			Source:      "_source.firstName",
-			Target:      "_profile.FirstName",
-			Searcheable: true,
+			Source: "_source.currency_name",
+			Target: "_order.Attributes.currency_name",
 		},
 		{
 			Type:   "STRING",
-			Source: "_source.total_price",
-			Target: "_order.TotalPrice",
+			Source: "_source.currency_symbol",
+			Target: "_order.Attributes.currency_symbol",
 		},
 		{
 			Type:   "STRING",
-			Source: "_source.startDate",
-			Target: "_order.Attributes.startDate",
+			Source: "_source.first_name",
+			Target: "_order.Attributes.first_name",
 		},
 		{
 			Type:   "STRING",
-			Source: "_source.country",
-			Target: "_profile.Address.Country",
+			Source: "_source.last_name",
+			Target: "_order.Attributes.last_name",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.email",
+			Target: "_order.Attributes.email",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.phone",
+			Target: "_order.Attributes.phone",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.start_date",
+			Target: "_order.Attributes.start_date",
 		},
 		{
 			Type:   "STRING",
 			Source: "_source.hotel_code",
-			Target: "_order.Attributes.hotelCode",
+			Target: "_order.Attributes.hotel_code",
 		},
 		{
 			Type:   "STRING",
-			Source: "_source.nNight",
-			Target: "_order.Attributes.nNights",
+			Source: "_source.type",
+			Target: "_order.Attributes.type",
 		},
 		{
 			Type:   "STRING",
-			Source: "_source.products",
-			Target: "_order.Attributes.products",
+			Source: "_source.description",
+			Target: "_order.Attributes.description",
 		},
 		{
 			Type:   "STRING",
-			Source: "_source.status",
-			Target: "_order.Status",
+			Source: "_source.amount",
+			Target: "_order.Attributes.amount",
 		},
 		{
-			Type:        "STRING",
-			Source:      "_source.email",
-			Target:      "_profile.PersonalEmailAddress",
-			Searcheable: true,
-		},
-		{
-			Type:        "STRING",
-			Source:      "_source.loyaltyId",
-			Target:      "_profile.AccountNumber",
-			Searcheable: true,
-			//TODO: this index should go on a dedicated customer ID field
-			Indexes: []string{"PROFILE"},
-		},
-		{
-			Type:        "STRING",
-			Source:      "_source.phone",
-			Target:      "_profile.PhoneNumber",
-			Searcheable: true,
+			Type:   "STRING",
+			Source: "_source.date",
+			Target: "_order.Attributes.date",
 		},
 	}
 }
