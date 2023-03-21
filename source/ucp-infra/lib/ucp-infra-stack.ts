@@ -691,9 +691,20 @@ export class UCPInfraStack extends Stack {
       kinesisLambdaStart.lambdaFunction.addEnvironment("dlqname", dlqname)
       kinesisLambdaACCP.lambdaFunction.addEnvironment("dlqname", dlqnameACCP)
 
+      kinesisLambdaACCP.lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
+        resources: ["*"],
+        actions: [
+          'profile:PutProfileObject',
+          'profile:ListProfileObjects',
+          'profile:ListProfileObjectTypes',
+          'profile:GetProfileObjectType',
+          'profile:PutProfileObjectType',
+        ]
+      }))
+
       new CfnOutput(this, "lambdaFunctionNameRealTime" + type, {value : kinesisLambdaStart.lambdaFunction.functionName});
       new CfnOutput(this, "kinesisStreamNameRealTime" + type, {value: kinesisLambdaStart.kinesisStream.streamName});
-      new CfnOutput(this, "kinesisStreamOutputNameRealTime" + type, {value: outputDataStream.streamName})
+      new CfnOutput(this, "kinesisStreamOutputNameRealTime" + type, {value: kinesisLambdaACCP.kinesisStream.streamName})
     }
   }
 
