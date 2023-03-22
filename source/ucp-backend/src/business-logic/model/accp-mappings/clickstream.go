@@ -25,7 +25,7 @@ func BuildClickstreamMapping() customerprofiles.FieldMappings {
 		{
 			Type:        "STRING",
 			Source:      "_source.traveller_id",
-			Target:      "_profile.profileId",
+			Target:      "_profile.Attributes.profile_id",
 			Searcheable: true,
 			Indexes:     []string{"PROFILE"},
 		},
