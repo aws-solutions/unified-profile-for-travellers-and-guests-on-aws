@@ -258,6 +258,32 @@ export class UCPCodePipelinesStack extends Stack {
       },
     });
 
+    const realTimeBuild = new codebuild.PipelineProject(this, 'realTimeDeployBuild' + envName, {
+      projectName: "ucp-real-time-" + envName,
+      role: buildProjectRole,
+      encryptionKey: codeBuildKmsKey,
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          install: {
+            "runtime-versions": {
+              golang: GO_VERSION
+            }
+          },
+          build: {
+            commands: [
+              'cd source/ucp-real-time-transformer',
+              'echo "Deploy Real Time code"',
+              'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName,
+            ],
+          },
+        }
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+      },
+    });
+
     const feTest = new codebuild.PipelineProject(this, 'feTestProject' + envName, {
       projectName: "ucp-fe-test-" + envName,
       role: buildProjectRole,
@@ -336,6 +362,13 @@ export class UCPCodePipelinesStack extends Stack {
         new codepipeline_actions.CodeBuildAction({
           actionName: 'buildLambdaCode',
           project: lambdaBuild,
+          input: sourceOutput,
+          runOrder: 2,
+          outputs: [cdkBuildOutputLambda],
+        }),
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'buildLambdaCodeRealTime',
+          project: realTimeBuild,
           input: sourceOutput,
           runOrder: 2,
           outputs: [cdkBuildOutputLambda],
