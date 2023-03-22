@@ -286,7 +286,7 @@ func (c Config) RunJob(name string, args map[string]string) error {
 
 func (c Config) WaitForJobRun(name string, timeoutSeconds int) (string, error) {
 	log.Printf("Waiting for job run to complete")
-	status, err := c.GetJobRunStatus(name)
+	_, status, err := c.GetJobRunStatus(name)
 	if err != nil {
 		return JOB_RUN_STATUS_UNKNOWN, err
 	}
@@ -294,7 +294,7 @@ func (c Config) WaitForJobRun(name string, timeoutSeconds int) (string, error) {
 	for status != glue.JobRunStateSucceeded {
 		log.Printf("Job run Status: %v Waiting 5 seconds before checking again", status)
 		time.Sleep(time.Duration(WAIT_DELAY) * time.Second)
-		status, err = c.GetJobRunStatus(name)
+		_, status, err = c.GetJobRunStatus(name)
 		if err != nil {
 			return JOB_RUN_STATUS_UNKNOWN, err
 		}
@@ -330,14 +330,14 @@ func (c Config) GetJob(jobName string) (Job, error) {
 	return job, nil
 }
 
-func (c Config) GetJobRunStatus(jobName string) (string, error) {
+func (c Config) GetJobRunStatus(jobName string) (time.Time, string, error) {
 	input := &glue.GetJobRunsInput{
 		JobName: &jobName,
 	}
 	output, err := c.Client.GetJobRuns(input)
 	if err != nil {
 		log.Printf("[GetJob] Error getting job runs: %v", err)
-		return JOB_RUN_STATUS_UNKNOWN, err
+		return time.Time{}, JOB_RUN_STATUS_UNKNOWN, err
 	}
 	lastJobRunTime := time.Time{}
 	status := JOB_RUN_STATUS_NOT_RUNNING
@@ -352,7 +352,7 @@ func (c Config) GetJobRunStatus(jobName string) (string, error) {
 		output, err = c.Client.GetJobRuns(input)
 		if err != nil {
 			log.Printf("[GetJob] Error getting job runs: %v", err)
-			return JOB_RUN_STATUS_UNKNOWN, err
+			return lastJobRunTime, JOB_RUN_STATUS_UNKNOWN, err
 		}
 		for _, jobRun := range output.JobRuns {
 			if jobRun.StartedOn.After(lastJobRunTime) {
@@ -361,7 +361,7 @@ func (c Config) GetJobRunStatus(jobName string) (string, error) {
 			}
 		}
 	}
-	return status, nil
+	return lastJobRunTime, status, nil
 }
 
 func (c Config) DeleteJob(jobName string) error {

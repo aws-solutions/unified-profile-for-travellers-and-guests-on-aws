@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -10,7 +11,6 @@ import (
 	glue "tah/core/glue"
 	s3 "tah/core/s3"
 	"testing"
-	"time"
 )
 
 var UCP_REGION = getRegion()
@@ -23,6 +23,12 @@ var TEST_BUCKET_GUEST_PROFILES = os.Getenv("TEST_BUCKET_GUEST_PROFILES")
 var TEST_BUCKET_STAY_REVENUE = os.Getenv("TEST_BUCKET_STAY_REVENUE")
 var TEST_BUCKET_CLICKSTREAM = os.Getenv("TEST_BUCKET_CLICKSTREAM")
 var TEST_BUCKET_ACCP_IMPORT = os.Getenv("TEST_BUCKET_ACCP_IMPORT")
+var TEST_TABLE_AIR_BOOKING = os.Getenv("TEST_TABLE_AIR_BOOKING")
+var TEST_TABLE_HOTEL_BOOKINGS = os.Getenv("TEST_TABLE_HOTEL_BOOKINGS")
+var TEST_TABLE_PAX_PROFILES = os.Getenv("TEST_TABLE_PAX_PROFILES")
+var TEST_TABLE_GUEST_PROFILES = os.Getenv("TEST_TABLE_GUEST_PROFILES")
+var TEST_TABLE_STAY_REVENUE = os.Getenv("TEST_TABLE_STAY_REVENUE")
+var TEST_TABLE_CLICKSTREAM = os.Getenv("TEST_TABLE_CLICKSTREAM")
 var GLUE_JOB_NAME_AIR_BOOKING = os.Getenv("GLUE_JOB_NAME_AIR_BOOKING")
 var GLUE_JOB_NAME_HOTEL_BOOKINGS = os.Getenv("GLUE_JOB_NAME_HOTEL_BOOKINGS")
 var GLUE_JOB_NAME_PAX_PROFILES = os.Getenv("GLUE_JOB_NAME_PAX_PROFILES")
@@ -42,10 +48,12 @@ type BusinessObjectTestConfig struct {
 }
 
 func TestMain(t *testing.T) {
-	schedule := "cron(15 12 * * ? *)"
+	//schedule := "cron(15 12 * * ? *)"
 	glueClient := glue.Init(UCP_REGION, GLUE_DB_NAME)
 	targetBucketHandler := s3.Init(TEST_BUCKET_ACCP_IMPORT, "", UCP_REGION)
-
+	year := "2023"
+	month := "12"
+	day := "01"
 	bizObjectConfigs := []BusinessObjectTestConfig{
 		BusinessObjectTestConfig{
 			ObjectName:   "air_booking",
@@ -55,7 +63,7 @@ func TestMain(t *testing.T) {
 				"data1.json",
 				"data2.json",
 			},
-			GlueTableName: "air_booking_" + time.Now().Format("15_04_05"),
+			GlueTableName: TEST_TABLE_AIR_BOOKING,
 			SourceBucket:  TEST_BUCKET_AIR_BOOKING,
 			CrawlerName:   "glue_e2e_tests_air_booking",
 			TargetPrefix:  "air_booking",
@@ -68,7 +76,7 @@ func TestMain(t *testing.T) {
 				"data1.json",
 				"data2.json",
 			},
-			GlueTableName: "clickstream_" + time.Now().Format("15_04_05"),
+			GlueTableName: TEST_TABLE_CLICKSTREAM,
 			SourceBucket:  TEST_BUCKET_CLICKSTREAM,
 			CrawlerName:   "glue_e2e_tests_clickstream",
 			TargetPrefix:  "clickstream",
@@ -81,7 +89,7 @@ func TestMain(t *testing.T) {
 				"data1.json",
 				"data2.json",
 			},
-			GlueTableName: "guest_profile_" + time.Now().Format("15_04_05"),
+			GlueTableName: TEST_TABLE_GUEST_PROFILES,
 			SourceBucket:  TEST_BUCKET_GUEST_PROFILES,
 			CrawlerName:   "glue_e2e_tests_guest_profile",
 			TargetPrefix:  "guest_profile",
@@ -94,7 +102,7 @@ func TestMain(t *testing.T) {
 				"data1.json",
 				"data2.json",
 			},
-			GlueTableName: "hotel_booking_" + time.Now().Format("15_04_05"),
+			GlueTableName: TEST_TABLE_HOTEL_BOOKINGS,
 			SourceBucket:  TEST_BUCKET_HOTEL_BOOKINGS,
 			CrawlerName:   "glue_e2e_tests_hotel_booking",
 			TargetPrefix:  "hotel_booking",
@@ -107,7 +115,7 @@ func TestMain(t *testing.T) {
 				"data1.json",
 				"data2.json",
 			},
-			GlueTableName: "hotel_stay_" + time.Now().Format("15_04_05"),
+			GlueTableName: TEST_TABLE_STAY_REVENUE,
 			SourceBucket:  TEST_BUCKET_STAY_REVENUE,
 			CrawlerName:   "glue_e2e_tests_hotel_stay",
 			TargetPrefix:  "hotel_stay_revenue_items",
@@ -120,7 +128,7 @@ func TestMain(t *testing.T) {
 				"data1.json",
 				"data2.json",
 			},
-			GlueTableName: "pax_profile_" + time.Now().Format("15_04_05"),
+			GlueTableName: TEST_TABLE_PAX_PROFILES,
 			SourceBucket:  TEST_BUCKET_PAX_PROFILES,
 			CrawlerName:   "glue_e2e_tests_pax_profile",
 			TargetPrefix:  "pax_profile",
@@ -137,9 +145,11 @@ func TestMain(t *testing.T) {
 			defer wg.Done()
 			log.Printf("[%v] 1-Starting e2e tests", c.ObjectName)
 			sourceBucketHandler := s3.Init(c.SourceBucket, "", UCP_REGION)
-			log.Printf("[%v] 2-Uploading data to s3://%s/%s", c.ObjectName, c.SourceBucket, c.GlueTableName+"/2023/12/01/09/")
+
+			log.Printf("[%v] 2-Uploading data to s3://%s/%s", c.ObjectName, c.SourceBucket, strings.Join([]string{year, month, day}, "/")+"/09/")
 			for _, file := range c.TestFiles {
-				err := sourceBucketHandler.UploadFile(c.GlueTableName+"/2023/12/01/09/"+file, c.TestFilePath+file)
+				unprettyfy(c.TestFilePath + file)
+				err := sourceBucketHandler.UploadFile("2023/12/01/09/"+file, c.TestFilePath+file)
 				if err != nil {
 					testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] Cound not upload files: %v", c.ObjectName, err))
 					cancel()
@@ -153,43 +163,15 @@ func TestMain(t *testing.T) {
 			default: // Default is must to avoid blocking
 			}
 
-			log.Printf("[%v] 3-Create cralwer", c.ObjectName)
-			err := glueClient.CreateSimpleS3Crawler(c.CrawlerName, GLUE_ROLE_NAME, schedule, "s3://"+c.SourceBucket+"/"+c.GlueTableName+"/")
-			if err != nil {
-				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error creating trigger: %v", c.ObjectName, err))
-				cancel()
-				return
-			}
-			select {
-			case <-ctx.Done():
-				log.Printf("[%v] Error in another test. stopping", c.ObjectName)
-				return // Error somewhere, terminate
-			default: // Default is must to avoid blocking
-			}
-
-			log.Printf("[%v] 4-Run Crawler", c.ObjectName)
-			err = glueClient.RunCrawler(c.CrawlerName)
-			if err != nil {
-				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v]  error running crawler: %v", c.ObjectName, err))
-				cancel()
-				return
-			}
-			select {
-			case <-ctx.Done():
-				log.Printf("[%v] Error in another test. stopping", c.ObjectName)
-				return // Error somewhere, terminate
-			default: // Default is must to avoid blocking
-			}
-
-			log.Printf("[%v] 5-Wait for Crawler", c.ObjectName)
-			status, err2 := glueClient.WaitForCrawlerRun(c.CrawlerName, 300)
-			if err2 != nil {
-				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v]  error running crawler: %v", c.ObjectName, err2))
-				cancel()
-				return
-			}
-			if status != "SUCCEEDED" {
-				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v]  crawler completed with non success status %v", c.ObjectName, status))
+			log.Printf("[%v] 3-Add Partitions to table", c.ObjectName)
+			errs := glueClient.AddPartitionsToTable(c.GlueTableName, []glue.Partition{glue.Partition{
+				Values:   []string{year, month, day},
+				Location: "s3://" + c.SourceBucket + "/" + strings.Join([]string{year, month, day}, "/"),
+			}})
+			if len(errs) > 0 {
+				for _, e := range errs {
+					testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error adding partition: %v", c.ObjectName, e))
+				}
 				cancel()
 				return
 			}
@@ -200,7 +182,7 @@ func TestMain(t *testing.T) {
 			default: // Default is must to avoid blocking
 			}
 			log.Printf("[%v] 6-Run job with modified source and targets", c.ObjectName)
-			err = glueClient.RunJob(c.GlueJob, map[string]string{
+			err := glueClient.RunJob(c.GlueJob, map[string]string{
 				"--DEST_BUCKET":  TEST_BUCKET_ACCP_IMPORT,
 				"--SOURCE_TABLE": c.GlueTableName,
 			})
@@ -216,9 +198,9 @@ func TestMain(t *testing.T) {
 			default: // Default is must to avoid blocking
 			}
 			log.Printf("[%v] 7-Wait for job run", c.ObjectName)
-			status, err = glueClient.WaitForJobRun(c.GlueJob, 600)
-			if err != nil {
-				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error waiting for job completion: %v", c.ObjectName, err))
+			status, err2 := glueClient.WaitForJobRun(c.GlueJob, 600)
+			if err2 != nil {
+				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error waiting for job completion: %v", c.ObjectName, err2))
 				cancel()
 				return
 			}
@@ -264,18 +246,28 @@ func TestMain(t *testing.T) {
 							return
 						}
 						//looking for an error header in the CSV that woudl indicate that an exception has occured in the trasformer
+						columns := map[string]bool{}
 						for j, col := range data[0] {
+							columns[col] = true
 							if col == "error" {
 								testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] invalid ETL output: data has an error column: %v", err2, c.ObjectName))
 								for k, row := range data {
 									if row[j] != "" {
-										testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] Error at row %v and col %v : %v", k, j, row[j], c.ObjectName))
+										testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] Error at row %v and col %v : %v", c.ObjectName, k, j, row[j]))
 									}
 								}
 								cancel()
 								return
 							}
 						}
+						mandatoryColumns := []string{"traveller_id", "last_updated", "model_version"}
+						log.Printf("[TestGlue][%v] Checking for mandatory columns %v in CSV file", c.ObjectName, mandatoryColumns)
+						for _, colName := range mandatoryColumns {
+							if !columns[colName] {
+								testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] CSV is missisng mandatory column '%v'", c.ObjectName, colName))
+							}
+						}
+
 						select {
 						case <-ctx.Done():
 							log.Printf("[%v] Error in another test. stopping", c.ObjectName)
@@ -304,13 +296,16 @@ func TestMain(t *testing.T) {
 	for _, c := range bizObjectConfigs {
 		sourceBucketHandler := s3.Init(c.SourceBucket, "", UCP_REGION)
 		log.Printf("[%v] Cleanup", c.ObjectName)
-		err := glueClient.DeleteCrawlerIfExists(c.CrawlerName)
-		if err != nil {
-			t.Errorf("[TestGlue][%v] error deleting crawler: %v", err, c.ObjectName)
+		errs := glueClient.RemovePartitionsFromTable(c.GlueTableName, []glue.Partition{glue.Partition{
+			Values: []string{year, month, day},
+		}})
+		if len(errs) > 0 {
+			t.Errorf("[TestGlue][%v] Error deleting partitions %v", c.ObjectName, errs)
 		}
-		err = sourceBucketHandler.EmptyBucket()
+
+		err := sourceBucketHandler.EmptyBucket()
 		if err != nil {
-			t.Errorf("[TestGlue][%v] Error emptying bucket %v", err, c.ObjectName)
+			t.Errorf("[TestGlue][%v] Error emptying bucket %v", c.ObjectName, err)
 		}
 	}
 	err := targetBucketHandler.EmptyBucket()
@@ -318,6 +313,21 @@ func TestMain(t *testing.T) {
 		t.Errorf("[TestGlue]Error emptying target bucket %v", err)
 	}
 
+}
+
+//unprettyfy json file before upload
+func unprettyfy(path string) error {
+	log.Printf("Unprettyfying: %v", path)
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	log.Printf("before unprettyfy: %v", string(data))
+	unprettyfied := strings.Replace(string(data), "\n", "", -1)
+	unprettyfied = strings.Replace(unprettyfied, "\t", "", -1)
+	log.Printf("after unprettyfy: %v", unprettyfied)
+	err = ioutil.WriteFile(path, []byte(unprettyfied), 0777)
+	return err
 }
 
 // TODO: move this somewhere centralized

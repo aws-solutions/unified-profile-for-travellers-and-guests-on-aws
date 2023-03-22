@@ -26,8 +26,21 @@
         </div>
         <br>
         <div class="section">
-            <div class="title-3">DATA VALIDATION</div>
+            <div class="title-3">DATA REPOSITORIES</div>
             <span class="helper-text">Source data locations</span><br />
+            <br />
+            <div class="row">
+                <div class="col-sm-12">
+                    <a *ngFor="let loc of dataSourceLocations" class="data-repository-icon"
+                        href="https://s3.console.aws.amazon.com/s3/buckets/{{loc.bucketName}}" target="_blank"><fa-icon
+                            [icon]="loc.icon"></fa-icon>{{loc.objectName}}</a>
+                </div>
+            </div>
+            <br />
+        </div>
+        <div class="section">
+            <div class="title-3">DATA VALIDATION</div>
+            <span class="helper-text">Data Validation errors</span><br />
             <br />
             <div class="row">
                 <div class="col-sm-12 align-center">
@@ -86,10 +99,42 @@
 
         </div>
 
-
         <div class="section">
+            <div class="title-3">JOBS</div>
+            <span class="helper-text">Glue Jobs for data transformation and Movements</span><br />
+            <br />
+            <div class="row table-header">
+                <div class="col-sm-4 title align-center block-title">
+                    Job Name
+                </div>
+                <div class="col-sm-4 title align-center block-title">
+                    Last Run
+                </div>
+                <div class="col-sm-4 title align-center block-title">
+                    Status
+                </div>
+            </div>
+            <div class="row table-row " *ngFor="let job of jobs">
+                <div class="col-sm-4 align-center">
+                    <a target="_blank"
+                        href="https://console.aws.amazon.com/gluestudio/home#/editor/job/{{job.name}}/runs"><fa-icon
+                            [icon]="faExternalLink"></fa-icon> {{job.name}}</a>
+                </div>
+                <div class="col-sm-4 align-center">
+                    <span *ngIf="job.lastRunTime === '0001-01-01T00:00:00Z'"><i>Never Ran</i></span>
+                    <span *ngIf="job.lastRunTime !== '0001-01-01T00:00:00Z'">{{job.lastRunTime}}</span>
+                </div>
+                <div class="col-sm-4 align-center">
+                    <span class="job-run-status job-status-{{job.status}}">{{job.status}}</span>
+                </div>
+            </div>
+            <br />
+        </div>
+
+        <div class=" section">
             <div class="title-3">FLOWS</div>
-            <span class="helper-text">List of Business objects integration flows</span><br />
+            <span class="helper-text">Appflow integration flows to Amazon Connect Customer
+                profile</span><br />
             <br />
             <div class="row">
                 <div class="col-sm-2 title align-center block-title">
@@ -120,14 +165,16 @@
                     {{integration.trigger }}
                 </div>
                 <div class="col-sm-3  align-center">
-                    {{(integration.lastRun != '0001-01-01T00:00:00Z') ? (integration.lastRun | date: 'medium') : "No
+                    {{(integration.lastRun != '0001-01-01T00:00:00Z') ? (integration.lastRun | date:
+                    'medium') : "No
                     Run
                     Yet"}}
                 </div>
                 <div class="col-sm-2  align-center">
                     <span class="integration-status"
                         [ngStyle]="{'background-color': getLastRunColorStatus(integration.lastRunStatus)}">
-                        {{integration.lastRunStatus ? integration.lastRunStatus : "No Last Run Deployed"}}</span>
+                        {{integration.lastRunStatus ? integration.lastRunStatus : "No Last Run
+                        Deployed"}}</span>
                 </div>
             </div>
         </div>

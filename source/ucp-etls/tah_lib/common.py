@@ -16,6 +16,16 @@ DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f000Z"
 # if not we will use the unique generated UUID for all ACCP records associated with this guest
 
 
+# resilient float parsing to be used to avoid cases where both int and float would come in for the same value which would lead to
+# CSV data source does not support struct<int:int,double:double> data type.
+# pyspark.sql.utils.AnalysisException: CSV data source does not support struct<int:int,double:double> data type.
+def parseNumber(num):
+    try:
+        return float(num)
+    except:
+        return 0.0
+
+
 def setTravellerId(rec, guestBizObject, uid):
     rec[FIELD_NAME_TRAVELLER_ID] = guestBizObject.get("id", "")
     if rec[FIELD_NAME_TRAVELLER_ID] == "":

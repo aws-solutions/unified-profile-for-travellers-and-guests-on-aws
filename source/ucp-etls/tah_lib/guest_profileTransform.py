@@ -2,7 +2,7 @@ import uuid
 import traceback
 from datetime import datetime
 
-from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setTravellerId, setTimestamp
+from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setTravellerId, setTimestamp, parseNumber
 
 
 def buildObjectRecord(rec):
@@ -83,9 +83,9 @@ def buildObjectRecord(rec):
                 'last_updated_by': rec.get('lastUpdatedBy', ""),
                 'id': loyalty.get('id', ""),
                 'program_name': loyalty.get('programName', ""),
-                'points': loyalty.get('points', ""),
+                'points': parseNumber(loyalty.get('points', "")),
                 'units': loyalty.get('pointUnit', ""),
-                'points_to_next_level': loyalty.get('pointsToNextLevel', ""),
+                'points_to_next_level': parseNumber(loyalty.get('pointsToNextLevel', "")),
                 'level': loyalty.get('level', ""),
                 'joined': loyalty.get('joined'),
             }

@@ -3,7 +3,7 @@ import uuid
 import traceback
 from datetime import datetime
 
-from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setBillingAddress, setTravellerId, getExternalId, setPaymentInfo, buildSerializedLists, setTimestamp
+from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setBillingAddress, setTravellerId, getExternalId, setPaymentInfo, buildSerializedLists, setTimestamp, parseNumber
 
 
 def buildObjectRecord(rec):
@@ -50,8 +50,8 @@ def addBookingRec(bookingRecs, rec, seg, product, guest, cid):
         'last_updated_by': rec.get("lastUpdatedBy", ""),
         'booking_id': rec.get("id", ""),
         'hotel_code': seg.get("hotelCode", ""),
-        'n_nights': rec.get("nNights", ""),
-        'n_guests': rec.get("nGuests", ""),
+        'n_nights': parseNumber(rec.get("nNights", "")),
+        'n_guests': parseNumber(rec.get("nGuests", "")),
         'product_id': product.get("id", ""),
         'check_in_date': rec.get("startDate", ""),
         'honorific': guest.get('honorific', ''),
@@ -63,6 +63,8 @@ def addBookingRec(bookingRecs, rec, seg, product, guest, cid):
         'date_of_birth': guest.get('dateOfBirth', ''),
         'job_title': guest.get('jobTitle', ''),
         'company': guest.get('parentCompany', ''),
+        'totalAfterTax': parseNumber(seg.get('price', {}).get("totalAfterTax", "")),
+        'totalBeforeTax': parseNumber(seg.get('price', {}).get("totalBeforeTax", "")),
     }
     hotelBookingRec["nationality_code"] = rec.get(
         'nationality', {}).get("code", "")

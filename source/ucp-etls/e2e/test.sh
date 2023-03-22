@@ -34,6 +34,13 @@ export TEST_BUCKET_GUEST_PROFILES=$(jq -r .customerTestBucketguestprofile ./ucp-
 export TEST_BUCKET_STAY_REVENUE=$(jq -r .customerTestBuckethotelstay ./ucp-config.json)
 export TEST_BUCKET_CLICKSTREAM=$(jq -r .customerTestBucketclickstream ./ucp-config.json)
 
+export TEST_TABLE_AIR_BOOKING=$(jq -r .testTableNameairbooking ./ucp-config.json)
+export TEST_TABLE_HOTEL_BOOKINGS=$(jq -r .testTableNamehotelbooking ./ucp-config.json)
+export TEST_TABLE_PAX_PROFILES=$(jq -r .testTableNamepaxprofile ./ucp-config.json)
+export TEST_TABLE_GUEST_PROFILES=$(jq -r .testTableNameguestprofile ./ucp-config.json)
+export TEST_TABLE_STAY_REVENUE=$(jq -r .testTableNamehotelstay ./ucp-config.json)
+export TEST_TABLE_CLICKSTREAM=$(jq -r .testTableNameclickstream ./ucp-config.json)
+
 export TEST_BUCKET_ACCP_IMPORT=$(jq -r .connectProfileImportBucketTestOut ./ucp-config.json)
 echo "GLUE_ROLE_NAME: $GLUE_ROLE_NAME"
 echo "GLUE_DB_NAME: $GLUE_DB_NAME"

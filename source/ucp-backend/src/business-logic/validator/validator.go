@@ -67,7 +67,18 @@ func (u Usecase) ValidateObject(bucketName string, object string, mappings []cus
 	allValidationErrors := []model.ValidationError{}
 	data, err1 := s3c.ParseCsvFromS3(object)
 	if err1 != nil {
-		return []model.ValidationError{}, errors.New(fmt.Sprintf("Could not access file %v to validate on S3. Error: %v", object, err1.Error()))
+		return []model.ValidationError{
+			model.ValidationError{
+				ErrType: model.ERR_TYPE_ACCESSS_ERROR,
+				File:    object,
+				Object:  parseObjectName(object),
+				Bucket:  bucketName,
+				Row:     0,
+				Col:     0,
+				ColName: "",
+				Msg:     fmt.Sprintf("Could not access file %v to validate on S3. Error: %v", object, err1.Error()),
+			},
+		}, nil
 	}
 	if len(data) < 2 {
 		u.Uc.Tx().Log("invalid data: %v", data)

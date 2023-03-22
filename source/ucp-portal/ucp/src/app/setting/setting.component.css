@@ -171,3 +171,54 @@ table {
 .form-button {
     margin: 3px;
 }
+
+.data-repository-icon {
+    border: #ccc 2px solid;
+    border-radius: 5px;
+    display: inline-block;
+    padding: 5px;
+    text-decoration: none;
+    color: black;
+    margin: 3px;
+}
+
+.data-repository-icon:hover {
+    background-color: #ccc;
+}
+
+.data-repository-icon fa-icon {
+    margin-right: 3px;
+}
+
+.job-run-status {
+    display: inline-block;
+    padding: 3px;
+    border-radius: 5px;
+    margin: 3px;
+
+}
+
+.job-status-unknown {
+    background-color: #ccc;
+    color: white;
+}
+
+.job-status-not_running {
+    background-color: #ccc;
+    color: white;
+}
+
+.job-status-SUCCEEDED {
+    background-color: green;
+    color: white;
+}
+
+.job-status-FAILED {
+    background-color: firebrick;
+    color: white;
+}
+
+.job-status-RUNNING {
+    background-color: orange;
+    color: white;
+}
