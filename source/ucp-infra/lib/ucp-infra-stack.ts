@@ -397,7 +397,6 @@ export class UCPInfraStack extends Stack {
     });
 
     const rule = new aws_events.Rule(this, 'ucpSyncJob', {
-      ruleName: "ucp_sync_job",
       schedule: aws_events.Schedule.expression('rate(1 hour)'),
       eventPattern: {}
     });
