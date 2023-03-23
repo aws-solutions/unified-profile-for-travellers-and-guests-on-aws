@@ -15,7 +15,7 @@ def buildObjectRecord(rec):
             newRec["last_updated_by"] = rec.get("lastUpdatedBy", "")
             newRec["created_by"] = rec.get("createdBy", "")
             newRec["id"] = rec.get("id", "")
-            newRec["bookingId"] = rec.get("bookingId", "")
+            newRec["booking_id"] = rec.get("bookingId", "")
             newRec["traveller_id"] = rec.get("guestId", "")
             newRec["currency_code"] = rec.get("currency", {}).get("code", "")
             newRec["currency_name"] = rec.get("currency", {}).get("name", "")

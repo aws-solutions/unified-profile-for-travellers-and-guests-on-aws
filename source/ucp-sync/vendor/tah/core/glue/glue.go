@@ -18,8 +18,11 @@ var JOB_RUN_STATUS_NOT_RUNNING = "not_running"
 var JOB_RUN_STATUS_UNKNOWN = "unknown"
 var WAIT_DELAY = 5
 
-//Gluue allows 100 partitions in batch create
-var GLUE_PATITION_BATCH_SIZE = 100
+//Glue allows 100 partitions in batch create
+var GLUE_PARTITION_BATCH_SIZE = 100
+
+//Glue allows 25 partitions in batch delete
+var GLUE_PARTITION_DELETE_BATCH_SIZE = 25
 
 type Config struct {
 	Client *glue.Glue
@@ -234,7 +237,7 @@ func (c Config) CreateTable(name string, bucketName string, partitionKeys map[st
 func (c Config) AddPartitionsToTable(tableName string, partitions []Partition) []error {
 	errs := []error{}
 	log.Printf("Total Number of Partitions to create: %v", len(partitions))
-	batchedPartitions := core.Chunk(core.InterfaceSlice(partitions), GLUE_PATITION_BATCH_SIZE)
+	batchedPartitions := core.Chunk(core.InterfaceSlice(partitions), GLUE_PARTITION_BATCH_SIZE)
 	for i, batch := range batchedPartitions {
 		partitionInputs := []*glue.PartitionInput{}
 		for _, ifce := range batch {
@@ -270,6 +273,42 @@ func (c Config) AddPartitionsToTable(tableName string, partitions []Partition) [
 				errs = append(errs, errors.New(fmt.Sprintf("[partition_create_error][%s] %v", part, *creationErr.ErrorDetail.ErrorMessage)))
 			} else {
 				errs = append(errs, errors.New("unknown partition creation error"))
+			}
+		}
+	}
+	return errs
+}
+
+func (c Config) RemovePartitionsFromTable(tableName string, partitions []Partition) []error {
+	errs := []error{}
+	log.Printf("Total Number of Partitions to delete: %v", len(partitions))
+	batchedPartitions := core.Chunk(core.InterfaceSlice(partitions), GLUE_PARTITION_DELETE_BATCH_SIZE)
+	for i, batch := range batchedPartitions {
+		partitionInputs := []*glue.PartitionValueList{}
+		for _, ifce := range batch {
+			part := ifce.(Partition)
+			partitionInputs = append(partitionInputs, &glue.PartitionValueList{
+				Values: aws.StringSlice(part.Values),
+			})
+		}
+		log.Printf("[batch-%d] Number of Partitions to delete: %v", i, len(partitionInputs))
+		out, err := c.Client.BatchDeletePartition(&glue.BatchDeletePartitionInput{
+			DatabaseName:       aws.String(c.DbName),
+			TableName:          aws.String(tableName),
+			PartitionsToDelete: partitionInputs,
+		})
+		if err != nil {
+			errs = append(errs, err)
+		}
+		for _, creationErr := range out.Errors {
+			if creationErr.ErrorDetail != nil && creationErr.ErrorDetail.ErrorMessage != nil {
+				part := ""
+				for _, val := range creationErr.PartitionValues {
+					part += *val + "/"
+				}
+				errs = append(errs, errors.New(fmt.Sprintf("[partition_delete_error][%s] %v", part, *creationErr.ErrorDetail.ErrorMessage)))
+			} else {
+				errs = append(errs, errors.New("unknown partition deletion error"))
 			}
 		}
 	}

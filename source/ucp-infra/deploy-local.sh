@@ -22,7 +22,7 @@ rm -rf ./tah-common-glue-schemas/*
 aws s3api get-object --bucket $artifactBucket --key $envName/$tahCommonVersion/tah-common-glue-schemas.zip tah-common-glue-schemas.zip
 rc=$?
 if [ $rc -ne 0 ]; then
-    echo "Could not find tah-cdk-common with version $tahCdkCommonVersion $rc" >&2
+    echo "Could not find tah-common with version $tahCommonVersion $rc" >&2
     exit $rc
 fi
 unzip tah-common-glue-schemas.zip -d ./tah-common-glue-schemas
