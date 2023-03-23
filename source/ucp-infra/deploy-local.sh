@@ -8,7 +8,6 @@ tahCommonVersion=$(jq -r '."tah-common"' ../../tah.json)
 
 echo "Downloading shared cdk code"
 echo "Getting tah-cdk-common version $tahCdkCommonVersion"
-echo "$artifactBucket + $envName/$tahCdkCommonVersion/tah-cdk-common.zip"
 rm -r tah-cdk-common
 aws s3api get-object --bucket $artifactBucket --key $envName/$tahCdkCommonVersion/tah-cdk-common.zip tah-cdk-common.zip
 rc=$?
