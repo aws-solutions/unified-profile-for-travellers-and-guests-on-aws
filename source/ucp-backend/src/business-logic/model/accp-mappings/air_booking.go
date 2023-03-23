@@ -349,12 +349,12 @@ func BuildAirBookingMapping() customerprofiles.FieldMappings {
 			Source:      "_source.booking_id",
 			Target:      "_order.Attributes.booking_id",
 			Searcheable: true,
-			Indexes:     []string{"UNIQUE", "ORDER"},
 		},
 		{
 			Type:        "STRING",
 			Source:      "_source.segment_id",
 			Target:      "_order.Attributes.segment_id",
+			Indexes:     []string{"UNIQUE", "ORDER"},
 			Searcheable: true,
 		},
 		{
