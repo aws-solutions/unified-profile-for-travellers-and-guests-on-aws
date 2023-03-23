@@ -195,6 +195,32 @@ export class UCPCodePipelinesStack extends Stack {
         buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
       },
     });
+    
+    const realTimeLambdaBuildIngestor = new codebuild.PipelineProject(this, 'realTimeIngestorBuild' + envName, {
+      projectName: "ucp-ingestor-real-time-" + envName,
+      role: buildProjectRole,
+      encryptionKey: codeBuildKmsKey,
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          install: {
+            "runtime-versions": {
+              golang: GO_VERSION
+            }
+          },
+          build: {
+            commands: [
+              'cd source/ucp-real-time-transformer',
+              'echo "Deploy Real Time code"',
+              'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName,
+            ],
+          },
+        }
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+      },
+    });
 
 
     const firehoselambdaBuild = new codebuild.PipelineProject(this, 'streamLambdaBuilProject' + envName, {
@@ -380,6 +406,7 @@ export class UCPCodePipelinesStack extends Stack {
     //Output Artifacts
     const sourceOutput = new codepipeline.Artifact();
     const cdkBuildOutputLambda = new codepipeline.Artifact('CdkBuildOutputLambda');
+    const cdkBuildOutputLambdaIngestor = new codepipeline.Artifact('CdkBuildOutputLambdaIngestor');
     const cdkBuildOutputLambdaSync = new codepipeline.Artifact('cdkBuildOutputLambdaSync');
     const cdkBuildOutputLambdaRealTime = new codepipeline.Artifact('cdkBuildOutputLambdaRealTime');
     const cdkBuildOutputEtl = new codepipeline.Artifact('CdkBuildOutputEtl');
@@ -443,6 +470,13 @@ export class UCPCodePipelinesStack extends Stack {
           input: sourceOutput,
           runOrder: 2,
           outputs: [cdkBuildOutputLambdaRealTime],
+        }),
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'buildRealTimeLambdaCodeIngestor',
+          project: realTimeLambdaBuildIngestor,
+          input: sourceOutput,
+          runOrder: 2,
+          outputs: [cdkBuildOutputLambdaIngestor],
         }),
         new codepipeline_actions.CodeBuildAction({
           actionName: 'deployInfra',

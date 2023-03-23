@@ -29,7 +29,16 @@ func TestMappings(t *testing.T) {
 	PassengerProfileMapping := BuildPassengerProfileMapping()
 	log.Printf("PassengerProfileMapping: %v", PassengerProfileMapping)
 
+	testMapping(BuildAirBookingMapping().GetSourceNames(), "../../../../test_assets/air_booking_fields.csv", t)
+	testMapping(BuildAirLoyaltyMapping().GetSourceNames(), "../../../../test_assets/air_loyalty_fields.csv", t)
+	testMapping(BuildClickstreamMapping().GetSourceNames(), "../../../../test_assets/clickstream_fields.csv", t)
+	testMapping(BuildEmailHistoryMapping().GetSourceNames(), "../../../../test_assets/email_history_fields.csv", t)
+	testMapping(BuildGuestProfileMapping().GetSourceNames(), "../../../../test_assets/guest_profile_fields.csv", t)
 	testMapping(BuildHotelBookingMapping().GetSourceNames(), "../../../../test_assets/hotel_booking_fields.csv", t)
+	testMapping(BuildHotelLoyaltyMapping().GetSourceNames(), "../../../../test_assets/hotel_loyalty_fields.csv", t)
+	testMapping(BuildHotelStayMapping().GetSourceNames(), "../../../../test_assets/hotel_stay_fields.csv", t)
+	testMapping(BuildPassengerProfileMapping().GetSourceNames(), "../../../../test_assets/pax_profile_fields.csv", t)
+	testMapping(BuildPhoneHistoryMapping().GetSourceNames(), "../../../../test_assets/phone_history_fields.csv", t)
 }
 
 // Compare mapped fields to expected fields from a CSV file.

@@ -1,9 +1,9 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { RemovalPolicy, Fn } from 'aws-cdk-lib';
+import { RemovalPolicy, Fn, Token } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import * as s3 from 'aws-cdk-lib/aws-s3';
+import { aws_s3 as s3 } from 'aws-cdk-lib';
 import { NagSuppressions } from 'cdk-nag';
 
 export class Bucket extends s3.Bucket {

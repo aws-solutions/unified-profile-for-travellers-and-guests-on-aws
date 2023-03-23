@@ -10,14 +10,31 @@ func BuildEmailHistoryMapping() customerprofiles.FieldMappings {
 			Source: "_source.model_version",
 			Target: "_order.Attributes.model_version",
 		},
+		{
+			Type:   "STRING",
+			Source: "_source.object_type",
+			Target: "_order.Attributes.object_type",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.last_updated",
+			Target: "_order.Attributes.last_updated",
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.last_updated_by",
+			Target: "_order.Attributes.last_updated_by",
+		},
+
 		// Profile Data
 		{
 			Type:        "STRING",
 			Source:      "_source.traveller_id",
-			Target:      "_profile.profileId",
+			Target:      "_profile.Attributes.profile_id",
 			Searcheable: true,
 			Indexes:     []string{"PROFILE"},
 		},
+
 		//Order Data
 		{
 			Type:    "STRING",
@@ -27,18 +44,8 @@ func BuildEmailHistoryMapping() customerprofiles.FieldMappings {
 		},
 		{
 			Type:   "STRING",
-			Source: "_source.last_updated_by",
-			Target: "_order.Attributes.last_updated_by",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.last_updated",
-			Target: "_order.Attributes.last_updated",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.object_type",
-			Target: "_order.Attributes.object_type",
+			Source: "_source.type",
+			Target: "_order.Attributes.type",
 		},
 	}
 }
