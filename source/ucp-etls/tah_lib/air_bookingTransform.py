@@ -1,17 +1,14 @@
 
 import uuid
+import json
 import traceback
 from datetime import datetime
-from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setBillingAddress, setTravellerId, getExternalId, setPaymentInfo, setTimestamp, parseNumber
+from tah_lib.common import setPrimaryEmail, setPrimaryPhone, setPrimaryAddress, setBillingAddress, setTravellerId, getExternalId, setPaymentInfo, setTimestamp, parseNumber, noneToList, logErrorToSQS
+
+BIZ_OBJECT_TYPE = "air_booking"
 
 
-def noneToList(val):
-    if val is None:
-        return []
-    return val
-
-
-def buildObjectRecord(rec):
+def buildObjectRecord(rec, errQueueUrl):
     try:
         bookingRecs = []
         emailRecs = []
@@ -65,11 +62,12 @@ def buildObjectRecord(rec):
                     setTravellerId(loyaltyRec, pax, cid)
                     setTimestamp(loyaltyRec)
                     loyaltyRecs.append(loyaltyRec)
-
+        else:
+            raise Exception("Invalid Business object of type", BIZ_OBJECT_TYPE)
     except Exception as e:
         traceback_info = traceback.format_exc()
         print(traceback_info)
-        bookingRecs.append({"error": str(e), "trace": traceback_info})
+        logErrorToSQS(e, rec, errQueueUrl, BIZ_OBJECT_TYPE)
     return {
         'air_booking_recs': bookingRecs,
         'common_email_recs': emailRecs,

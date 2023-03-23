@@ -1,5 +1,7 @@
 
 from datetime import datetime
+import json
+import boto3
 
 SUPPORTED_ADRESS_TYPES = ["", "billing", "business", "mailing"]
 SUPPORTED_ADRESS_FIELDS = ["line1", "line2", "line3",
@@ -10,10 +12,10 @@ FIELD_NAME_LAST_UPDATED = "last_updated"
 FIELD_NAME_LAST_UPDATED_PARTITION = "last_updated_partition"
 # 2021-12-09T07:59:14.873255297Z
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f000Z"
-# this file should eventually contain common functions between all etls
-# this function set the mandatory ACCP traveller ID using the following rule
-# if the guest has an ID provided by customer we use this one
-# if not we will use the unique generated UUID for all ACCP records associated with this guest
+
+SQS_MES_ATTR_UCP_ERROR_TYPE = "UcpErrorType"
+SQS_MES_ATTR_BUSINESS_OBJECT_TYPE_NAME = "BusinessObjectTypeName"
+SQS_MES_ATTR_MESSAGE = "Message"
 
 
 # resilient float parsing to be used to avoid cases where both int and float would come in for the same value which would lead to
@@ -188,3 +190,31 @@ def replaceAndjoin(array, sep):
         item.replace(sep, "")
         parts.append(item)
     return sep.join(parts)
+
+
+def noneToList(val):
+    if val is None:
+        return []
+    return val
+
+
+def logErrorToSQS(e: Exception, rec: dict, errQueueUrl: str, bizObjType: str):
+    client = boto3.client('sqs')
+    client.send_message(
+        QueueUrl=errQueueUrl,
+        MessageBody=json.Dump(rec),
+        MessageAttributes={
+            SQS_MES_ATTR_UCP_ERROR_TYPE: {
+                'StringValue': 'transformer_exception',
+                'DataType': 'string'
+            },
+            SQS_MES_ATTR_BUSINESS_OBJECT_TYPE_NAME: {
+                'StringValue': bizObjType,
+                'DataType': 'string'
+            },
+            SQS_MES_ATTR_MESSAGE: {
+                'StringValue': str(e),
+                'DataType': 'string'
+            }
+        },
+    )

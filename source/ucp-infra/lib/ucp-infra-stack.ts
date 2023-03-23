@@ -15,6 +15,8 @@ import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as aws_events from 'aws-cdk-lib/aws-events';
 import * as aws_events_targets from 'aws-cdk-lib/aws-events-targets';
+import * as lambda_event_sources from 'aws-cdk-lib/aws-lambda-event-sources';
+
 
 import { CorsHttpMethod, HttpApi, HttpMethod, HttpRoute, HttpStage, PayloadFormatVersion } from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpUserPoolAuthorizer } from '@aws-cdk/aws-apigatewayv2-authorizers-alpha';
@@ -109,6 +111,7 @@ export class UCPInfraStack extends Stack {
      ********************/
     const connectorCrawlerQueue = new Queue(this, "ucp-connector-crawler-queue-" + envName)
     const connectorCrawlerDlq = new Queue(this, "ucp-connector-crawler-dlq-" + envName)
+    const accpDomainErrorQueue = new Queue(this, "ucp-acc-domain-errors-" + envName)
 
     /**************
      * Glue Database
@@ -239,10 +242,22 @@ export class UCPInfraStack extends Stack {
       sortKey: { name: dynamo_sk, type: dynamodb.AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY,
     });
+    const dynamo_error_pk = "error_type"
+    const dynamo_error_sk = "error_id"
+    const errorTable = new dynamodb.Table(this, "ucpErrorTable", {
+      tableName: "ucp-erroor-table-" + envName,
+      partitionKey: { name: dynamo_pk, type: dynamodb.AttributeType.STRING },
+      sortKey: { name: dynamo_sk, type: dynamodb.AttributeType.STRING },
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
 
     //////////////////////////
-    //LAMBDA FUNCTION
+    //LAMBDA FUNCTIONS
     /////////////////////////
+
+    //Main application backend
+    //////////////////////////////
+
     const lambdaArtifactRepositoryBucket = s3.Bucket.fromBucketName(this, 'BucketByName', artifactBucket);
     const ucpBackEndLambdaPrefix = 'ucpBackEnd'
     const ucpBackEndLambda = new lambda.Function(this, 'ucpBackEnd' + envName, {
@@ -273,9 +288,9 @@ export class UCPInfraStack extends Stack {
         CONNECTOR_CRAWLER_DLQ: connectorCrawlerDlq.queueArn,
         GLUE_DB: glueDb.databaseName,
         DATALAKE_ADMIN_ROLE_ARN: datalakeAdminRole.roleArn,
-        UCP_GUEST360_TABLE_NAME: "",
-        UCP_GUEST360_TABLE_PK: "",
-        UCP_GUEST360_ATHENA_TABLE: "",
+        ERROR_TABLE_NAME: errorTable.tableName,
+        ERROR_TABLE_PK: dynamo_error_pk,
+        ERROR_TABLE_SK: dynamo_error_sk,
         S3_HOTEL_BOOKING: hotelBookingOutput.bucket.bucketName,
         S3_AIR_BOOKING: airBookingOutput.bucket.bucketName,
         S3_GUEST_PROFILE: guestProfileOutput.bucket.bucketName,
@@ -295,6 +310,8 @@ export class UCPInfraStack extends Stack {
     clickstreamOutput.bucket.grantRead(ucpBackEndLambda)
     hotelStayOutput.bucket.grantRead(ucpBackEndLambda)
     connectProfileImportBucket.grantRead(ucpBackEndLambda)
+
+    errorTable.grantReadWriteData(ucpBackEndLambda)
 
     ucpBackEndLambda.addToRolePolicy(new iam.PolicyStatement({
       resources: ["*"],
@@ -360,6 +377,9 @@ export class UCPInfraStack extends Stack {
         'sqs:DeleteQueue']
     }));
 
+
+    //Partition sync lambda
+    ///////////////////////
 
     const ucpSyncLambdaPrefix = 'ucpSync'
     const ucpSyncLambda = new lambda.Function(this, 'ucpSync' + envName, {
@@ -429,6 +449,37 @@ export class UCPInfraStack extends Stack {
 
     configTable.grantReadWriteData(ucpSyncLambda)
 
+
+    //Error management lmabda 
+    //////////////////////////////
+    const ucpErrorLambdaPrefix = 'ucpError'
+    const ucpErrorLambda = new lambda.Function(this, 'ucpError' + envName, {
+      code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpErrorLambdaPrefix, 'main.zip'].join("/")),
+      functionName: ucpErrorLambdaPrefix + envName,
+      handler: 'main',
+      runtime: lambda.Runtime.GO_1_X,
+      tracing: lambda.Tracing.ACTIVE,
+      //timeout should be aligned with SQS queue visibility timeout
+      timeout: Duration.seconds(30),
+      environment: {
+        LAMBDA_ACCOUNT_ID: account,
+        LAMBDA_ENV: envName,
+        LAMBDA_REGION: region || "",
+        DYNAMO_TABLE: errorTable.tableName,
+        DYNAMO_PK: dynamo_error_pk,
+        DYNAMO_SK: dynamo_error_sk,
+      }
+    });
+
+    errorTable.grantReadWriteData(ucpErrorLambda)
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(accpDomainErrorQueue));
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(hotelBookingOutput.errorQueue));
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(airBookingOutput.errorQueue));
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(guestProfileOutput.errorQueue));
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(paxProfileOutput.errorQueue));
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(clickstreamOutput.errorQueue));
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(hotelStayOutput.errorQueue));
+    //TODO add queues from the Construct
 
     //////////////////////////
     // COGNITO USER POOL
@@ -837,18 +888,23 @@ export class UCPInfraStack extends Stack {
     let table = this.table(this, businessObjectName, envName, glueDb, glueSchemas, bucketRaw)
     let testTable = this.table(this, businessObjectName, "Test" + envName, glueDb, glueSchemas, testBucketRaw)
 
+    //3-Creating SQS error queue
+    const errQueue = new Queue(this, businessObjectName + "-errors-" + envName)
+    errQueue.grantSendMessages(dataLakeAdminRole)
+
     //4- Creating Jobs
     let toUcpScript = businessObjectName.replace('-', '_') + "ToUcp"
     let job = this.job(businessObjectName + "FromCustomer", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
       ["SOURCE_TABLE", table.tableName],
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
-      ["BUSINESS_OBJECT", businessObjectName],
+      ["ERROR_QUEUE_URL", errQueue.queueUrl],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
     let industryConnectorJob = this.job(businessObjectName + "FromConnector", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
       // SOURCE_TABLE provided by customer when linking connector
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
       ["BUSINESS_OBJECT", businessObjectName],
+      ["ERROR_QUEUE_URL", errQueue.queueUrl],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
     //6- Job Triggers
@@ -878,6 +934,7 @@ export class UCPInfraStack extends Stack {
       customerJobName: job.name ?? "",
       bucket: bucketRaw,
       tableName: table.tableName,
+      errorQueue: errQueue,
     }
   }
 
