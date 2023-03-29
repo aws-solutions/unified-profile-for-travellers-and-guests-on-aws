@@ -6,12 +6,15 @@ import { SessionService } from '../service/sessionService';
 import { faCog, faBackward, faForward, faHome, faRefresh, faPlane, faUser, faExternalLink, faUsd, faHotel, faMousePointer } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
 import { PaginationOptions } from '../model/pagination.model'
+import { Subscription } from 'rxjs';
+import { DomainService } from '../service/domainService';
 @Component({
   selector: 'app-setting',
   templateUrl: './setting.component.html',
   styleUrls: ['./setting.component.css']
 })
 export class SettingComponent implements OnInit {
+  private selectDomainSubscription: Subscription
   faCog = faCog;
   faHome = faHome;
   faBackward = faBackward;
@@ -58,7 +61,7 @@ export class SettingComponent implements OnInit {
       deploymentStatus: "Not Deployed"
     }]
 
-  constructor(public dialog: MatDialog, private session: SessionService, private ucpService: UcpService, private router: Router) {
+  constructor(public dialog: MatDialog, private session: SessionService, private ucpService: UcpService, private router: Router, private domainService: DomainService) {
     this.selectedDomain = this.session.getProfileDomain()
     if (this.selectedDomain) {
       this.ucpService.getConfig(this.selectedDomain).subscribe((res: any) => {
@@ -134,7 +137,19 @@ export class SettingComponent implements OnInit {
   }
 
   ngOnInit(): void {
-
+    this.selectDomainSubscription = this.domainService.selectedDomainObs.subscribe((selectedDomain: string) => {
+      this.selectedDomain = this.session.getProfileDomain()
+      if (this.selectedDomain) {
+          this.ucpService.getConfig(this.selectedDomain).subscribe((res: any) => {
+          console.log(res)
+          this.domain = res.config.domains[0];
+        })
+      }
+      this.ucpService.listApplications().subscribe((res: any) => {
+        this.industryConnectorSolutions = (res || {}).connectors;
+      })
+      this.fetchValidationErrors()
+    })
   }
 
   public openDeployConnectorLink(): void {
@@ -196,6 +211,10 @@ export class SettingComponent implements OnInit {
     this.router.navigate(["home"])
   }
 
+  deleteDomain() {
+    this.domainService.deleteDomain(this.selectedDomain)
+  }
+
 
   public getLastRunColorStatus(status: string) {
     let statusColor: string;
@@ -243,8 +262,9 @@ export class LinkConnectorComponent {
     bucketArn: new FormControl('', Validators.required),
   });
   buttonDisabled: boolean;
+  selectDomainSubscription: Subscription
 
-  constructor(public dialogRef: MatDialogRef<LinkConnectorComponent>, private ucpService: UcpService, private session: SessionService, public dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any) {
+  constructor(public dialogRef: MatDialogRef<LinkConnectorComponent>, private ucpService: UcpService, private session: SessionService, public domainService: DomainService, public dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any) {
     this.domain = this.session.getProfileDomain();
     let localData = this.session.getConnectorData(this.domain);
     this.linkConnectorForm.controls['agwUrl'].setValue(localData?.agwUrl ?? "");
@@ -263,6 +283,17 @@ export class LinkConnectorComponent {
         this.buttonDisabled = true;
       }
     });
+
+    this.selectDomainSubscription = this.domainService.selectedDomainObs.subscribe((selectedDomain: string) => {
+      this.domain = this.session.getProfileDomain();
+      let localData = this.session.getConnectorData(this.domain);
+      this.linkConnectorForm.controls['agwUrl'].setValue(localData?.agwUrl ?? "");
+      this.linkConnectorForm.controls['tokenEndpoint'].setValue(localData?.tokenEndpoint ?? "");
+      this.linkConnectorForm.controls['clientId'].setValue(localData?.clientId ?? "");
+      this.linkConnectorForm.controls['clientSecret'].setValue(localData?.clientSecret ?? "");
+      this.linkConnectorForm.controls['bucketArn'].setValue(localData?.bucketArn ?? "");
+      this.buttonDisabled = true;
+    })
   }
 
   public link() {

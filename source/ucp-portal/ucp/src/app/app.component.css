@@ -2,10 +2,12 @@
 .beginning {
     display: flex;
     white-space: nowrap;
+    align-items: center;
 }
 .end {
     display: flex;
     white-space: nowrap;
+    align-items: center;
 }
 .loader {
     position: fixed;
@@ -74,5 +76,9 @@
 
 .navbar-toggler.domain {
     width: 200px
+}
+
+.page {
+    font-size: x-large;
 }
   
