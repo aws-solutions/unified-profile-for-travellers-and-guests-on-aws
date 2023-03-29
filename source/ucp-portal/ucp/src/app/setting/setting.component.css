@@ -74,6 +74,10 @@ table {
     color: black;
 }
 
+.delete-domain-button {
+    margin-left: auto
+}
+
 .delete-icon {
     float: right;
     cursor: pointer;
@@ -222,3 +226,9 @@ table {
     background-color: orange;
     color: white;
 }
+
+.parent {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+  }

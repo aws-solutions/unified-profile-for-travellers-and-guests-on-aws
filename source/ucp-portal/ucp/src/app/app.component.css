@@ -1,4 +1,12 @@
 /*https://www.w3schools.com/colors/colors_trends.asp*/
+.beginning {
+    display: flex;
+    white-space: nowrap;
+}
+.end {
+    display: flex;
+    white-space: nowrap;
+}
 .loader {
     position: fixed;
     z-index: 100000;
@@ -27,3 +35,44 @@
     color: white;
     padding-left: 1em;
 }
+
+.aws-logo {
+    width: 75px;
+    position: relative;
+    padding-left: 5px;
+}
+
+.middle {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%);
+}
+
+.settings-button {
+    float: right;
+    cursor: pointer;
+}
+
+.header {
+    float: left
+}
+
+.header-title {
+    padding: 10px;
+    font-size: x-large;
+    color: #ccc;
+}
+
+.navbar {
+    width: 100%;
+    display: flex;
+    padding: 10px;
+    align-items: center;
+    justify-content: space-between;
+    white-space: nowrap
+}
+
+.navbar-toggler.domain {
+    width: 200px
+}
+  
