@@ -6,10 +6,9 @@ func BuildGuestProfileMapping() customerprofiles.FieldMappings {
 	return []customerprofiles.FieldMapping{
 		// Metadata
 		{
-			Type:    "STRING",
-			Source:  "_source.model_version",
-			Target:  "_order.Attributes.model_version",
-			Indexes: []string{"UNIQUE", "ORDER"},
+			Type:   "STRING",
+			Source: "_source.model_version",
+			Target: "_order.Attributes.model_version",
 		},
 		{
 			Type:   "STRING",
@@ -17,9 +16,10 @@ func BuildGuestProfileMapping() customerprofiles.FieldMappings {
 			Target: "_order.Attributes.object_type",
 		},
 		{
-			Type:   "STRING",
-			Source: "_source.last_updated",
-			Target: "_order.Attributes.last_updated",
+			Type:    "STRING",
+			Source:  "_source.last_updated",
+			Target:  "_order.Attributes.last_updated",
+			Indexes: []string{"UNIQUE", "ORDER"},
 		},
 		{
 			Type:   "STRING",
@@ -167,7 +167,7 @@ func BuildGuestProfileMapping() customerprofiles.FieldMappings {
 			Source: "_source.address_country",
 			Target: "_profile.Address.Country",
 		},
-		// Business Address
+		// Billing Address
 		{
 			Type:   "STRING",
 			Source: "_source.address_billing_line1",

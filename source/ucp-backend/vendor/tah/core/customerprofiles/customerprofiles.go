@@ -18,7 +18,7 @@ import (
 )
 
 var OBJECT_TYPE_NAME_ORDER = "_order"
-var PROFILE_ID_KEY = "profile_id"
+var PROFILE_ID_KEY = "_profileId"
 
 var STANDARD_IDENTIFIER_PROFILE = customerProfileSdk.StandardIdentifierProfile
 var STANDARD_IDENTIFIER_ASSET = customerProfileSdk.StandardIdentifierAsset
@@ -113,12 +113,15 @@ type IngestionError struct {
 }
 
 type Address struct {
-	Lines     []string `json:"lines"`     //unique identifier of the hotel
-	City      string   `json:"city"`      //unique identifier of the hotel
-	Country   string   `json:"country"`   //unique identifier of the hotel
-	Latitude  float64  `json:"latitude"`  //unique identifier of the hotel
-	Longitude float64  `json:"longitude"` //unique identifier of the hotel
-	ZipCode   string   `json:"zipcode"`   //unique identifier of the hotel
+	Address1   string `json:"address1"`
+	Address2   string `json:"address2"`
+	Address3   string `json:"address3"`
+	Address4   string `json:"address4"`
+	City       string `json:"city"`
+	State      string `json:"state"`
+	Province   string `json:"province"`
+	PostalCode string `json:"postalcode"`
+	Country    string `json:"country"`
 }
 
 type MatchList struct {
@@ -160,64 +163,6 @@ type Integration struct {
 	LastRunStatus  string
 	LastRunMessage string
 	Trigger        string
-}
-
-type Task struct {
-	ConnectorOperator ConnectorOperator `json:"connectoroperator"`
-	DestinationField  string            `json:"destinationfield"`
-	SourceFields      []string          `json:"sourcefields"`
-	TaskProperties    map[string]string `json:"taskproperties"`
-	TaskType          string            `json:"tasktype"`
-}
-
-// Note: Only using S3 for this, but these other fields
-// are present in the API so I am including them here
-type ConnectorOperator struct {
-	Marketo    string `json:"Marketo"`
-	S3         string `json:"S3"`
-	Salesforce string `json:"Salesforce"`
-	ServiceNow string `json:"Servicenow"`
-	Zendesk    string `json:"Zendesk"`
-}
-
-// Source Flows
-type SourceFlowConfig struct {
-	ConnectorType             string                    `json:"conntectortype"`
-	SourceConnectorProperties SourceConnectorProperties `json:"sourceconnectorproperties"`
-}
-
-type SourceConnectorProperties struct {
-	S3 S3SourceProperties `json:"s3sourceproperties"`
-}
-
-type S3SourceProperties struct {
-	BucketName   string `json:"bucketname"`
-	BucketPrefix string `json:"bucketprefix"`
-}
-
-// Trigger Flows
-type TriggerConfig struct {
-	TriggerProperties TriggerProperties `json:"triggerproperties"`
-	TriggerType       string            `json:"triggertype"`
-}
-
-type TriggerProperties struct {
-	Scheduled ScheduledTriggerProperties `json:"scheduled"`
-}
-
-type ScheduledTriggerProperties struct {
-	ScheduleExpression string    `json:"scheduleexpression"`
-	DataPullMode       string    `json:"datapullmode"`
-	ScheduleStartTime  time.Time `json:"schedulestarttime"`
-}
-
-type FlowDefinition struct {
-	FlowName         string           `json:"flowname"`
-	Description      string           `json:"description"`
-	KmsArn           string           `json:"kmsarn"`
-	SourceFlowConfig SourceFlowConfig `json:"sourceflowconfig"`
-	TriggerConfig    TriggerConfig    `json:"triggerconfig"`
-	Tasks            []Task           `json:"tasks"`
 }
 
 func InitWithDomain(domainName string, region string) CustomerProfileConfig {
