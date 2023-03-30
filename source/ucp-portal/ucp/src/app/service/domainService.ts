@@ -13,6 +13,10 @@ export class DomainService {
     public ingestionErrors = [];
     public totalErrors: number = 0;
 
+    //Setting up subscriptions, allows each component using the service
+    //to thave their own version of "selectedDomain" and "domains"
+    //which subscribe to the version in the service
+    //More futureproof than grabbing the value directly from the service (that was my view when implementing)
     public selectedDomain: string = "Select a Domain";
     private selectedDomainBS = new BehaviorSubject<string>(this.selectedDomain)
     public selectedDomainObs = this.selectedDomainBS.asObservable();
@@ -62,6 +66,9 @@ export class DomainService {
         return this.domains
     }
 
+    //Makes the subscription approach work
+    //control over when an update happens to 
+    //the data in the components using the service
     public updateDomainData(newData: any[]): void {
         this.domainBS.next(newData)
     }

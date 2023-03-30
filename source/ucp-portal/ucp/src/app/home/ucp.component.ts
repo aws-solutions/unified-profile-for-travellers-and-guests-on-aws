@@ -38,7 +38,6 @@ export class UCPComponent implements OnInit, OnDestroy {
   ingestionErrors = [];
   totalErrors: number = 0;
   selectedDomain: string;
-  private domainSubscription: Subscription
   private selectDomainSubscription: Subscription
 
   constructor(private ucpService: UcpService, public dialog: MatDialog, private userEngSvc: UserEngagementService, 
@@ -56,8 +55,8 @@ export class UCPComponent implements OnInit, OnDestroy {
     })
   }
 
+  //Unsubscribe from domain subscriptions created in ngoninit, ensure creation / destruction consistancy
   ngOnDestroy() {
-    this.domainSubscription.unsubscribe()
     this.selectDomainSubscription.unsubscribe()
   }
 
