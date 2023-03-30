@@ -44,18 +44,12 @@ func (u *ListErrors) ValidateRequest(rq model.RequestWrapper) error {
 }
 
 func (u *ListErrors) Run(req model.RequestWrapper) (model.ResponseWrapper, error) {
-	errs, totalErrors, err := u.reg.Accp.GetErrors()
+	errs := []model.UcpIngestionError{}
+	err := u.reg.ErrorDB.FindAll(&errs)
 	if err != nil {
 		return model.ResponseWrapper{}, err
 	}
-	ingErrors := []model.IngestionErrors{}
-	for _, ingErr := range errs {
-		ingErrors = append(ingErrors, model.IngestionErrors{
-			Reason:  ingErr.Reason,
-			Message: ingErr.Message,
-		})
-	}
-	return model.ResponseWrapper{IngestionErrors: ingErrors, TotalErrors: totalErrors}, nil
+	return model.ResponseWrapper{IngestionErrors: errs, TotalErrors: int64(len(errs))}, nil
 }
 
 func (u *ListErrors) CreateResponse(res model.ResponseWrapper) (events.APIGatewayProxyResponse, error) {

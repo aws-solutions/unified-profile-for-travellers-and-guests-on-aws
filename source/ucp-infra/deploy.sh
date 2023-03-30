@@ -87,6 +87,10 @@ else
     lambdaFunctionNameRealTimeTest=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='lambdaFunctionNameRealTimeTest'].OutputValue" --output text)
     kinesisStreamNameRealTimeTest=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='kinesisStreamNameRealTimeTest'].OutputValue" --output text)
     kinesisStreamOutputNameRealTimeTest=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='kinesisStreamOutputNameRealTimeTest'].OutputValue" --output text)
+    dlgRealTimeGo=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='dlgRealTimeGo'].OutputValue" --output text)
+    dldRealTimePython=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='dldRealTimePython'].OutputValue" --output text)
+    dlgRealTimeGoTest=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='dlgRealTimeGoTest'].OutputValue" --output text)
+    dldRealTimePythonTest=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='dldRealTimePythonTest'].OutputValue" --output text)
 
     echo "3.2 Creating admin User and getting refresh token"
     RANDOM=$$

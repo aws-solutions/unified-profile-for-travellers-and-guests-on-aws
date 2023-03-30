@@ -23,7 +23,7 @@ import { HttpUserPoolAuthorizer } from '@aws-cdk/aws-apigatewayv2-authorizers-al
 import { HttpLambdaIntegration, } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import { Database, Table, DataFormat, Schema } from '@aws-cdk/aws-glue-alpha';
 import { CfnCrawler, CfnJob, CfnTrigger, CfnWorkflow } from 'aws-cdk-lib/aws-glue';
-import { Queue } from 'aws-cdk-lib/aws-sqs';
+import { Queue, IQueue } from 'aws-cdk-lib/aws-sqs';
 import * as tah_s3 from '../tah-cdk-common/s3';
 import * as tah_core from '../tah-cdk-common/core';
 import { BusinessObjectPipelineOutput, GlueSchema } from "./model"
@@ -400,6 +400,7 @@ export class UCPInfraStack extends Stack {
         DYNAMO_PK: dynamo_pk,
         DYNAMO_SK: dynamo_sk,
 
+
         HOTEL_BOOKING_TABLE_NAME_CUSTOMER: hotelBookingOutput.tableName,
         AIR_BOOKING_TABLE_NAME_CUSTOMER: airBookingOutput.tableName,
         GUEST_PROFILE_TABLE_NAME_CUSTOMER: guestProfileOutput.tableName,
@@ -448,8 +449,100 @@ export class UCPInfraStack extends Stack {
 
     configTable.grantReadWriteData(ucpSyncLambda)
 
+    // Real time flow lambdas
+    ////////////////////////
 
-    //Error management lmabda 
+    //The flow here is the following:
+    // Kinesis -> Python lmabda -> Kinesis -> Go Lambda -> ACCP
+    // we use AWS Solutions Constructs to build this flow from pretested constructs
+
+    const ucpEtlRealTimeLambdaPrefix = "ucpRealTimeTransformer"
+    const ucpEtlRealTimeACCPPrefix = "ucpRealTimeTransformerAccp"
+
+    let dlqs: Map<string, Queue> = new Map<string, Queue>();
+    dlqs.set("dlgGo", new Queue(this, "ucp-real-time-error-go-" + envName))
+    dlqs.set("dldPython", new Queue(this, "ucp-real-time-error-python-" + envName))
+    dlqs.set("dlgGoTest", new Queue(this, "ucp-real-time-error-go-test-" + envName))
+    dlqs.set("dldPythonTest", new Queue(this, "ucp-real-time-error-python-test-" + envName))
+
+    for (let type of ["", "Test"]) {
+      const kinesisLambdaACCP = new KinesisStreamsToLambda(this, ucpEtlRealTimeACCPPrefix + type + envName, {
+        kinesisEventSourceProps: {
+          startingPosition: lambda.StartingPosition.TRIM_HORIZON,
+          batchSize: 10,
+          maximumRetryAttempts: 0
+        },
+        lambdaFunctionProps: {
+          runtime: lambda.Runtime.GO_1_X,
+          handler: 'main',
+          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeACCPPrefix, 'mainAccp.zip'].join("/")),
+          deadLetterQueueEnabled: true,
+          deadLetterQueue: dlqs.get("dldGo" + type),
+          functionName: ucpEtlRealTimeACCPPrefix + type + envName,
+          environment: {
+            LAMBDA_REGION: region || ""
+          }
+        }
+      });
+
+      const kinesisLambdaStart = new KinesisStreamsToLambda(this, ucpEtlRealTimeLambdaPrefix + type + envName, {
+        kinesisEventSourceProps: {
+          startingPosition: lambda.StartingPosition.TRIM_HORIZON,
+          batchSize: 10,
+          maximumRetryAttempts: 0
+        },
+        lambdaFunctionProps: {
+          runtime: lambda.Runtime.PYTHON_3_7,
+          handler: 'index.handler',
+          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeLambdaPrefix, 'main.zip'].join("/")),
+          deadLetterQueueEnabled: true,
+          deadLetterQueue: dlqs.get("dldPython" + type),
+          functionName: ucpEtlRealTimeLambdaPrefix + type + envName,
+          environment: {
+            output_stream: kinesisLambdaACCP.kinesisStream.streamName,
+            LAMBDA_REGION: region || ""
+          }
+        }
+      });
+
+      //there are 2 cases when we right to DLD.
+      //1- if lambda fails for any reason,  the incoming message will automatically be sent to DLQ after the configured numbre of retries
+      //2- in cases where we gracefuly fail insude the function, we manually put the message into the queue. this allows better error management
+      kinesisLambdaACCP.kinesisStream.grantReadWrite(kinesisLambdaStart.lambdaFunction)
+      const pythonDlQ = kinesisLambdaStart.lambdaFunction.deadLetterQueue
+      const goDLQ = kinesisLambdaACCP.lambdaFunction.deadLetterQueue
+      if (pythonDlQ) {
+        pythonDlQ.grantConsumeMessages(kinesisLambdaStart.lambdaFunction)
+        pythonDlQ.grantSendMessages(kinesisLambdaStart.lambdaFunction)
+        kinesisLambdaStart.lambdaFunction.addEnvironment("DEAD_LETTER_QUEUE_URL", pythonDlQ.queueUrl)
+      }
+      if (goDLQ) {
+        goDLQ.grantConsumeMessages(kinesisLambdaACCP.lambdaFunction)
+        goDLQ.grantSendMessages(kinesisLambdaACCP.lambdaFunction)
+        kinesisLambdaACCP.lambdaFunction.addEnvironment("DEAD_LETTER_QUEUE_URL", goDLQ.queueUrl)
+      }
+
+
+      kinesisLambdaACCP.lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
+        resources: ["*"],
+        actions: [
+          'profile:PutProfileObject',
+          'profile:ListProfileObjects',
+          'profile:ListProfileObjectTypes',
+          'profile:GetProfileObjectType',
+          'profile:PutProfileObjectType',
+        ]
+      }))
+
+
+
+      new CfnOutput(this, "lambdaFunctionNameRealTime" + type, { value: kinesisLambdaStart.lambdaFunction.functionName });
+      new CfnOutput(this, "kinesisStreamNameRealTime" + type, { value: kinesisLambdaStart.kinesisStream.streamName });
+      new CfnOutput(this, "kinesisStreamOutputNameRealTime" + type, { value: kinesisLambdaACCP.kinesisStream.streamName })
+    }
+
+
+    //Error management Lambda 
     //////////////////////////////
     const ucpErrorLambdaPrefix = 'ucpError'
     const ucpErrorLambda = new lambda.Function(this, 'ucpError' + envName, {
@@ -478,7 +571,19 @@ export class UCPInfraStack extends Stack {
     ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(paxProfileOutput.errorQueue));
     ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(clickstreamOutput.errorQueue));
     ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(hotelStayOutput.errorQueue));
-    //TODO add queues from the Construct
+    let pQueue = dlqs.get("dldPython")
+    if (pQueue) {
+      ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(pQueue));
+    }
+    let gQueue = dlqs.get("dldGo")
+    if (gQueue) {
+      ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(gQueue));
+    }
+
+    new CfnOutput(this, 'dlgRealTimeGo', { value: dlqs.get('dlgGo')?.queueUrl || "" });
+    new CfnOutput(this, 'dldRealTimePython', { value: dlqs.get('dldPython')?.queueUrl || "" });
+    new CfnOutput(this, 'dlgRealTimeGoTest', { value: dlqs.get('dlgGoTest')?.queueUrl || "" });
+    new CfnOutput(this, 'dldRealTimePythonTest', { value: dlqs.get('dldPythonTest')?.queueUrl || "" });
 
     //////////////////////////
     // COGNITO USER POOL
@@ -788,81 +893,6 @@ export class UCPInfraStack extends Stack {
     tah_core.Output.add(this, "websiteDistributionId", websiteDistribution.distributionId)
     tah_core.Output.add(this, "websiteDomainName", websiteDistribution.distributionDomainName)
 
-    ///////////////////////
-    // KINESIS DATASTREAM FOR REAL TIME FLOW
-    ////////////////////////
-
-    const ucpEtlRealTimeLambdaPrefix = "ucpRealTimeTransformer"
-    const ucpEtlRealTimeACCPPrefix = "ucpRealTimeTransformerAccp"
-    for (let type of ["", "Test"]) {
-      const kinesisLambdaACCP = new KinesisStreamsToLambda(this, ucpEtlRealTimeACCPPrefix + type + envName, {
-        kinesisEventSourceProps: {
-          startingPosition: lambda.StartingPosition.TRIM_HORIZON,
-          batchSize: 10,
-          maximumRetryAttempts: 0
-        },
-        lambdaFunctionProps: {
-          runtime: lambda.Runtime.GO_1_X,
-          handler: 'main',
-          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeACCPPrefix, 'mainAccp.zip'].join("/")),
-          deadLetterQueueEnabled: true,
-          functionName: ucpEtlRealTimeACCPPrefix + type + envName,
-          environment: {
-          }
-        }
-      });
-
-      const kinesisLambdaStart = new KinesisStreamsToLambda(this, ucpEtlRealTimeLambdaPrefix + type + envName, {
-        kinesisEventSourceProps: {
-          startingPosition: lambda.StartingPosition.TRIM_HORIZON,
-          batchSize: 10,
-          maximumRetryAttempts: 0
-        },
-        lambdaFunctionProps: {
-          runtime: lambda.Runtime.PYTHON_3_7,
-          handler: 'index.handler',
-          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeLambdaPrefix, 'main.zip'].join("/")),
-          deadLetterQueueEnabled: true,
-          functionName: ucpEtlRealTimeLambdaPrefix + type + envName,
-          environment: {
-            output_stream: kinesisLambdaACCP.kinesisStream.streamName
-          }
-        }
-      });
-
-      kinesisLambdaACCP.kinesisStream.grantReadWrite(kinesisLambdaStart.lambdaFunction)
-      const dlqvalue = kinesisLambdaStart.lambdaFunction.deadLetterQueue
-      const dlqvalueACCP = kinesisLambdaACCP.lambdaFunction.deadLetterQueue
-      let dlqname = ""
-      let dlqnameACCP = ""
-      if (dlqvalue) {
-        dlqvalue.grantConsumeMessages(kinesisLambdaStart.lambdaFunction)
-        dlqvalue.grantSendMessages(kinesisLambdaStart.lambdaFunction)
-        dlqname = dlqvalue.queueUrl
-      }
-      if (dlqvalueACCP) {
-        dlqvalueACCP.grantConsumeMessages(kinesisLambdaACCP.lambdaFunction)
-        dlqvalueACCP.grantSendMessages(kinesisLambdaACCP.lambdaFunction)
-        dlqnameACCP = dlqvalueACCP.queueUrl
-      }
-      kinesisLambdaStart.lambdaFunction.addEnvironment("dlqname", dlqname)
-      kinesisLambdaACCP.lambdaFunction.addEnvironment("dlqname", dlqnameACCP)
-
-      kinesisLambdaACCP.lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
-        resources: ["*"],
-        actions: [
-          'profile:PutProfileObject',
-          'profile:ListProfileObjects',
-          'profile:ListProfileObjectTypes',
-          'profile:GetProfileObjectType',
-          'profile:PutProfileObjectType',
-        ]
-      }))
-
-      new CfnOutput(this, "lambdaFunctionNameRealTime" + type, {value : kinesisLambdaStart.lambdaFunction.functionName});
-      new CfnOutput(this, "kinesisStreamNameRealTime" + type, {value: kinesisLambdaStart.kinesisStream.streamName});
-      new CfnOutput(this, "kinesisStreamOutputNameRealTime" + type, {value: kinesisLambdaACCP.kinesisStream.streamName})
-    }
   }
 
 

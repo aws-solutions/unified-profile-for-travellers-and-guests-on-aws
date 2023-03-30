@@ -9,7 +9,7 @@ def loadTestRecord(data_file):
     f = open(data_file)
     data = json.load(f)
     f.close()
-    return buildObjectRecord(data)
+    return buildObjectRecord(data, "")
 
 
 def loadExpectedRecord(data_file):

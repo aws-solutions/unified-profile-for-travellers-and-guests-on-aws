@@ -11,6 +11,7 @@ import (
 	"tah/core/appregistry"
 	core "tah/core/core"
 	"tah/core/customerprofiles"
+	"tah/core/db"
 	"tah/core/glue"
 	"tah/core/iam"
 
@@ -31,6 +32,7 @@ type Registry struct {
 	Iam         *iam.Config
 	Glue        *glue.Config
 	Accp        *customerprofiles.CustomerProfileConfig
+	ErrorDB     *db.DBConfig
 }
 
 type Usecase interface {
@@ -45,8 +47,8 @@ type Usecase interface {
 	Run(req model.RequestWrapper) (model.ResponseWrapper, error)                      //Excecute the use case business logic
 }
 
-func NewRegistry(region string, appRegCfg *appregistry.Config, iamCfg *iam.Config, glueCfg *glue.Config, accp *customerprofiles.CustomerProfileConfig) Registry {
-	//we initialize a transaction for the pre-handler locgic (befroe the lambda function actually processes it's first request)
+func NewRegistry(region string, appRegCfg *appregistry.Config, iamCfg *iam.Config, glueCfg *glue.Config, accp *customerprofiles.CustomerProfileConfig, errorDB *db.DBConfig) Registry {
+	//we initialize a transaction for the pre-handler locgic (before the lambda function actually processes it's first request)
 	tx := core.NewTransaction("ind_connector", "")
 	return Registry{
 		Tx:          &tx,
@@ -56,6 +58,7 @@ func NewRegistry(region string, appRegCfg *appregistry.Config, iamCfg *iam.Confi
 		Iam:         iamCfg,
 		Glue:        glueCfg,
 		Accp:        accp,
+		ErrorDB:     errorDB,
 		Env:         map[string]string{},
 	}
 }

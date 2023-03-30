@@ -94,6 +94,6 @@ func createUnknownErrorError(rec events.SQSMessage, err error) model.UcpIngestio
 
 func parseTravellerID(body string) string {
 	accpRecord := model.AccpRecord{}
-	json.Unmarshal([]byte(body), accpRecord)
+	json.Unmarshal([]byte(body), &accpRecord)
 	return accpRecord.TravellerID
 }

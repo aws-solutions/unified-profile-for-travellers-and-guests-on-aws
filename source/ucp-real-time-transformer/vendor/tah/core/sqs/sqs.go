@@ -165,14 +165,31 @@ func (c Config) DeleteByName(queueName string) error {
 	return err
 }
 
-func (c Config) Send(dedupID string, msg string) error {
+func (c Config) Send(msg string) error {
+	return c.SendWithStringAttributes(msg, map[string]string{})
+}
+
+func (c Config) SendWithStringAttributes(msg string, msgAttr map[string]string) error {
 	input := &sqs.SendMessageInput{
-		MessageBody:            aws.String(msg),
-		MessageDeduplicationId: aws.String(dedupID),
-		QueueUrl:               aws.String(c.QueueUrl),
+		MessageBody: aws.String(msg),
+		QueueUrl:    aws.String(c.QueueUrl),
+	}
+	if len(msgAttr) > 0 {
+		input.MessageAttributes = toMessageAttributes(msgAttr)
 	}
 	_, err := c.Client.SendMessage(input)
 	return err
+}
+
+func toMessageAttributes(msgAttr map[string]string) map[string]*sqs.MessageAttributeValue {
+	res := map[string]*sqs.MessageAttributeValue{}
+	for key, val := range msgAttr {
+		res[key] = &sqs.MessageAttributeValue{
+			StringValue: aws.String(val),
+			DataType:    aws.String("String"),
+		}
+	}
+	return res
 }
 
 func (c Config) Get() (QueuePeekContent, error) {

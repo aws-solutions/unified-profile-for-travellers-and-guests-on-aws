@@ -18,6 +18,7 @@ import (
 	core "tah/core/core"
 	customerprofiles "tah/core/customerprofiles"
 	kinesis "tah/core/kinesis"
+	sqs "tah/core/sqs"
 
 	"context"
 	"os"
@@ -35,22 +36,11 @@ type Event struct {
 }
 
 // Environment Variable passed from infrastructure
-var LAMBDA_REGION = os.Getenv("TAH_REGION")
-
-//var ANONYMOUS_USAGE = os.Getenv("ANONYMOUS_USAGE")
-//var METRICS_SOLUTION_ID = os.Getenv("METRICS_SOLUTION_ID")
-//var METRICS_SOLUTION_VERSION = os.Getenv("METRICS_SOLUTION_VERSION")
-//var METRICS_UUID = os.Getenv("METRICS_UUID")
-
+var LAMBDA_REGION = os.Getenv("LAMBDA_REGION")
 var INPUT_STREAM = os.Getenv("INPUT_STREAM")
-var DLQ = os.Getenv("dlqname")
+var DLQ_URL = os.Getenv("DEAD_LETTER_QUEUE_URL")
 
-// initlialize resource handlers
-//var kinesisCfg = kinesis.Init(INPUT_STREAM, LAMBDA_REGION)
-
-var DOMAIN_NAME string = "test-domain-water"
-
-const profile_id string = "prof"
+var sqsConfig = sqs.InitWithQueueUrl(DLQ_URL, LAMBDA_REGION)
 
 //This is from the connectors solution, probably will want something like this in UCP but not used for now
 //var solutionUtils awssolutions.IConfig = awssolutions.Init(METRICS_SOLUTION_ID, METRICS_SOLUTION_VERSION, METRICS_UUID, ANONYMOUS_USAGE)
@@ -59,32 +49,33 @@ type Controller struct {
 	Tx core.Transaction
 }
 
-func HandleRequest(ctx context.Context, req events.KinesisEvent) error {
-	return HandleRequestWithServices(ctx, req)
+type ProcessingError struct {
+	Error      error
+	Data       string
+	AccpRecord string
 }
 
-func HandleRequestWithServices(ctx context.Context, req events.KinesisEvent) error {
-	customCfg := customerprofiles.InitWithDomain(DOMAIN_NAME, LAMBDA_REGION)
+type BusinessObjectRecord struct {
+	Domain       string        `json:"domain"`
+	ObjectType   string        `json:"objectType"`
+	ModelVersion string        `json:"modelVersion"`
+	Data         []interface{} `json:"data"`
+}
+
+var SQS_MES_ATTR_UCP_ERROR_TYPE = "UcpErrorType"
+var SQS_MES_ATTR_BUSINESS_OBJECT_TYPE_NAME = "BusinessObjectTypeName"
+var SQS_MES_ATTR_MESSAGE = "Message"
+
+func HandleRequest(ctx context.Context, req events.KinesisEvent) error {
+	return HandleRequestWithServices(ctx, req, sqsConfig)
+}
+
+func HandleRequestWithServices(ctx context.Context, req events.KinesisEvent, sqsc sqs.Config) error {
 	tx := core.NewTransaction("ucp-real-time", "")
 	tx.Log("Received %v Kinesis Data Stream Events", len(req.Records))
-	// outputStream, err := kinesisCfg.Describe()
-	// if err != nil {
-	// 	tx.Log("Error retreiving output stream config %v. Exiting", err)
-	// 	return nil
-	// }
-	// tx.Log("Input stream configuration: %+v", outputStream)
-
-	events := []Event{}
 	for _, rec := range req.Records {
-		event, err := parseEvent(tx, rec)
-		if err != nil {
-			tx.Log("Error parsing event %v")
-		}
-		events = append(events, event)
-
+		processKinesisRecord(tx, rec, sqsc)
 	}
-	processEvents(tx, events, customCfg)
-	//We do not want to reprocess events on failure
 	return nil
 }
 
@@ -92,65 +83,56 @@ func main() {
 	awsLamdba.Start(HandleRequest)
 }
 
-func parseEvent(tx core.Transaction, kinesisEvt events.KinesisEventRecord) (Event, error) {
-	tx.Log("Parsing kinesis event record")
-	evt := Event{
-		OriginalEvent: string(kinesisEvt.Kinesis.Data),
+func processKinesisRecord(tx core.Transaction, rec events.KinesisEventRecord, sqsc sqs.Config) error {
+	//Using panic/defer/recover as a try/catch
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Log("Error while processing record. Logging to SQS queue")
+			logProcessingError(tx, r.(ProcessingError), sqsc)
+		}
+	}()
+	tx.Log("Processing Kineiss record")
+	businessRecord := BusinessObjectRecord{}
+	tx.Log("Parsing Kinesis Data")
+	err := json.Unmarshal(rec.Kinesis.Data, &businessRecord)
+	if err != nil {
+		tx.Log("Unexpected format for record inputted %v", err)
+		panic(ProcessingError{Error: err, Data: string(rec.Kinesis.Data)})
 	}
+	//TODO: To remove
+	tx.Log("Parsed: %v", businessRecord)
 
-	return evt, nil
-}
-
-func processEvents(tx core.Transaction, events []Event, customCfg customerprofiles.CustomerProfileConfig) error {
-	tx.Log("Processing events")
-	var businessRecord map[string]interface{}
-	for _, event := range events {
-		err1 := json.Unmarshal([]byte(event.OriginalEvent), &businessRecord)
-		if err1 != nil {
-			tx.Log("Unexpected format for record inputted %v", err1)
-			continue
-		}
-
-		var dataMap map[string]interface{}
-		dataByte, err3 := json.Marshal(businessRecord["data"])
-		err4 := json.Unmarshal(dataByte, &dataMap)
-		if err3 != nil || err4 != nil {
-			tx.Log("Error processing data field, perhaps data not flattened")
-			continue
-		}
-
-		dataMap["profile_id"] = profile_id
-		serialProfile, err2 := json.Marshal(dataMap)
+	tx.Log("Extracting ACCP Reccords")
+	//TODO: parallelize this
+	for _, accpRec := range businessRecord.Data {
+		accpRecByte, err2 := json.Marshal(accpRec)
 		if err2 != nil {
-			tx.Log("Problem adding profile_id %v", err2)
-			continue
+			tx.Log("Error processing data field, perhaps data not flattened: %v", err2)
+			panic(ProcessingError{Error: err, Data: string(rec.Kinesis.Data), AccpRecord: businessRecord.ObjectType})
 		}
-
-		var objectTypeName string
-		objectByte, err4 := json.Marshal(businessRecord["objectType"])
-		if err4 != nil {
-			tx.Log("problem getting object type")
-			continue
-		}
-		objectTypeName = string(objectByte)
-
-		tx.Log("Putting profile object")
-		tx.Log(string(serialProfile))
-		err := customCfg.PutProfileObject(string(serialProfile), objectTypeName[1:len(objectTypeName)-1])
+		customCfg := customerprofiles.InitWithDomain(businessRecord.Domain, LAMBDA_REGION)
+		tx.Log("Putting profile object to ACCP in domain %s", businessRecord.Domain)
+		err = customCfg.PutProfileObject(string(accpRecByte), businessRecord.ObjectType)
 		if err != nil {
 			tx.Log("error putting profile object %v", err)
-			continue
+			panic(ProcessingError{Error: err, Data: string(rec.Kinesis.Data), AccpRecord: businessRecord.ObjectType})
 		}
 	}
+
 	return nil
 }
 
-// func sendMetrics(events []Event) {
-// 	//for connector, evts := range eventsByConnector {
-// 	// solutionUtils.SendMetrics(map[string]interface{}{
-// 	// 	"use_case":    "real_time_ingestion",
-// 	// 	"connector":   connector,
-// 	// 	"num_records": len(evts),
-// 	// })
-// 	//}
-// }
+func logProcessingError(tx core.Transaction, errObj ProcessingError, sqsc sqs.Config) {
+	accpRec := errObj.AccpRecord
+	if accpRec == "" {
+		accpRec = "Unknown"
+	}
+	err := sqsc.SendWithStringAttributes(errObj.Data, map[string]string{
+		SQS_MES_ATTR_UCP_ERROR_TYPE:            "ACP real time Ingestion error",
+		SQS_MES_ATTR_BUSINESS_OBJECT_TYPE_NAME: accpRec,
+		SQS_MES_ATTR_MESSAGE:                   errObj.Error.Error(),
+	})
+	if err != nil {
+		tx.Log("Could not log message to SQS queue %v. Error: %v", sqsc.QueueUrl, err)
+	}
+}

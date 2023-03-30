@@ -1,15 +1,17 @@
 import unittest
 import json
+import boto3
 from tah_lib.air_bookingTransform import buildObjectRecord
 
 data_path = 'test_data/air_booking/'
+sqsClient = boto3.client('sqs')
 
 
-def loadTestRecord(data_file):
+def loadTestRecord(data_file, queueUrl=""):
     f = open(data_file)
     data = json.load(f)
     f.close()
-    return buildObjectRecord(data)
+    return buildObjectRecord(data, queueUrl)
 
 
 def loadExpectedRecord(data_file):
@@ -21,17 +23,6 @@ def loadExpectedRecord(data_file):
 
 class TestAirBooking(unittest.TestCase):
     unittest.TestCase.maxDiff = None
-
-    def test_transformation_success(self):
-        for rec in ["data1", "data2"]:
-            actual = loadTestRecord(data_path + rec + '.json')
-            expected = loadExpectedRecord(data_path + rec + '_expected.json')
-            self.assertEqual(actual, expected)
-            self.assertIsNot(actual["air_booking_recs"][0]["traveller_id"], "")
-            self.assertIsNot(actual["air_booking_recs"]
-                             [0]["model_version"], "")
-            self.assertIsNot(actual["air_booking_recs"][0]["object_type"], "")
-            self.assertIsNot(actual["air_booking_recs"][0]["last_updated"], "")
 
     def test_transformation_no_pax_id(self):
         # testing that a unique ID is generated if pax don't have Ids

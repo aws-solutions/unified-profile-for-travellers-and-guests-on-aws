@@ -6,6 +6,7 @@ import (
 	appregistry "tah/core/appregistry"
 	core "tah/core/core"
 	customerprofiles "tah/core/customerprofiles"
+	db "tah/core/db"
 	glue "tah/core/glue"
 	iam "tah/core/iam"
 	"tah/ucp/src/business-logic/usecase/admin"
@@ -55,6 +56,10 @@ var HOTEL_STAY_JOB_NAME_CUSTOMER = os.Getenv("HOTEL_STAY_JOB_NAME_CUSTOMER")
 var KMS_KEY_PROFILE_DOMAIN = os.Getenv("KMS_KEY_PROFILE_DOMAIN")
 var UCP_CONNECT_DOMAIN = ""
 
+var ERROR_TABLE_NAME = os.Getenv("ERROR_TABLE_NAME")
+var ERROR_TABLE_PK = os.Getenv("ERROR_TABLE_PK")
+var ERROR_TABLE_SK = os.Getenv("ERROR_TABLE_SK")
+
 //Use cases
 var FN_RETREIVE_UCP_PROFILE = "retreive_ucp_profile"
 var FN_DELETE_UCP_PROFILE = "delete_ucp_profile"
@@ -74,6 +79,7 @@ var CUSTOMER_PROFILE_DOMAIN_HEADER = "customer-profiles-domain"
 var appregistryClient = appregistry.Init(LAMBDA_REGION)
 var iamClient = iam.Init()
 var glueClient = glue.Init(LAMBDA_REGION, GLUE_DB)
+var errorDB = db.Init(ERROR_TABLE_NAME, ERROR_TABLE_PK, ERROR_TABLE_SK)
 
 func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	tx := core.NewTransaction("ucp", req.Headers[core.TRANSACTION_ID_HEADER])
@@ -81,7 +87,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	tx.Log("Received Request %+v with context %+v", req, ctx)
 	var profiles = customerprofiles.InitWithDomain(req.Headers[CUSTOMER_PROFILE_DOMAIN_HEADER], LAMBDA_REGION)
 
-	var reg = registry.NewRegistry(LAMBDA_REGION, &appregistryClient, &iamClient, &glueClient, &profiles)
+	var reg = registry.NewRegistry(LAMBDA_REGION, &appregistryClient, &iamClient, &glueClient, &profiles, &errorDB)
 	reg.SetRegion(LAMBDA_REGION)
 	reg.SetTx(&tx)
 	//Setting environment variables to the registry (this allows to pass CloudFormation created resources)

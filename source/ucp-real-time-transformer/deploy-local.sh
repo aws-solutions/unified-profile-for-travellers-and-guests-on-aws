@@ -14,7 +14,5 @@ if [ $rc -ne 0 ]; then
 fi
 
 unzip tah-core.zip -d src/tah-core/
-rm -rf tah-core.zip
-rm -rf src/tah-core
 
 sh deploy.sh $envName $artifactBucket

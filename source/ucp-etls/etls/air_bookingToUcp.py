@@ -35,8 +35,7 @@ businessObjectRepartitioned = DynamicFrame.fromDF(
 # applying Python transformation function
 accpReccords = Map.apply(
     frame=businessObjectRepartitioned,
-    f=lambda rec: buildObjectRecord(
-        rec=rec, err_queue_url=args['ERROR_QUEUE_URL']))
+    f=lambda rec: buildObjectRecord(rec, args['ERROR_QUEUE_URL']))
 accpReccords.printSchema()
 # accpReccords.toDF().show(10)
 # moving to dataframes

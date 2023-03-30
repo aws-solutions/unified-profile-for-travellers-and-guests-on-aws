@@ -47,7 +47,7 @@ type RequestWrapper struct {
 type ResponseWrapper struct {
 	TxID            string
 	Profiles        []travellerModel.Traveller `json:"profiles"`
-	IngestionErrors []IngestionErrors          `json:"ingestionErrors"`
+	IngestionErrors []UcpIngestionError        `json:"ingestionErrors"`
 	DataValidation  []ValidationError          `json:"dataValidation"`
 	TotalErrors     int64                      `json:"totalErrors"`
 	UCPConfig       UCPConfig                  `json:"config"`
@@ -108,9 +108,15 @@ type Match struct {
 	EmailAddress    string  `json:"email"`
 }
 
-type IngestionErrors struct {
-	Reason  string `json:"reason"`
-	Message string `json:"message"`
+type UcpIngestionError struct {
+	Type               string `json:"error_type"`
+	ID                 string `json:"error_id"`
+	Message            string `json:"message"`
+	Domain             string `json:"domain"`
+	BusinessObjectType string `json:"businessObjectType"`
+	AccpRecordType     string `json:"accpRecordType"`
+	Record             string `json:"reccord"`
+	TravellerID        string `json:"travelerId"`
 }
 
 type ObjectMapping struct {
