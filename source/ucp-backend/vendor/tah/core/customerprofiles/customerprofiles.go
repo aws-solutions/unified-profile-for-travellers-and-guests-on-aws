@@ -1063,6 +1063,7 @@ func containsIntegration(integrations []Integration, expectedName string) bool {
 
 //Check if a profile exists
 //TODO: to be refactored in an Exist function
+//TODO: remove the hardcoded key for profile ID.
 func (c *CustomerProfileConfig) GetProfileId(profileId string) (string, error) {
 	log.Printf("[customerprofiles][GetProfileId] Searching profile with ID %v in domain %v", profileId, c.DomainName)
 	input := customerProfileSdk.SearchProfilesInput{

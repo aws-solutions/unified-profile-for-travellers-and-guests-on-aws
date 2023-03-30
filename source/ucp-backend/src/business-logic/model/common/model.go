@@ -39,9 +39,10 @@ type RequestWrapper struct {
 	SearchRq                 SearchRq
 	Domain                   Domain
 	EnvName                  string
-	LinkIndustryConnectorRq  LinkIndustryConnectorRq  `json:"linkIndustryConnectorRq"`
-	CreateConnectorCrawlerRq CreateConnectorCrawlerRq `json:"createConnectorCrawlerRq"`
-	Pagination               PaginationOptions        `json:"pagination"`
+	LinkIndustryConnectorRq  LinkIndustryConnectorRq   `json:"linkIndustryConnectorRq"`
+	CreateConnectorCrawlerRq CreateConnectorCrawlerRq  `json:"createConnectorCrawlerRq"`
+	UcpErrorToDelete         UcpIngestionErrorToDelete `json:"ucpErrorToDelete"`
+	Pagination               PaginationOptions         `json:"pagination"`
 }
 
 type ResponseWrapper struct {
@@ -109,14 +110,20 @@ type Match struct {
 }
 
 type UcpIngestionError struct {
-	Type               string `json:"error_type"`
-	ID                 string `json:"error_id"`
-	Message            string `json:"message"`
-	Domain             string `json:"domain"`
-	BusinessObjectType string `json:"businessObjectType"`
-	AccpRecordType     string `json:"accpRecordType"`
-	Record             string `json:"reccord"`
-	TravellerID        string `json:"travelerId"`
+	Type               string    `json:"error_type"`
+	ID                 string    `json:"error_id"`
+	Category           string    `json:"category"`
+	Message            string    `json:"message"`
+	Domain             string    `json:"domain"`
+	BusinessObjectType string    `json:"businessObjectType"`
+	AccpRecordType     string    `json:"accpRecordType"`
+	Record             string    `json:"reccord"`
+	TravellerID        string    `json:"travelerId"`
+	Timestamp          time.Time `json:"timestamp"`
+}
+type UcpIngestionErrorToDelete struct {
+	Type string `json:"error_type"`
+	ID   string `json:"error_id"`
 }
 
 type ObjectMapping struct {

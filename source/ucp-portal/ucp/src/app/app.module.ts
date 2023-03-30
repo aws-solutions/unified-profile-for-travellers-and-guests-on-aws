@@ -27,7 +27,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ProfileComponent } from './profile/profile.component';
-import { SettingComponent, LinkConnectorComponent } from './setting/setting.component';
+import { SettingComponent, LinkConnectorComponent, RecordDisplayComponent } from './setting/setting.component';
 
 @NgModule({
   declarations: [
@@ -36,6 +36,7 @@ import { SettingComponent, LinkConnectorComponent } from './setting/setting.comp
     ProfileComponent,
     SettingComponent,
     LinkConnectorComponent,
+    RecordDisplayComponent
   ],
   imports: [
     UcpModule,

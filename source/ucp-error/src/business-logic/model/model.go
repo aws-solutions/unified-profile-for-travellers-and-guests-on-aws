@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 var ERROR_PARSING_ERROR = "error_parsing_error"
 var ACCP_INGESTION_ERROR = "accp_ingestion_error"
 
@@ -10,14 +12,16 @@ type ACCPIngestionError struct {
 }
 
 type UcpIngestionError struct {
-	Type               string `json:"error_type"`
-	ID                 string `json:"error_id"`
-	Message            string `json:"message"`
-	Domain             string `json:"domain"`
-	BusinessObjectType string `json:"businessObjectType"`
-	AccpRecordType     string `json:"accpRecordType"`
-	Record             string `json:"reccord"`
-	TravellerID        string `json:"travelerId"`
+	Type               string    `json:"error_type"`
+	ID                 string    `json:"error_id"`
+	Category           string    `json:"category"`
+	Message            string    `json:"message"`
+	Domain             string    `json:"domain"`
+	BusinessObjectType string    `json:"businessObjectType"`
+	AccpRecordType     string    `json:"accpRecordType"`
+	Record             string    `json:"reccord"`
+	TravellerID        string    `json:"travelerId"`
+	Timestamp          time.Time `json:"timestamp"`
 }
 
 type AccpRecord struct {

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"tah/core/core"
+	"tah/core/db"
 	model "tah/ucp/src/business-logic/model/common"
 	"tah/ucp/src/business-logic/usecase/registry"
 
@@ -45,7 +46,13 @@ func (u *ListErrors) ValidateRequest(rq model.RequestWrapper) error {
 
 func (u *ListErrors) Run(req model.RequestWrapper) (model.ResponseWrapper, error) {
 	errs := []model.UcpIngestionError{}
-	err := u.reg.ErrorDB.FindAll(&errs)
+	queryOptions := db.QueryOptions{
+		ReverseOrder: true,
+		PaginOptions: db.DynamoPaginationOptions{
+			Page:     int64(req.Pagination.Page),
+			PageSize: int64(req.Pagination.PageSize),
+		}}
+	err := u.reg.ErrorDB.FindStartingWithAndFilterWithIndex(ERROR_PK, ERROR_SK_PREFIX, &errs, queryOptions)
 	if err != nil {
 		return model.ResponseWrapper{}, err
 	}

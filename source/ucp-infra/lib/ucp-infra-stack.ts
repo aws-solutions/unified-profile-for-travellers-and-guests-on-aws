@@ -113,6 +113,8 @@ export class UCPInfraStack extends Stack {
     const connectorCrawlerDlq = new Queue(this, "ucp-connector-crawler-dlq-" + envName)
     const accpDomainErrorQueue = new Queue(this, "ucp-acc-domain-errors-" + envName)
 
+    new CfnOutput(this, 'accpDomainErrorQueue', { value: accpDomainErrorQueue.queueUrl });
+
     /**************
      * Glue Database
      ********************/
@@ -245,9 +247,9 @@ export class UCPInfraStack extends Stack {
     const dynamo_error_pk = "error_type"
     const dynamo_error_sk = "error_id"
     const errorTable = new dynamodb.Table(this, "ucpErrorTable", {
-      tableName: "ucp-erroor-table-" + envName,
-      partitionKey: { name: dynamo_pk, type: dynamodb.AttributeType.STRING },
-      sortKey: { name: dynamo_sk, type: dynamodb.AttributeType.STRING },
+      tableName: "ucp-error-table-" + envName,
+      partitionKey: { name: dynamo_error_pk, type: dynamodb.AttributeType.STRING },
+      sortKey: { name: dynamo_error_sk, type: dynamodb.AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
@@ -585,6 +587,8 @@ export class UCPInfraStack extends Stack {
     new CfnOutput(this, 'dlgRealTimeGoTest', { value: dlqs.get('dlgGoTest')?.queueUrl || "" });
     new CfnOutput(this, 'dldRealTimePythonTest', { value: dlqs.get('dldPythonTest')?.queueUrl || "" });
 
+
+
     //////////////////////////
     // COGNITO USER POOL
     ///////////////////////////////////////
@@ -762,6 +766,16 @@ export class UCPInfraStack extends Stack {
       path: '/' + ucpEndpointName + "/" + ucpEndpointErrors,
       authorizer: authorizer,
       methods: [HttpMethod.GET],
+      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationErrors', ucpBackEndLambda, {
+        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
+      })
+    }).forEach(route => {
+      allRoutes.push(route)
+    });
+    apiV2.addRoutes({
+      path: '/' + ucpEndpointName + "/" + ucpEndpointErrors + "/{id}",
+      authorizer: authorizer,
+      methods: [HttpMethod.DELETE],
       integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationErrors', ucpBackEndLambda, {
         payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
       })

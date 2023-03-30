@@ -222,3 +222,25 @@ table {
     background-color: orange;
     color: white;
 }
+
+.record-display {
+    white-space: nowrap;
+    overflow-x: hidden;
+}
+
+.record-display-content {
+    background-color: #eee;
+    border: 2px solid #ccc;
+    padding: 10px;
+    font-size: x-small;
+}
+
+.record-display:hover {
+    text-decoration: underline;
+    cursor: pointer;
+    color: black;
+}
+
+.delete-error-button {
+    color: firebrick;
+}

@@ -43,6 +43,9 @@ export class UcpService {
     public listErrors() {
         return this.service.query({}, <RestOptions>{ subEndpoint: "error" });
     }
+    public deleteError(id) {
+        return this.service.delete(id, {}, <RestOptions>{ subEndpoint: "error" });
+    }
     public mergeProfile(id: string, id2: string) {
         return this.service.post({}, { mergeRq: { p1: id, p2: id2 } }, <RestOptions>{ subEndpoint: "merge" });
     }
