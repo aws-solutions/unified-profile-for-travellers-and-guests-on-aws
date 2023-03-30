@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { PaginationOptions } from '../model/pagination.model'
 import { Subscription } from 'rxjs';
 import { DomainService } from '../service/domainService';
+import { UCPProfileDeletionConfirmationComponent } from '../home/ucp.component';
 @Component({
   selector: 'app-setting',
   templateUrl: './setting.component.html',
@@ -74,6 +75,28 @@ export class SettingComponent implements OnInit {
     })
     this.fetchValidationErrors()
 
+  }
+
+  deleteDomain(domain: string) {
+    const dialogRef = this.dialog.open(UCPProfileDeletionConfirmationComponent, {
+      width: '50%',
+      data: {
+        name: domain
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed: any) => {
+      console.log('The dialog was closed with confirmation: ', confirmed);
+      if (confirmed) {
+        this.ucpService.deleteDomain(domain).subscribe((res: any) => {
+          console.log(res)
+          this.session.unsetDomain()
+          this.domainService.loadDomains()
+          this.domainService.updateSelectedData(this.session.getProfileDomain())
+        })
+      }
+
+    });
   }
 
   fetchValidationErrors() {
@@ -209,10 +232,6 @@ export class SettingComponent implements OnInit {
 
   goHome() {
     this.router.navigate(["home"])
-  }
-
-  deleteDomain() {
-    this.domainService.deleteDomain(this.selectedDomain)
   }
 
 

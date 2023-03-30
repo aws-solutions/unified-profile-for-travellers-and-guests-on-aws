@@ -38,60 +38,19 @@ export class UCPComponent implements OnInit, OnDestroy {
   ingestionErrors = [];
   totalErrors: number = 0;
   selectedDomain: string;
-  domains: any[] = [];
   private domainSubscription: Subscription
   private selectDomainSubscription: Subscription
 
   constructor(private ucpService: UcpService, public dialog: MatDialog, private userEngSvc: UserEngagementService, 
-    private session: SessionService, private router: Router, private domainService: DomainService) {
-    this.loadDomains()
+    private session: SessionService, private router: Router, public domainService: DomainService) {
 
-  }
-
-  loadDomains() {
-    this.domainService.loadDomains()
-  }
-
-  selectDomain(domain: string) {
-    this.domainService.selectDomain(domain)
-  }
-
-  createDomain() {
-    this.domainService.createDomain()
   }
 
   goToSettings() {
     this.router.navigate(["setting"])
   }
 
-
-  deleteDomain(domain: string) {
-    const dialogRef = this.dialog.open(UCPProfileDeletionConfirmationComponent, {
-      width: '50%',
-      data: {
-        name: domain
-      }
-    });
-
-    dialogRef.afterClosed().subscribe((confirmed: any) => {
-      console.log('The dialog was closed with confirmation: ', confirmed);
-      if (confirmed) {
-        this.ucpService.deleteDomain(domain).subscribe((res: any) => {
-          console.log(res)
-          this.session.unsetDomain()
-          this.loadDomains()
-        })
-      }
-
-    });
-  }
-
-
   ngOnInit() {
-    this.domainSubscription = this.domainService.domainObs.subscribe((domains: any[]) => {
-      this.domains = domains
-    })
-
     this.selectDomainSubscription = this.domainService.selectedDomainObs.subscribe((selectedDomain: string) => {
       this.selectedDomain = selectedDomain
     })
@@ -147,11 +106,6 @@ export class UCPComponent implements OnInit, OnDestroy {
       console.log('The dialog was closed');
     });
   }
-
-
-
-
-
 }
 
 

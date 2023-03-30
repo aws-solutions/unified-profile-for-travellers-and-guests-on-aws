@@ -8,6 +8,8 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { faCog, faSearch, faTimes, faPlus, faHome, faSquareCaretDown } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 import { SessionService } from './service/sessionService';
+import { UcpService } from './service/ucpService';
+import { DomainCreationModalComponent } from './home/ucp.component';
 
 @Component({
   selector: 'app-root',
@@ -34,7 +36,7 @@ export class AppComponent implements OnInit, OnDestroy {
   currentRoute: string = ""
 
   constructor(public _loader: LoaderService, public router: Router, public dialog: MatDialog, 
-    public _domain: DomainService, public session: SessionService, public route: ActivatedRoute ) {
+    public _domain: DomainService, public session: SessionService, public route: ActivatedRoute, public ucpService: UcpService ) {
     this._domain.loadDomains()
     this.domains = this._domain.domains
     this.selectedDomain = this._domain.selectedDomain
@@ -68,22 +70,6 @@ export class AppComponent implements OnInit, OnDestroy {
     this.router.navigate(["home"])
   }
 
-  createDomain() {
-    this.domains = this._domain.domains
-    this._domain.createDomain()
-    return
-  }
-
-  selectDomain(domainName: string) {
-    this._domain.selectDomain(domainName)
-    console.log(this.selectedDomain)
-    this.isMenuVisible = false
-  }
-
-  deleteDomain(domainName: string) {
-    this._domain.deleteDomain(domainName)
-  }
-
   public toggleNavbar() {
     this._domain.loadDomains()
     this.isMenuVisible = !this.isMenuVisible;
@@ -108,6 +94,28 @@ export class AppComponent implements OnInit, OnDestroy {
 
   showNavBar(): boolean {
     return (this.route.snapshot.routeConfig.path !== "login")
+  }
+
+  selectDomain(domain) {
+    this._domain.selectDomain(domain)
+    this.isMenuVisible = false;
+  }
+
+  createDomain() {
+    console.log("Opening dialog to create domain")
+    const dialogRef = this.dialog.open(DomainCreationModalComponent, {
+      width: '50%',
+    });
+
+    dialogRef.afterClosed().subscribe((name: any) => {
+      console.log('The dialog was closed with value: ', name);
+      if (name) {
+        this.ucpService.createDomain(name).subscribe((res: any) => {
+          console.log(res)
+          this._domain.loadDomains()
+        })
+      }
+    });
   }
 
 }
