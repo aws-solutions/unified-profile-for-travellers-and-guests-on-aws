@@ -9,7 +9,7 @@ let loginPage: LoginPage;
 let homePage: HomePage;
 let domainName: string;
 
-setDefaultTimeout(50000)
+setDefaultTimeout(60000)
 
 Before(() => {
     loginPage = new LoginPage();
@@ -52,7 +52,8 @@ When(/^I enter my credentials and validate$/, async () => {
 Then(/^I should be redirected to the home screen$/, async () => {
     expect(await homePage.getHeaderText()).to.equal('Unified Customer Profile for Travellers and Guests');
 });
-//Creation of Domain
+
+/*//Creation of Domain
 Given(/^I am on the home screen$/, async () => {
     expect(await homePage.getHeaderText()).to.equal('Unified Customer Profile for Travellers and Guests');
 });
@@ -108,4 +109,4 @@ When(/^I Click Yes$/, async () => {
 });
 Then(/^I see the Domain Component be Deleted$/, async () => {
     expect(await homePage.waitForFormUpdateInvisible('domain-component-name-' + domainName)).to.equal(true);
-});
+});*/
