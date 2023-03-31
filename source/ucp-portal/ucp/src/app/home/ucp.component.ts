@@ -1,11 +1,13 @@
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
 import { UcpService } from '../service/ucpService';
 import { UserEngagementService } from '../service/userEngagementService';
 import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { SessionService } from '../service/sessionService';
+import { DomainService } from '../service/domainService';
 import { faCog, faSearch, faTimes, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { Subscription } from 'rxjs';
 
 
 import * as moment from 'moment';
@@ -16,7 +18,7 @@ import * as moment from 'moment';
   templateUrl: './ucp.component.html',
   styleUrls: ['./ucp.component.css']
 })
-export class UCPComponent implements OnInit {
+export class UCPComponent implements OnInit, OnDestroy {
   displayedColumns: string[] = ['id', 'firstName', 'lastName', 'email', 'actions'];
   profiles = [];
   faCog = faCog;
@@ -36,87 +38,26 @@ export class UCPComponent implements OnInit {
   ingestionErrors = [];
   totalErrors: number = 0;
   selectedDomain: string;
-  domains: any[] = [];
+  private selectDomainSubscription: Subscription
 
-  constructor(private ucpService: UcpService, public dialog: MatDialog, private userEngSvc: UserEngagementService, private session: SessionService, private router: Router) {
-    this.loadDomains()
+  constructor(private ucpService: UcpService, public dialog: MatDialog, private userEngSvc: UserEngagementService, 
+    private session: SessionService, private router: Router, public domainService: DomainService) {
 
-  }
-
-  loadDomains() {
-    this.ucpService.listDomains().subscribe((res: any) => {
-      console.log(res)
-      this.config = res.config;
-      this.domains = res.config.domains
-      if (res.config.domains.lenth > 0) {
-        this.selectDomain(res.config.domains[0].customerProfileDomain)
-
-      }
-    })
-  }
-
-  selectDomain(domain: string) {
-    console.log("Selecting domain: ", domain)
-    this.profiles = []
-    this.session.setProfileDomain(domain)
-    //this.showDetail({ "unique_id": "906cd43cae044345b1f2027ad9465fdb" })
-    this.ucpService.getConfig(domain).subscribe((res: any) => {
-      console.log(res)
-      this.config = res.config.domains[0];
-      this.selectedDomain = domain;
-    })
-    this.ucpService.listErrors().subscribe((res: any) => {
-      console.log(res)
-      this.ingestionErrors = res.ingestionErrors || [];
-      this.totalErrors = res.totalErrors || 0;
-    })
-  }
-
-  createDomain() {
-    console.log("Opening dialog to create domain")
-    const dialogRef = this.dialog.open(DomainCreationModalComponent, {
-      width: '50%',
-    });
-
-    dialogRef.afterClosed().subscribe((name: any) => {
-      console.log('The dialog was closed with value: ', name);
-      if (name) {
-        this.ucpService.createDomain(name).subscribe((res: any) => {
-          console.log(res)
-          this.loadDomains()
-        })
-      }
-    });
   }
 
   goToSettings() {
     this.router.navigate(["setting"])
   }
 
-
-  deleteDomain(domain: string) {
-    const dialogRef = this.dialog.open(UCPProfileDeletionConfirmationComponent, {
-      width: '50%',
-      data: {
-        name: domain
-      }
-    });
-
-    dialogRef.afterClosed().subscribe((confirmed: any) => {
-      console.log('The dialog was closed with confirmation: ', confirmed);
-      if (confirmed) {
-        this.ucpService.deleteDomain(domain).subscribe((res: any) => {
-          console.log(res)
-          this.session.unsetDomain()
-          this.loadDomains()
-        })
-      }
-
-    });
+  ngOnInit() {
+    this.selectDomainSubscription = this.domainService.selectedDomainObs.subscribe((selectedDomain: string) => {
+      this.selectedDomain = selectedDomain
+    })
   }
 
-
-  ngOnInit() {
+  //Unsubscribe from domain subscriptions created in ngoninit, ensure creation / destruction consistancy
+  ngOnDestroy() {
+    this.selectDomainSubscription.unsubscribe()
   }
 
   search() {
@@ -164,11 +105,6 @@ export class UCPComponent implements OnInit {
       console.log('The dialog was closed');
     });
   }
-
-
-
-
-
 }
 
 

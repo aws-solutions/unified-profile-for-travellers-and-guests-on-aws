@@ -3,18 +3,7 @@
     <div class="d-sm-none">TEST </div>
     <div class="d-sm-none"> TEST2</div>
     <div class="inner-container">
-        <div class="header">
-            <img class="aws-logo" src="assets/1200px-Amazon_Web_Services_Logo.svg.png" />
-
-            <div id="settings-button" class="btn btn-large btn-link settings-button" (click)="goToSettings()">
-                <fa-icon [icon]="faCog"></fa-icon>
-                Settings
-            </div>
-
-            <span id="header" class="header-title">Unified Customer Profile for Travellers and Guests </span>
-        </div>
-        <br />
-        <div class="admin-panel">
+        <!-- <div class="admin-panel">
             <div class="panel-title">ENVIRONMENTS</div>
             <br />
             <div class="row">
@@ -32,15 +21,6 @@
                             date}}</span><br />
                     </div>
                 </div>
-                <div class="col-sm-2">
-                    <!-- <div class="domain" (click)="createDomain()">
-                        <i class="fa fa-plus f-2x"></i><br />
-                        <b>Create a new domain</b>
-                    </div>-->
-
-
-                </div>
-
             </div>
             <div class="row">
                 <div class="col-sm-12">
@@ -50,7 +30,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
         <br />
         <div *ngIf="selectedDomain">
             <div class="admin-panel">
@@ -60,15 +40,15 @@
                 <div class="row">
                     <div class="col-sm-4">
                         <span style="color:#aaa;font-size:x-small">NUMBER OF OBJECTS</span><br />
-                        <span style="font-size:large">{{config.numberOfObjects}}</span>
+                        <span style="font-size:large">{{this.domainService.config.numberOfObjects}}</span>
                     </div>
                     <div class="col-sm-4">
                         <span style="color:#aaa;font-size:x-small">NUMBER OF PROFILES</span><br />
-                        <span style="font-size:large">{{config.numberOfProfiles}}</span>
+                        <span style="font-size:large">{{this.domainService.config.numberOfProfiles}}</span>
                     </div>
                     <div class="col-sm-4">
                         <span style="color:#aaa;font-size:x-small">INGESTION ERRORS</span><br />
-                        <span style="font-size:large;cursor: pointer;" (click)="showErrors()">{{totalErrors}}</span>
+                        <span style="font-size:large;cursor: pointer;" (click)="showErrors()">{{this.domainService.totalErrors}}</span>
                     </div>
                 </div>
             </div>
@@ -173,7 +153,7 @@
             </table>
             <br />
         </div>
-        <div *ngIf="domains.length === 0">
+        <div *ngIf="this.domainService.domains.length === 0">
             <div class="row">
                 <div class="col-sm-12 align-center">
                     <span class="no-domain-message">You first need to create a Unified Profile domain<br>
