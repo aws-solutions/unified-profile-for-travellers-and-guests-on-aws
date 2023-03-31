@@ -50,7 +50,7 @@ When(/^I enter my credentials and validate$/, async () => {
     await loginPage.waitForLogin()
 });
 Then(/^I should be redirected to the home screen$/, async () => {
-    expect(await homePage.getHeaderText()).to.equal('Unified Customer Profile for Travellers and Guests');
+    expect(await homePage.getHeaderText()).to.equal('Unified Customer Profile for Travellers and Guests on AWS');
 });
 
 /*//Creation of Domain
