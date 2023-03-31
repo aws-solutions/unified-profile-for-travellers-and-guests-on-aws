@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"log"
 	"strconv"
 	"time"
@@ -40,4 +41,31 @@ func ParseTime(t string, layout string) time.Time {
 		return time.Time{}
 	}
 	return parsed
+}
+
+// Convert string to time.
+//
+// Returns type's default value if the value is empty
+// or there is an error while parsing.
+func TryParseTime(t, layout string) (time.Time, error) {
+	if t == "" {
+		return time.Time{}, nil
+	}
+	parsed, err := time.Parse(layout, t)
+	if err != nil {
+		return time.Time{}, errors.New("error parsing time: \"%s\"")
+	}
+	return parsed, nil
+}
+
+// Convert string to int.
+//
+// Returns type's default value if the value is empty
+// or there is an error while parsing.
+func TryParseInt(val string) (int, error) {
+	parsed, err := strconv.Atoi(val)
+	if err != nil {
+		return 0, errors.New("error parsing value \"%s\" to int")
+	}
+	return parsed, nil
 }

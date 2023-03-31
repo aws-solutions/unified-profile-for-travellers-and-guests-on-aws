@@ -30,5 +30,6 @@ source/ucp-backend/vendor/github.com/aws/aws-sdk-go/service/customerprofiles/api
 #fake test data
 source/ucp-etls/test_data/*
 source/test_data/*
+source/ucp-backend/src/business-logic/usecase/traveller/traveller_test.go
 #real time
 source/ucp-real-time-transformer/vendor/*
