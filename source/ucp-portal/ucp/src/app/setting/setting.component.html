@@ -3,25 +3,20 @@
     <div class="d-sm-none">TEST </div>
     <div class="d-sm-none"> TEST2</div>
     <div class="inner-container">
-        <div class="header">
-            <img class="aws-logo" src="assets/1200px-Amazon_Web_Services_Logo.svg.png" />
-
-            <div id="settings-button" class="btn btn-large btn-link settings-button" (click)="goHome()">
-                <fa-icon [icon]="faHome"></fa-icon>
-                Home
-            </div>
-
-            <span id="header" class="header-title">Unified Customer Profile for Travellers and Guests </span>
-        </div>
-        <br />
         <div class="section">
             <div class="title-3">
                 DOMAIN
             </div>
-            <div>
-                <span class="helper-text" *ngIf="selectedDomain"> {{selectedDomain}}</span><br />
-                <span class="helper-text" *ngIf="!selectedDomain"> No Domain Selected. Create a domain on the <span
-                        class="inline-btn-link" (click)="goHome()">Home page</span></span><br />
+            <div class="parent">
+                <div class="domain-name-text">
+                    <span class="helper-text" *ngIf="selectedDomain"> {{selectedDomain}}</span><br />
+                    <span class="helper-text" *ngIf="!selectedDomain"> No Domain Selected. Create a domain on the Navigation Bar</span><br />
+                </div>
+                <div class="delete-domain-button">
+                    <div class="btn btn-danger" (click)="deleteDomain(selectedDomain)">
+                        Delete Domain
+                    </div>
+                </div>
             </div>
         </div>
         <br>
