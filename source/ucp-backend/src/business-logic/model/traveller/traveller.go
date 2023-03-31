@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-type Traveller2 struct {
+type Traveller struct {
 	// Metadata
 	ModelVersion string
 	Errors       []string
@@ -164,48 +164,6 @@ type PhoneHistory struct {
 	Type          string
 	LastUpdated   time.Time
 	LastUpdatedBy string
-}
-
-type Traveller struct {
-	//Admin fields
-	ModelVersion string    `json:"modelVersion"`
-	TS           time.Time `json:"lastUpdated"`
-	UpdatedBy    string    `json:"updatedBy"`
-
-	//IDs
-	ID          string              `json:"unique_id"`
-	ExternalIDs []ExternalProfileID `json:"externalIDs"`
-
-	//Main Identifiers
-	Gender     string    `json:"gender"`
-	Pronouns   []string  `json:"pronouns"`
-	Title      string    `json:"title"`
-	LastName   string    `json:"lastName"`
-	MiddleName string    `json:"middleName"`
-	FirstName  string    `json:"firstName"`
-	BirthDate  time.Time `json:"birthDate"`
-
-	//PII
-	Emails     []TraceableString `json:"emails"`
-	FirstNames []TraceableString `json:"firstNames"`
-	LastNames  []TraceableString `json:"lastNames"`
-	Phones     []TraceableString `json:"phones"`
-	Addresses  []Address         `json:"addresses"`
-	Companies  []Company         `json:"company"`
-	JobTitles  []TraceableString `json:"jobTitles"`
-
-	//Loyalty
-	LoyaltyProfiles []LoyaltyProfileSummary `json:"loyaltyProfiles"`
-
-	//Transactions
-	RestaurantOrders []RestaurantOrder      `json:"restaurantOrders"`
-	HotelBookings    []HotelBookingSummary  `json:"hotelBookings"`
-	AirBookings      []AirBookingSummary    `json:"airbookings"`
-	CruiseBookings   []CruiseBookingSummary `json:"cruiseBookings"`
-	CarBookings      []CarBookingSummary    `json:"carBookings"`
-	RailBookings     []RailBookingSummary   `json:"railBookings"`
-	//Interests
-	Searches []Search `json:"searches"`
 }
 
 type TraceableString struct {

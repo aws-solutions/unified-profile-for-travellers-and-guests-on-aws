@@ -923,7 +923,7 @@ func toMatchList(item *customerProfileSdk.MatchItem) MatchList {
 }
 
 func toProfile(item *customerProfileSdk.Profile) Profile {
-	return Profile{
+	profile := Profile{
 		ProfileId:            aws.StringValue(item.ProfileId),
 		AccountNumber:        aws.StringValue(item.AccountNumber),
 		FirstName:            aws.StringValue(item.FirstName),
@@ -939,6 +939,19 @@ func toProfile(item *customerProfileSdk.Profile) Profile {
 		BusinessEmailAddress: aws.StringValue(item.BusinessEmailAddress),
 		Attributes:           core.ToMapString(item.Attributes),
 	}
+	// Safely access fields if Address is not nil
+	if item.Address != nil {
+		profile.Address.Address1 = aws.StringValue(item.Address.Address1)
+		profile.Address.Address2 = aws.StringValue(item.Address.Address2)
+		profile.Address.Address3 = aws.StringValue(item.Address.Address3)
+		profile.Address.Address4 = aws.StringValue(item.Address.Address4)
+		profile.Address.City = aws.StringValue(item.Address.City)
+		profile.Address.State = aws.StringValue(item.Address.State)
+		profile.Address.Province = aws.StringValue(item.Address.State)
+		profile.Address.PostalCode = aws.StringValue(item.Address.PostalCode)
+		profile.Address.Country = aws.StringValue(item.Address.Country)
+	}
+	return profile
 }
 
 func toProfileObject(item *customerProfileSdk.ListProfileObjectsItem) ProfileObject {
@@ -1003,7 +1016,7 @@ func containsIntegration(integrations []Integration, expectedName string) bool {
 func (c *CustomerProfileConfig) GetProfileId(profileId string) (string, error) {
 	input := customerProfileSdk.SearchProfilesInput{
 		DomainName: &c.DomainName,
-		KeyName:    &PROFILE_ID_KEY,
+		KeyName:    aws.String("profile_id"),
 		Values:     aws.StringSlice([]string{profileId}),
 	}
 	output, err := c.Client.SearchProfiles(&input)
