@@ -14,7 +14,8 @@
                     aria-expanded="false" aria-label="Toggle navigation" (click)="togglePageMenu()">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="dropdown-menu navbar-dropdown" aria-labelledby="dropdownMenuButton" [ngStyle]="{'display' : getPageMenuStyle()}">
+                <div class="dropdown-menu navbar-dropdown" aria-labelledby="dropdownMenuButton"
+                    [ngStyle]="{'display' : getPageMenuStyle()}">
                     <span class="cursor-pointer dropdown-item" (click)="goToHome()" [routerLink]="['/home']">
                         <fa-icon [icon]="faHome"></fa-icon>
                         Home
@@ -23,42 +24,42 @@
                         <fa-icon [icon]="faCog"></fa-icon>
                         Settings
                     </span>
+                    <span class="cursor-pointer dropdown-item signout-menu" (click)="logout()"
+                        [routerLink]="['/settings']">
+                        <fa-icon [icon]="faSignOut"></fa-icon>
+                        Logout
+                    </span>
                 </div>
             </div>
-            <div class="page" *ngIf="this.router.url == '/home'"><fa-icon [icon]="faHome"></fa-icon>Home</div>
-            <div class="page" *ngIf="this.router.url == '/setting'"><fa-icon [icon]="faCog"></fa-icon>Settings</div>
+            <span class="header-title">Unified Customer Profile for Travellers and Guests on AWS </span>
         </div>
 
-        <div class="middle">
-            <img class="aws-logo" src="assets/1200px-Amazon_Web_Services_Logo.svg.png" />
-            <span class="header-title">Unified Customer Profile for Travellers and Guests </span>
-        </div>
-        
 
         <div class="end justify-content-end">
             <div class="dropdown">
-                <button class="navbar-toggler domain" type="button" data-toggle="collapse"
+                <div class="navbar-toggler domain-selector" data-toggle="collapse"
                     data-target="#navbarToggleExternalContent" aria-controls="navbarToggleExternalContent"
                     aria-expanded="false" aria-label="Toggle navigation" (click)="toggleNavbar()">
-                    <fa-icon [icon]="faSqaureCaretDown"></fa-icon>{{selectedDomain}}
-                </button>
+                    <span class="domain-selector-content">
+                        <fa-icon [icon]="faSqaureCaretDown"></fa-icon><span
+                            class="domain-selector-text">{{selectedDomain || "click to select a domain"}}</span>
+                    </span>
+                </div>
                 <div class="dropdown-menu navbar-dropdown" aria-labelledby="dropdownMenuButton"
-                        [ngStyle]="{'display' : getDisplayStyle()}">
+                    [ngStyle]="{'display' : getDisplayStyle()}">
                     <div *ngFor="let domain of domains">
                         <span id="domain-component-name-{{domain.customerProfileDomain}}"
-                                class="cursor-pointer dropdown-item"
-                                (click)="selectDomain(domain.customerProfileDomain)"
-                                [ngStyle]="{'background-color': selectedDomain === domain.customerProfileDomain ? 'lightgreen' : 'white'}">
-                                <b>{{domain.customerProfileDomain}}</b><br />
-                                <span class="domain-details">Last
-                                    Updated on {{domain.lastUpdated | date}}</span><br />
+                            class="cursor-pointer dropdown-item" *ngIf="domain.customerProfileDomain !== selectedDomain"
+                            (click)="selectDomain(domain.customerProfileDomain)">
+                            <b>{{domain.customerProfileDomain}}</b><br />
+                            <span class="domain-details">Last
+                                Updated on {{domain.lastUpdated | date}}</span><br />
                         </span>
                     </div>
-                    <span class = "cursor-pointer dropdown-item" (click)="createDomain()">Create New Domain</span>
+                    <br />
+                    <div><button class="cursor-pointer btn btn-link" (click)="createDomain()"><fa-icon
+                                [icon]="faPlus"></fa-icon> New Domain</button></div>
                 </div>
-            </div>
-            <div class="btn btn-primary" (click)="logout()">
-                Log Out
             </div>
         </div>
     </div>

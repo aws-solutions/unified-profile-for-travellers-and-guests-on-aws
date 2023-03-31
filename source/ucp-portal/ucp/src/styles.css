@@ -9,6 +9,9 @@ body {
     font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
+.cursor-pointer {
+    cursor: pointer
+}
 
 .float-right {
     float: right;

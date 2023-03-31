@@ -66,6 +66,11 @@ export class SettingComponent implements OnInit {
     }]
 
   constructor(public dialog: MatDialog, private session: SessionService, private ucpService: UcpService, private router: Router, private domainService: DomainService) {
+    this.loadSettingsData()
+
+  }
+
+  loadSettingsData() {
     this.selectedDomain = this.session.getProfileDomain()
     if (this.selectedDomain) {
       this.ucpService.getConfig(this.selectedDomain).subscribe((res: any) => {
@@ -73,12 +78,13 @@ export class SettingComponent implements OnInit {
         this.domain = res.config.domains[0];
       })
       this.fetchErrors()
+    } else {
+      this.domain = {}
     }
     this.ucpService.listApplications().subscribe((res: any) => {
       this.industryConnectorSolutions = (res || {}).connectors;
     })
     this.fetchValidationErrors()
-
   }
 
   deleteDomain(domain: string) {
@@ -97,6 +103,7 @@ export class SettingComponent implements OnInit {
           this.session.unsetDomain()
           this.domainService.loadDomains()
           this.domainService.updateSelectedData(this.session.getProfileDomain())
+          this.loadSettingsData()
         })
       }
 
@@ -172,19 +179,6 @@ export class SettingComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.selectDomainSubscription = this.domainService.selectedDomainObs.subscribe((selectedDomain: string) => {
-      this.selectedDomain = this.session.getProfileDomain()
-      if (this.selectedDomain) {
-          this.ucpService.getConfig(this.selectedDomain).subscribe((res: any) => {
-          console.log(res)
-          this.domain = res.config.domains[0];
-        })
-      }
-      this.ucpService.listApplications().subscribe((res: any) => {
-        this.industryConnectorSolutions = (res || {}).connectors;
-      })
-      this.fetchValidationErrors()
-    })
   }
 
   public openDeployConnectorLink(): void {

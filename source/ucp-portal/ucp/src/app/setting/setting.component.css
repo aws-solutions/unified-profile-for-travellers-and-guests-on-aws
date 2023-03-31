@@ -75,7 +75,7 @@ table {
 }
 
 .delete-domain-button {
-    margin-left: auto
+    float: right;
 }
 
 .delete-icon {

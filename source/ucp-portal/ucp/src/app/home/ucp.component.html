@@ -3,58 +3,10 @@
     <div class="d-sm-none">TEST </div>
     <div class="d-sm-none"> TEST2</div>
     <div class="inner-container">
-        <!-- <div class="admin-panel">
-            <div class="panel-title">ENVIRONMENTS</div>
-            <br />
-            <div class="row">
-                <div class="col-sm-2" *ngFor="let domain of domains">
-                    <div id="domain-component-name-{{domain.customerProfileDomain}}"
-                        class="domain {{selectedDomain === domain.customerProfileDomain?'domain-selected':''}}"
-                        (click)="selectDomain(domain.customerProfileDomain)">
-                        <span class="delete-icon">
-                            <fa-icon id="delete-domain-icon-{{domain.customerProfileDomain}}" [icon]="faTimes"
-                                (click)="deleteDomain(domain.customerProfileDomain)"></fa-icon>
-                        </span>
-                        <b>{{domain.customerProfileDomain}}</b><br />
-                        <span class="domain-details">Last
-                            Updated on {{domain.lastUpdated |
-                            date}}</span><br />
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-12">
-                    <div id="new-domain-button" class="btn btn-large btn-link float-right" (click)="createDomain()">
-                        <fa-icon [icon]="faPlus"></fa-icon>
-                        New Domain
-                    </div>
-                </div>
-            </div>
-        </div> -->
-        <br />
         <div *ngIf="selectedDomain">
-            <div class="admin-panel">
-                <div class="panel-title">SUMMARY</div>
-                <br />
-
-                <div class="row">
-                    <div class="col-sm-4">
-                        <span style="color:#aaa;font-size:x-small">NUMBER OF OBJECTS</span><br />
-                        <span style="font-size:large">{{this.domainService.config.numberOfObjects}}</span>
-                    </div>
-                    <div class="col-sm-4">
-                        <span style="color:#aaa;font-size:x-small">NUMBER OF PROFILES</span><br />
-                        <span style="font-size:large">{{this.domainService.config.numberOfProfiles}}</span>
-                    </div>
-                    <div class="col-sm-4">
-                        <span style="color:#aaa;font-size:x-small">INGESTION ERRORS</span><br />
-                        <span style="font-size:large;cursor: pointer;" (click)="showErrors()">{{this.domainService.totalErrors}}</span>
-                    </div>
-                </div>
-            </div>
             <br />
             <div class="admin-panel" [formGroup]="searchForm">
-                <div class="panel-title">SEARCH</div>
+                <div class="panel-title">SEARCH TRAVELER</div>
                 <br />
                 <div class="row">
                     <div class="col-sm-3">
@@ -86,6 +38,7 @@
                         </div>
                     </div>
                 </div>
+                <br />
                 <div class="row">
                     <div class="col-sm-3">
                         <div class="form-group">
@@ -153,11 +106,10 @@
             </table>
             <br />
         </div>
-        <div *ngIf="this.domainService.domains.length === 0">
+        <div *ngIf="!selectedDomain">
             <div class="row">
                 <div class="col-sm-12 align-center">
-                    <span class="no-domain-message">You first need to create a Unified Profile domain<br>
-                        Click on the <b>New Domain</b> button get Started</span>
+                    <span class="no-domain-message">Create or Select a domain to get started</span>
                 </div>
             </div>
         </div>
