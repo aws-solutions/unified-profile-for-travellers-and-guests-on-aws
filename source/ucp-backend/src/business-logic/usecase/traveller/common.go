@@ -84,7 +84,7 @@ func profileToTraveller(profile customerprofiles.Profile) model.Traveller {
 		LanguageName:         profile.Attributes["langauge_name"],
 
 		// Addresses
-		HomeAddress: model.Address2{
+		HomeAddress: model.Address{
 			Address1:   profile.Address.Address1,
 			Address2:   profile.Address.Address2,
 			Address3:   profile.Address.Address3,

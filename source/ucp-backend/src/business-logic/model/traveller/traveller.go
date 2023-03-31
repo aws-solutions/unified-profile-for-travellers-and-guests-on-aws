@@ -39,10 +39,10 @@ type Traveller struct {
 	LanguageName         string
 
 	// Addresses
-	HomeAddress     Address2
-	BusinessAddress Address2
-	MailingAddress  Address2
-	BillingAddress  Address2
+	HomeAddress     Address
+	BusinessAddress Address
+	MailingAddress  Address
+	BillingAddress  Address
 
 	// Payment Info
 	// TODO: should payment data be for an order, profile, separate history object or combination?
@@ -335,17 +335,6 @@ type RailPreferences struct {
 }
 
 type Address struct {
-	StateCode    string    `json:"stateCode"`
-	PostalCode   string    `json:"postalCode"`
-	City         string    `json:"city"`
-	Country      string    `json:"country"`
-	State        string    `json:"state"`
-	AddressLine1 string    `json:"addressLine1"`
-	TS           time.Time `json:"timestamp"`
-	Source       string    `json:"source"`
-}
-
-type Address2 struct {
 	Address1   string
 	Address2   string
 	Address3   string
