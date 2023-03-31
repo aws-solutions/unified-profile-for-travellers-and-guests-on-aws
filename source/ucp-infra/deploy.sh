@@ -67,6 +67,12 @@ else
     customerJobNamehotelbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerJobNamehotelbooking'].OutputValue" --output text)
     customerJobNamehotelstay=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerJobNamehotelstay'].OutputValue" --output text)
     customerJobNamepaxprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerJobNamepaxprofile'].OutputValue" --output text)
+    customerBuckethotelbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerBuckethotelbooking'].OutputValue" --output text)
+    customerBucketairbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerBucketairbooking'].OutputValue" --output text)
+    customerBucketguestprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerBucketguestprofile'].OutputValue" --output text)
+    customerBucketpaxprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerBucketpaxprofile'].OutputValue" --output text)
+    customerBucketclickstream=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerBucketclickstream'].OutputValue" --output text)
+    customerBuckethotelstay=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerBuckethotelstay'].OutputValue" --output text)
     customerTestBuckethotelbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBuckethotelbooking'].OutputValue" --output text)
     customerTestBucketairbooking=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBucketairbooking'].OutputValue" --output text)
     customerTestBucketguestprofile=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='customerTestBucketguestprofile'].OutputValue" --output text)
@@ -176,6 +182,12 @@ else
          "\"customerJobNamehotelbooking\":\"$customerJobNamehotelbooking\","\
          "\"customerJobNamehotelstay\":\"$customerJobNamehotelstay\","\
          "\"customerJobNamepaxprofile\":\"$customerJobNamepaxprofile\","\
+         "\"customerBuckethotelbooking\":\"$customerBuckethotelbooking\","\
+         "\"customerBucketairbooking\":\"$customerBucketairbooking\","\
+         "\"customerBucketguestprofile\":\"$customerBucketguestprofile\","\
+         "\"customerBucketpaxprofile\":\"$customerBucketpaxprofile\","\
+         "\"customerBucketclickstream\":\"$customerBucketclickstream\","\
+         "\"customerBuckethotelstay\":\"$customerBuckethotelstay\","\
          "\"customerTestBuckethotelbooking\":\"$customerTestBuckethotelbooking\","\
          "\"customerTestBucketairbooking\":\"$customerTestBucketairbooking\","\
          "\"customerTestBucketguestprofile\":\"$customerTestBucketguestprofile\","\

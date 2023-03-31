@@ -3,46 +3,167 @@ package model
 import "time"
 
 type Traveller struct {
-	//Admin fields
-	ModelVersion string    `json:"modelVersion"`
-	TS           time.Time `json:"lastUpdated"`
-	UpdatedBy    string    `json:"updatedBy"`
+	// Metadata
+	ModelVersion string
+	Errors       []string
 
-	//IDs
-	ID          string              `json:"unique_id"`
-	ExternalIDs []ExternalProfileID `json:"externalIDs"`
+	// Profile IDs
+	ConnectID   string
+	TravellerID string
+	PSSID       string
+	GDSID       string
+	PMSID       string
+	CRSID       string
 
-	//Main Identifiers
-	Gender     string    `json:"gender"`
-	Pronouns   []string  `json:"pronouns"`
-	Title      string    `json:"title"`
-	LastName   string    `json:"lastName"`
-	MiddleName string    `json:"middleName"`
-	FirstName  string    `json:"firstName"`
-	BirthDate  time.Time `json:"birthDate"`
+	// Profile Data
+	Honorific   string
+	FirstName   string
+	MiddleName  string
+	LastName    string
+	Gender      string
+	Pronoun     string // should be an array of pronouns?
+	BirthDate   time.Time
+	JobTitle    string
+	CompanyName string
 
-	//PII
-	Emails     []TraceableString `json:"emails"`
-	FirstNames []TraceableString `json:"firstNames"`
-	LastNames  []TraceableString `json:"lastNames"`
-	Phones     []TraceableString `json:"phones"`
-	Addresses  []Address         `json:"addresses"`
-	Companies  []Company         `json:"company"`
-	JobTitles  []TraceableString `json:"jobTitles"`
+	// Contact Info
+	PhoneNumber          string
+	MobilePhoneNumber    string
+	HomePhoneNumber      string
+	BusinessPhoneNumber  string
+	PersonalEmailAddress string
+	BusinessEmailAddress string
+	NationalityCode      string
+	NationalityName      string
+	LanguageCode         string
+	LanguageName         string
 
-	//Loyalty
-	LoyaltyProfiles []LoyaltyProfileSummary `json:"loyaltyProfiles"`
+	// Addresses
+	HomeAddress     Address
+	BusinessAddress Address
+	MailingAddress  Address
+	BillingAddress  Address
 
-	//Transactions
-	RestaurantOrders []RestaurantOrder      `json:"restaurantOrders"`
-	HotelBookings    []HotelBookingSummary  `json:"hotelBookings"`
-	AirBookings      []AirBookingSummary    `json:"airbookings"`
-	CruiseBookings   []CruiseBookingSummary `json:"cruiseBookings"`
-	CarBookings      []CarBookingSummary    `json:"carBookings"`
-	RailBookings     []RailBookingSummary   `json:"railBookings"`
-	//Interests
-	Searches []Search `json:"searches"`
-	
+	// Payment Info
+	// TODO: should payment data be for an order, profile, separate history object or combination?
+
+	// Object Type Records
+	AirBookingRecords   []AirBooking
+	AirLoyaltyRecords   []AirLoyalty
+	ClickstreamRecords  []Clickstream
+	EmailHistoryRecords []EmailHistory
+	HotelBookingRecords []HotelBooking
+	HotelLoyaltyRecords []HotelLoyalty
+	HotelStayRecords    []HotelStay
+	PhoneHistoryRecords []PhoneHistory
+}
+
+type AirBooking struct {
+	BookingID     string
+	SegmentID     string
+	From          string
+	To            string
+	FlightNumber  string
+	DepartureDate string
+	DepartureTime string
+	ArrivalDate   string
+	ArrivalTime   string
+	Channel       string
+	Status        string
+	Price         string
+}
+
+type AirLoyalty struct {
+	LoyaltyID        string
+	ProgramName      string
+	Miles            string
+	MilesToNextLevel string
+	Level            string
+	Joined           time.Time
+}
+
+type Clickstream struct {
+	SessionID                       string
+	EventTimestamp                  time.Time
+	EventType                       string
+	EventVersion                    string
+	ArrivalTimestamp                time.Time
+	UserAgent                       string
+	Products                        string
+	FareClass                       string
+	FareType                        string
+	FlightSegmentsDepartureDateTime time.Time
+	FlightNumbers                   string
+	FlightMarket                    string
+	FlightType                      string
+	OriginDate                      string
+	OriginDateTime                  time.Time
+	ReturnDate                      string
+	ReturnDateTime                  time.Time
+	ReturnFlightRoute               string
+	NumPaxAdults                    int
+	NumPaxInf                       int
+	NumPaxChildren                  int
+	PaxType                         string
+	TotalPassengers                 int
+}
+
+type EmailHistory struct {
+	Address       string
+	Type          string
+	LastUpdated   time.Time
+	LastUpdatedBy string
+}
+
+type HotelBooking struct {
+	BookingID             string
+	HotelCode             string
+	NumNights             int
+	NumGuests             int
+	ProductID             string
+	CheckInDate           time.Time
+	RoomTypeCode          string
+	RoomTypeName          string
+	RoomTypeDescription   string
+	AttributeCodes        string
+	AttributeNames        string
+	AttributeDescriptions string
+}
+
+type HotelLoyalty struct {
+	LoyaltyID         string
+	ProgramName       string
+	Points            string
+	Units             string
+	PointsToNextLevel string
+	Level             string
+	Joined            time.Time
+}
+
+type HotelStay struct {
+	ID             string
+	BookingID      string
+	CurrencyCode   string
+	CurrencyName   string
+	CurrencySymbol string
+	FirstName      string
+	LastName       string
+	Email          string
+	Phone          string
+	StartDate      time.Time
+	HotelCode      string
+	Type           string
+	Description    string
+	Amount         string
+	Date           time.Time
+}
+
+type PhoneHistory struct {
+	Number        string
+	CountryCode   string
+	Type          string
+	LastUpdated   time.Time
+	LastUpdatedBy string
 }
 
 type TraceableString struct {
@@ -214,14 +335,15 @@ type RailPreferences struct {
 }
 
 type Address struct {
-	StateCode    string    `json:"stateCode"`
-	PostalCode   string    `json:"postalCode"`
-	City         string    `json:"city"`
-	Country      string    `json:"country"`
-	State        string    `json:"state"`
-	AddressLine1 string    `json:"addressLine1"`
-	TS           time.Time `json:"timestamp"`
-	Source       string    `json:"source"`
+	Address1   string
+	Address2   string
+	Address3   string
+	Address4   string
+	City       string
+	State      string
+	Province   string
+	PostalCode string
+	Country    string
 }
 
 type Company struct {
