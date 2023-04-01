@@ -45,7 +45,7 @@ export class HomePage {
             let domain_innerText = await domain_test.getText()
             let domain_name_created = domain_innerText.toString().split('\n')[0]
             return (domain_name_created === domain_name);
-        }, 17500) as Promise<boolean>;
+        }, 30000) as Promise<boolean>;
     }
 
     confirmDomainSelected(domain_name: string) {

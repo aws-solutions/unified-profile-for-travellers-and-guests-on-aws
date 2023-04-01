@@ -15,13 +15,15 @@ import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as aws_events from 'aws-cdk-lib/aws-events';
 import * as aws_events_targets from 'aws-cdk-lib/aws-events-targets';
+import * as lambda_event_sources from 'aws-cdk-lib/aws-lambda-event-sources';
+
 
 import { CorsHttpMethod, HttpApi, HttpMethod, HttpRoute, HttpStage, PayloadFormatVersion } from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpUserPoolAuthorizer } from '@aws-cdk/aws-apigatewayv2-authorizers-alpha';
 import { HttpLambdaIntegration, } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import { Database, Table, DataFormat, Schema } from '@aws-cdk/aws-glue-alpha';
 import { CfnCrawler, CfnJob, CfnTrigger, CfnWorkflow } from 'aws-cdk-lib/aws-glue';
-import { Queue } from 'aws-cdk-lib/aws-sqs';
+import { Queue, IQueue } from 'aws-cdk-lib/aws-sqs';
 import * as tah_s3 from '../tah-cdk-common/s3';
 import * as tah_core from '../tah-cdk-common/core';
 import { BusinessObjectPipelineOutput, GlueSchema } from "./model"
@@ -109,6 +111,9 @@ export class UCPInfraStack extends Stack {
      ********************/
     const connectorCrawlerQueue = new Queue(this, "ucp-connector-crawler-queue-" + envName)
     const connectorCrawlerDlq = new Queue(this, "ucp-connector-crawler-dlq-" + envName)
+    const accpDomainErrorQueue = new Queue(this, "ucp-acc-domain-errors-" + envName)
+
+    new CfnOutput(this, 'accpDomainErrorQueue', { value: accpDomainErrorQueue.queueUrl });
 
     /**************
      * Glue Database
@@ -239,10 +244,22 @@ export class UCPInfraStack extends Stack {
       sortKey: { name: dynamo_sk, type: dynamodb.AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY,
     });
+    const dynamo_error_pk = "error_type"
+    const dynamo_error_sk = "error_id"
+    const errorTable = new dynamodb.Table(this, "ucpErrorTable", {
+      tableName: "ucp-error-table-" + envName,
+      partitionKey: { name: dynamo_error_pk, type: dynamodb.AttributeType.STRING },
+      sortKey: { name: dynamo_error_sk, type: dynamodb.AttributeType.STRING },
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
 
     //////////////////////////
-    //LAMBDA FUNCTION
+    //LAMBDA FUNCTIONS
     /////////////////////////
+
+    //Main application backend
+    //////////////////////////////
+
     const lambdaArtifactRepositoryBucket = s3.Bucket.fromBucketName(this, 'BucketByName', artifactBucket);
     const ucpBackEndLambdaPrefix = 'ucpBackEnd'
     const ucpBackEndLambda = new lambda.Function(this, 'ucpBackEnd' + envName, {
@@ -273,9 +290,9 @@ export class UCPInfraStack extends Stack {
         CONNECTOR_CRAWLER_DLQ: connectorCrawlerDlq.queueArn,
         GLUE_DB: glueDb.databaseName,
         DATALAKE_ADMIN_ROLE_ARN: datalakeAdminRole.roleArn,
-        UCP_GUEST360_TABLE_NAME: "",
-        UCP_GUEST360_TABLE_PK: "",
-        UCP_GUEST360_ATHENA_TABLE: "",
+        ERROR_TABLE_NAME: errorTable.tableName,
+        ERROR_TABLE_PK: dynamo_error_pk,
+        ERROR_TABLE_SK: dynamo_error_sk,
         S3_HOTEL_BOOKING: hotelBookingOutput.bucket.bucketName,
         S3_AIR_BOOKING: airBookingOutput.bucket.bucketName,
         S3_GUEST_PROFILE: guestProfileOutput.bucket.bucketName,
@@ -295,6 +312,8 @@ export class UCPInfraStack extends Stack {
     clickstreamOutput.bucket.grantRead(ucpBackEndLambda)
     hotelStayOutput.bucket.grantRead(ucpBackEndLambda)
     connectProfileImportBucket.grantRead(ucpBackEndLambda)
+
+    errorTable.grantReadWriteData(ucpBackEndLambda)
 
     ucpBackEndLambda.addToRolePolicy(new iam.PolicyStatement({
       resources: ["*"],
@@ -361,6 +380,9 @@ export class UCPInfraStack extends Stack {
     }));
 
 
+    //Partition sync lambda
+    ///////////////////////
+
     const ucpSyncLambdaPrefix = 'ucpSync'
     const ucpSyncLambda = new lambda.Function(this, 'ucpSync' + envName, {
       code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpSyncLambdaPrefix, 'main.zip'].join("/")),
@@ -379,6 +401,7 @@ export class UCPInfraStack extends Stack {
         DYNAMO_TABLE: configTable.tableName,
         DYNAMO_PK: dynamo_pk,
         DYNAMO_SK: dynamo_sk,
+
 
         HOTEL_BOOKING_TABLE_NAME_CUSTOMER: hotelBookingOutput.tableName,
         AIR_BOOKING_TABLE_NAME_CUSTOMER: airBookingOutput.tableName,
@@ -427,6 +450,143 @@ export class UCPInfraStack extends Stack {
     clickstreamOutput.bucket.grantReadWrite(ucpSyncLambda)
 
     configTable.grantReadWriteData(ucpSyncLambda)
+
+    // Real time flow lambdas
+    ////////////////////////
+
+    //The flow here is the following:
+    // Kinesis -> Python lmabda -> Kinesis -> Go Lambda -> ACCP
+    // we use AWS Solutions Constructs to build this flow from pretested constructs
+
+    const ucpEtlRealTimeLambdaPrefix = "ucpRealTimeTransformer"
+    const ucpEtlRealTimeACCPPrefix = "ucpRealTimeTransformerAccp"
+
+    let dlqs: Map<string, Queue> = new Map<string, Queue>();
+    dlqs.set("dlgGo", new Queue(this, "ucp-real-time-error-go-" + envName))
+    dlqs.set("dldPython", new Queue(this, "ucp-real-time-error-python-" + envName))
+    dlqs.set("dlgGoTest", new Queue(this, "ucp-real-time-error-go-test-" + envName))
+    dlqs.set("dldPythonTest", new Queue(this, "ucp-real-time-error-python-test-" + envName))
+
+    for (let type of ["", "Test"]) {
+      const kinesisLambdaACCP = new KinesisStreamsToLambda(this, ucpEtlRealTimeACCPPrefix + type + envName, {
+        kinesisEventSourceProps: {
+          startingPosition: lambda.StartingPosition.TRIM_HORIZON,
+          batchSize: 10,
+          maximumRetryAttempts: 0
+        },
+        lambdaFunctionProps: {
+          runtime: lambda.Runtime.GO_1_X,
+          handler: 'main',
+          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeACCPPrefix, 'mainAccp.zip'].join("/")),
+          deadLetterQueueEnabled: true,
+          deadLetterQueue: dlqs.get("dldGo" + type),
+          functionName: ucpEtlRealTimeACCPPrefix + type + envName,
+          environment: {
+            LAMBDA_REGION: region || ""
+          }
+        }
+      });
+
+      const kinesisLambdaStart = new KinesisStreamsToLambda(this, ucpEtlRealTimeLambdaPrefix + type + envName, {
+        kinesisEventSourceProps: {
+          startingPosition: lambda.StartingPosition.TRIM_HORIZON,
+          batchSize: 10,
+          maximumRetryAttempts: 0
+        },
+        lambdaFunctionProps: {
+          runtime: lambda.Runtime.PYTHON_3_7,
+          handler: 'index.handler',
+          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeLambdaPrefix, 'main.zip'].join("/")),
+          deadLetterQueueEnabled: true,
+          deadLetterQueue: dlqs.get("dldPython" + type),
+          functionName: ucpEtlRealTimeLambdaPrefix + type + envName,
+          environment: {
+            output_stream: kinesisLambdaACCP.kinesisStream.streamName,
+            LAMBDA_REGION: region || ""
+          }
+        }
+      });
+
+      //there are 2 cases when we right to DLD.
+      //1- if lambda fails for any reason,  the incoming message will automatically be sent to DLQ after the configured numbre of retries
+      //2- in cases where we gracefuly fail insude the function, we manually put the message into the queue. this allows better error management
+      kinesisLambdaACCP.kinesisStream.grantReadWrite(kinesisLambdaStart.lambdaFunction)
+      const pythonDlQ = kinesisLambdaStart.lambdaFunction.deadLetterQueue
+      const goDLQ = kinesisLambdaACCP.lambdaFunction.deadLetterQueue
+      if (pythonDlQ) {
+        pythonDlQ.grantConsumeMessages(kinesisLambdaStart.lambdaFunction)
+        pythonDlQ.grantSendMessages(kinesisLambdaStart.lambdaFunction)
+        kinesisLambdaStart.lambdaFunction.addEnvironment("DEAD_LETTER_QUEUE_URL", pythonDlQ.queueUrl)
+      }
+      if (goDLQ) {
+        goDLQ.grantConsumeMessages(kinesisLambdaACCP.lambdaFunction)
+        goDLQ.grantSendMessages(kinesisLambdaACCP.lambdaFunction)
+        kinesisLambdaACCP.lambdaFunction.addEnvironment("DEAD_LETTER_QUEUE_URL", goDLQ.queueUrl)
+      }
+
+
+      kinesisLambdaACCP.lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
+        resources: ["*"],
+        actions: [
+          'profile:PutProfileObject',
+          'profile:ListProfileObjects',
+          'profile:ListProfileObjectTypes',
+          'profile:GetProfileObjectType',
+          'profile:PutProfileObjectType',
+        ]
+      }))
+
+
+
+      new CfnOutput(this, "lambdaFunctionNameRealTime" + type, { value: kinesisLambdaStart.lambdaFunction.functionName });
+      new CfnOutput(this, "kinesisStreamNameRealTime" + type, { value: kinesisLambdaStart.kinesisStream.streamName });
+      new CfnOutput(this, "kinesisStreamOutputNameRealTime" + type, { value: kinesisLambdaACCP.kinesisStream.streamName })
+    }
+
+
+    //Error management Lambda 
+    //////////////////////////////
+    const ucpErrorLambdaPrefix = 'ucpError'
+    const ucpErrorLambda = new lambda.Function(this, 'ucpError' + envName, {
+      code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpErrorLambdaPrefix, 'main.zip'].join("/")),
+      functionName: ucpErrorLambdaPrefix + envName,
+      handler: 'main',
+      runtime: lambda.Runtime.GO_1_X,
+      tracing: lambda.Tracing.ACTIVE,
+      //timeout should be aligned with SQS queue visibility timeout
+      timeout: Duration.seconds(30),
+      environment: {
+        LAMBDA_ACCOUNT_ID: account,
+        LAMBDA_ENV: envName,
+        LAMBDA_REGION: region || "",
+        DYNAMO_TABLE: errorTable.tableName,
+        DYNAMO_PK: dynamo_error_pk,
+        DYNAMO_SK: dynamo_error_sk,
+      }
+    });
+
+    errorTable.grantReadWriteData(ucpErrorLambda)
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(accpDomainErrorQueue));
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(hotelBookingOutput.errorQueue));
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(airBookingOutput.errorQueue));
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(guestProfileOutput.errorQueue));
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(paxProfileOutput.errorQueue));
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(clickstreamOutput.errorQueue));
+    ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(hotelStayOutput.errorQueue));
+    let pQueue = dlqs.get("dldPython")
+    if (pQueue) {
+      ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(pQueue));
+    }
+    let gQueue = dlqs.get("dldGo")
+    if (gQueue) {
+      ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(gQueue));
+    }
+
+    new CfnOutput(this, 'dlgRealTimeGo', { value: dlqs.get('dlgGo')?.queueUrl || "" });
+    new CfnOutput(this, 'dldRealTimePython', { value: dlqs.get('dldPython')?.queueUrl || "" });
+    new CfnOutput(this, 'dlgRealTimeGoTest', { value: dlqs.get('dlgGoTest')?.queueUrl || "" });
+    new CfnOutput(this, 'dldRealTimePythonTest', { value: dlqs.get('dldPythonTest')?.queueUrl || "" });
+
 
 
     //////////////////////////
@@ -615,6 +775,16 @@ export class UCPInfraStack extends Stack {
     apiV2.addRoutes({
       path: '/' + ucpEndpointName + "/" + ucpEndpointErrors + "/{id}",
       authorizer: authorizer,
+      methods: [HttpMethod.DELETE],
+      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationErrors', ucpBackEndLambda, {
+        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
+      })
+    }).forEach(route => {
+      allRoutes.push(route)
+    });
+    apiV2.addRoutes({
+      path: '/' + ucpEndpointName + "/" + ucpEndpointErrors + "/{id}",
+      authorizer: authorizer,
       methods: [HttpMethod.GET],
       integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationErrorsId', ucpBackEndLambda, {
         payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
@@ -737,81 +907,6 @@ export class UCPInfraStack extends Stack {
     tah_core.Output.add(this, "websiteDistributionId", websiteDistribution.distributionId)
     tah_core.Output.add(this, "websiteDomainName", websiteDistribution.distributionDomainName)
 
-    ///////////////////////
-    // KINESIS DATASTREAM FOR REAL TIME FLOW
-    ////////////////////////
-
-    const ucpEtlRealTimeLambdaPrefix = "ucpRealTimeTransformer"
-    const ucpEtlRealTimeACCPPrefix = "ucpRealTimeTransformerAccp"
-    for (let type of ["", "Test"]) {
-      const kinesisLambdaACCP = new KinesisStreamsToLambda(this, ucpEtlRealTimeACCPPrefix + type + envName, {
-        kinesisEventSourceProps: {
-          startingPosition: lambda.StartingPosition.TRIM_HORIZON,
-          batchSize: 10,
-          maximumRetryAttempts: 0
-        },
-        lambdaFunctionProps: {
-          runtime: lambda.Runtime.GO_1_X,
-          handler: 'main',
-          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeACCPPrefix, 'mainAccp.zip'].join("/")),
-          deadLetterQueueEnabled: true,
-          functionName: ucpEtlRealTimeACCPPrefix + type + envName,
-          environment: {
-          }
-        }
-      });
-
-      const kinesisLambdaStart = new KinesisStreamsToLambda(this, ucpEtlRealTimeLambdaPrefix + type + envName, {
-        kinesisEventSourceProps: {
-          startingPosition: lambda.StartingPosition.TRIM_HORIZON,
-          batchSize: 10,
-          maximumRetryAttempts: 0
-        },
-        lambdaFunctionProps: {
-          runtime: lambda.Runtime.PYTHON_3_7,
-          handler: 'index.handler',
-          code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpEtlRealTimeLambdaPrefix, 'main.zip'].join("/")),
-          deadLetterQueueEnabled: true,
-          functionName: ucpEtlRealTimeLambdaPrefix + type + envName,
-          environment: {
-            output_stream: kinesisLambdaACCP.kinesisStream.streamName
-          }
-        }
-      });
-
-      kinesisLambdaACCP.kinesisStream.grantReadWrite(kinesisLambdaStart.lambdaFunction)
-      const dlqvalue = kinesisLambdaStart.lambdaFunction.deadLetterQueue
-      const dlqvalueACCP = kinesisLambdaACCP.lambdaFunction.deadLetterQueue
-      let dlqname = ""
-      let dlqnameACCP = ""
-      if (dlqvalue) {
-        dlqvalue.grantConsumeMessages(kinesisLambdaStart.lambdaFunction)
-        dlqvalue.grantSendMessages(kinesisLambdaStart.lambdaFunction)
-        dlqname = dlqvalue.queueUrl
-      }
-      if (dlqvalueACCP) {
-        dlqvalueACCP.grantConsumeMessages(kinesisLambdaACCP.lambdaFunction)
-        dlqvalueACCP.grantSendMessages(kinesisLambdaACCP.lambdaFunction)
-        dlqnameACCP = dlqvalueACCP.queueUrl
-      }
-      kinesisLambdaStart.lambdaFunction.addEnvironment("dlqname", dlqname)
-      kinesisLambdaACCP.lambdaFunction.addEnvironment("dlqname", dlqnameACCP)
-
-      kinesisLambdaACCP.lambdaFunction.addToRolePolicy(new iam.PolicyStatement({
-        resources: ["*"],
-        actions: [
-          'profile:PutProfileObject',
-          'profile:ListProfileObjects',
-          'profile:ListProfileObjectTypes',
-          'profile:GetProfileObjectType',
-          'profile:PutProfileObjectType',
-        ]
-      }))
-
-      new CfnOutput(this, "lambdaFunctionNameRealTime" + type, {value : kinesisLambdaStart.lambdaFunction.functionName});
-      new CfnOutput(this, "kinesisStreamNameRealTime" + type, {value: kinesisLambdaStart.kinesisStream.streamName});
-      new CfnOutput(this, "kinesisStreamOutputNameRealTime" + type, {value: kinesisLambdaACCP.kinesisStream.streamName})
-    }
   }
 
 
@@ -840,18 +935,23 @@ export class UCPInfraStack extends Stack {
     let table = this.table(this, businessObjectName, envName, glueDb, glueSchemas, bucketRaw)
     let testTable = this.table(this, businessObjectName, "Test" + envName, glueDb, glueSchemas, testBucketRaw)
 
+    //3-Creating SQS error queue
+    const errQueue = new Queue(this, businessObjectName + "-errors-" + envName)
+    errQueue.grantSendMessages(dataLakeAdminRole)
+
     //4- Creating Jobs
     let toUcpScript = businessObjectName.replace('-', '_') + "ToUcp"
     let job = this.job(businessObjectName + "FromCustomer", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
       ["SOURCE_TABLE", table.tableName],
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
-      ["BUSINESS_OBJECT", businessObjectName],
+      ["ERROR_QUEUE_URL", errQueue.queueUrl],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
     let industryConnectorJob = this.job(businessObjectName + "FromConnector", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
       // SOURCE_TABLE provided by customer when linking connector
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
       ["BUSINESS_OBJECT", businessObjectName],
+      ["ERROR_QUEUE_URL", errQueue.queueUrl],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
     //6- Job Triggers
@@ -881,6 +981,7 @@ export class UCPInfraStack extends Stack {
       customerJobName: job.name ?? "",
       bucket: bucketRaw,
       tableName: table.tableName,
+      errorQueue: errQueue,
     }
   }
 

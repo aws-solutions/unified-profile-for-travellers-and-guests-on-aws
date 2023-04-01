@@ -2,6 +2,7 @@ package admin
 
 import (
 	"errors"
+	"strings"
 	"sync"
 	"tah/core/core"
 	"tah/core/customerprofiles"
@@ -88,9 +89,11 @@ func (u *GetDataValidationStatus) Run(req model.RequestWrapper) (model.ResponseW
 		go func(filePath string) {
 			valErrs, err := uc.ValidateAccpRecords(req.Pagination, accpSourceBucket, filePath, businessMap[filePath]())
 			for _, valErr := range valErrs {
-				mu.Lock()
-				res.DataValidation = append(res.DataValidation, valErr)
-				mu.Unlock()
+				if !strings.Contains(valErr.Object, "_$folder$") && !strings.Contains(valErr.File, "_$folder$") {
+					mu.Lock()
+					res.DataValidation = append(res.DataValidation, valErr)
+					mu.Unlock()
+				}
 			}
 			if err != nil {
 				lastErr = err
@@ -117,7 +120,10 @@ func (u *GetDataValidationStatus) Run(req model.RequestWrapper) (model.ResponseW
 			return res, err
 		}
 		for _, valErr := range valErrs {
-			res.DataValidation = append(res.DataValidation, valErr)
+			//we remove temporary folders added by glue form the results
+			if !strings.Contains(valErr.Object, "_$folder$") {
+				res.DataValidation = append(res.DataValidation, valErr)
+			}
 		}
 	}
 

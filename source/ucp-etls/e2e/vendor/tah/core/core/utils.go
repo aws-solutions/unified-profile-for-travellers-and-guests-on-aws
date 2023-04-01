@@ -8,12 +8,15 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
@@ -52,7 +55,22 @@ func ChunkArray(size int64, chunkSize int64) [][]interface{} {
 
 //Generats a usinque ID based timestamp
 func GeneratUniqueId() string {
-	return strconv.FormatInt(int64(Hash(time.Now().Format("20060102150405.000"))), 10)
+	return UniqueIdOfLength(10)
+}
+
+//Generats a usinque ID based timestamp
+const letterBytes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+
+func UniqueIdOfLength(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
+	}
+	return string(b)
+}
+
+func UUID() string {
+	return uuid.New().String()
 }
 
 func ParseEpochMs(ms string) (time.Time, error) {

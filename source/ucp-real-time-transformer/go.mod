@@ -11,6 +11,7 @@ require (
 
 require (
 	github.com/aws/aws-sdk-go v1.44.178 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/mmcloughlin/geohash v0.10.0 // indirect
 )

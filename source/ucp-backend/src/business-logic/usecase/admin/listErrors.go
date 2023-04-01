@@ -2,6 +2,7 @@ package admin
 
 import (
 	"tah/core/core"
+	"tah/core/db"
 	model "tah/ucp/src/business-logic/model/common"
 	"tah/ucp/src/business-logic/usecase/registry"
 
@@ -44,18 +45,18 @@ func (u *ListErrors) ValidateRequest(rq model.RequestWrapper) error {
 }
 
 func (u *ListErrors) Run(req model.RequestWrapper) (model.ResponseWrapper, error) {
-	errs, totalErrors, err := u.reg.Accp.GetErrors()
+	errs := []model.UcpIngestionError{}
+	queryOptions := db.QueryOptions{
+		ReverseOrder: true,
+		PaginOptions: db.DynamoPaginationOptions{
+			Page:     int64(req.Pagination.Page),
+			PageSize: int64(req.Pagination.PageSize),
+		}}
+	err := u.reg.ErrorDB.FindStartingWithAndFilterWithIndex(ERROR_PK, ERROR_SK_PREFIX, &errs, queryOptions)
 	if err != nil {
 		return model.ResponseWrapper{}, err
 	}
-	ingErrors := []model.IngestionErrors{}
-	for _, ingErr := range errs {
-		ingErrors = append(ingErrors, model.IngestionErrors{
-			Reason:  ingErr.Reason,
-			Message: ingErr.Message,
-		})
-	}
-	return model.ResponseWrapper{IngestionErrors: ingErrors, TotalErrors: totalErrors}, nil
+	return model.ResponseWrapper{IngestionErrors: errs, TotalErrors: int64(len(errs))}, nil
 }
 
 func (u *ListErrors) CreateResponse(res model.ResponseWrapper) (events.APIGatewayProxyResponse, error) {

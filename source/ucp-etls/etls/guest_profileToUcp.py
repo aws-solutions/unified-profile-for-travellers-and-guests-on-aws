@@ -15,7 +15,7 @@ from tah_lib.etl_utils import explodeAndWrite
 
 glueContext = GlueContext(SparkContext.getOrCreate())
 args = getResolvedOptions(
-    sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET'])
+    sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET', 'ERROR_QUEUE_URL'])
 
 businessObject = glueContext.create_dynamic_frame.from_catalog(
     database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"], additional_options={"recurse": True})
@@ -33,9 +33,10 @@ businessObjectRepartitionedDF
 businessObjectRepartitioned = DynamicFrame.fromDF(
     businessObjectRepartitionedDF, glueContext, "data")
 
-nestedSegments = Map.apply(
-    frame=businessObjectRepartitioned, f=buildObjectRecord)
-accpReccordsDF = nestedSegments.toDF()
+accpReccords = Map.apply(
+    frame=businessObjectRepartitioned,
+    f=lambda rec: buildObjectRecord(rec, args['ERROR_QUEUE_URL']))
+accpReccordsDF = accpReccords.toDF()
 
 accpReccordsDF.printSchema()
 

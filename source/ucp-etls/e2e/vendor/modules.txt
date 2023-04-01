@@ -49,10 +49,14 @@ github.com/aws/aws-sdk-go/service/iam
 github.com/aws/aws-sdk-go/service/s3
 github.com/aws/aws-sdk-go/service/s3/s3iface
 github.com/aws/aws-sdk-go/service/s3/s3manager
+github.com/aws/aws-sdk-go/service/sqs
 github.com/aws/aws-sdk-go/service/sso
 github.com/aws/aws-sdk-go/service/sso/ssoiface
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
+# github.com/google/uuid v1.3.0
+## explicit
+github.com/google/uuid
 # github.com/jmespath/go-jmespath v0.4.0
 ## explicit; go 1.14
 github.com/jmespath/go-jmespath
@@ -77,3 +81,4 @@ tah/core/core
 tah/core/glue
 tah/core/iam
 tah/core/s3
+tah/core/sqs

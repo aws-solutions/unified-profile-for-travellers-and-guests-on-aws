@@ -4,22 +4,45 @@
     <div class="d-sm-none"> TEST2</div>
     <div class="inner-container">
         <div class="section">
+            <div class="delete-domain-button" *ngIf="selectedDomain">
+                <div class="btn btn-danger" (click)="deleteDomain(selectedDomain)">
+                    <fa-icon [icon]="faTrash"></fa-icon>
+                    Delete this Domain
+                </div>
+            </div>
             <div class="title-3">
                 DOMAIN
             </div>
-            <div class="parent">
-                <div class="domain-name-text">
-                    <span class="helper-text" *ngIf="selectedDomain"> {{selectedDomain}}</span><br />
-                    <span class="helper-text" *ngIf="!selectedDomain"> No Domain Selected. Create a domain on the Navigation Bar</span><br />
-                </div>
-                <div class="delete-domain-button">
-                    <div class="btn btn-danger" (click)="deleteDomain(selectedDomain)">
-                        Delete Domain
+            <div class="domain-name-text">
+                <span class="helper-text" *ngIf="selectedDomain"> {{selectedDomain}}</span><br />
+                <span class="helper-text" *ngIf="!selectedDomain"> No Domain Selected. Create a domain on the Navigation
+                    Bar</span><br />
+            </div>
+            <div *ngIf="selectedDomain">
+                <div class="admin-panel">
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <span style="color:#aaa;font-size:x-small">NUMBER OF OBJECTS</span><br />
+                            <span style="font-size:large">{{domain.numberOfObjects}}</span>
+                        </div>
+                        <div class="col-sm-3">
+                            <span style="color:#aaa;font-size:x-small">NUMBER OF PROFILES</span><br />
+                            <span style="font-size:large">{{domain.numberOfProfiles}}</span>
+                        </div>
+                        <div class="col-sm-3">
+                            <span style="color:#aaa;font-size:x-small">INGESTION ERRORS</span><br />
+                            <span style="font-size:large;cursor: pointer;">{{totalErrors}}</span>
+                        </div>
+                        <div class="col-sm-3">
+                            <span style="color:#aaa;font-size:x-small">VALIDATION ERRORS</span><br />
+                            <span style="font-size:large;cursor: pointer;">{{(validationErrors || []).length}}</span>
+                        </div>
                     </div>
                 </div>
             </div>
+            <br>
+
         </div>
-        <br>
         <div class="section">
             <div class="title-3">DATA REPOSITORIES</div>
             <span class="helper-text">Source data locations</span><br />
@@ -37,7 +60,7 @@
             <div class="title-3">DATA VALIDATION</div>
             <span class="helper-text">Data Validation errors</span><br />
             <br />
-            <div class="row">
+            <div class="row" *ngIf="validationErrors.length > 20">
                 <div class="col-sm-12 align-center">
                     <button class="btn btn-primary btn-sm pagination-button" (click)="validationPageDown()">
                         <fa-icon [icon]="faBackward"></fa-icon>
@@ -91,7 +114,55 @@
                         href="https://s3.console.aws.amazon.com/s3/buckets/{{valErr.bucket}}?prefix={{valErr.file}}">View</a>
                 </div>
             </div>
+            <div class="text-center" *ngIf="validationErrors.length === 0">No Validation errors</div>
+        </div>
+        <br />
 
+        <div class="section">
+            <div class="title-3">INGESTIONS ERRORS</div>
+            <span class="helper-text">Errors reported during the data ingestion process</span><br />
+            <div class="row table-header">
+                <div class="col-sm-2 title align-center block-title">
+                    Timestamp
+                </div>
+                <div class="col-sm-2 title align-center block-title">
+                    Error Type
+                </div>
+                <div class="col-sm-1 title align-center block-title">
+                    Business Object
+                </div>
+                <div class="col-sm-2 title align-center block-title">
+                    Message
+                </div>
+                <div class="col-sm-4 title align-center block-title">
+                    Record
+                </div>
+                <div class="col-sm-1 title align-center block-title">
+                    Action
+                </div>
+            </div>
+            <div class="row table-row" *ngFor="let err of ingestionErrors">
+                <div class="col-sm-2 title align-center">
+                    {{err.timestamp | date : 'YYY-MM-dd HH:mm:ss'}}
+                </div>
+                <div class="col-sm-1 title align-center">
+                    {{err.category}}
+                </div>
+                <div class="col-sm-2 title align-center">
+                    {{err.businessObjectType || err.accpRecordType}}
+                </div>
+                <div class="col-sm-2 title align-center">
+                    {{err.message}}
+                </div>
+                <div class="col-sm-4 title align-center record-display" (click)="showReccord(err.reccord)">
+                    {{err.reccord}}
+                </div>
+                <div class="col-sm-1 title align-center">
+                    <button class="btn  delete-error-button" (click)="deleteError(err)"><fa-icon
+                            [icon]="faTrash"></fa-icon></button>
+                </div>
+            </div>
+            <div class="text-center" *ngIf="ingestionErrors.length === 0">No Ingestions errors</div>
         </div>
 
         <div class="section">
@@ -132,7 +203,7 @@
                 profile</span><br />
             <br />
             <div class="row">
-                <div class="col-sm-2 title align-center block-title">
+                <div class="col-sm-1 title align-center block-title">
                     Business Object
                 </div>
                 <div class="col-sm-2 title align-center block-title">
@@ -147,31 +218,40 @@
                 <div class="col-sm-2 title align-center block-title">
                     Last Run Status
                 </div>
-            </div>
-            <div class="row integration-list" *ngFor="let integration of domain.integrations">
-                <div id="business-obj-name-{{integration.target.split('/')[1]}}" class="col-sm-2  align-center">
-                    {{integration.target.split("/")[1]}}
-                </div>
-                <div class="col-sm-2  align-center">
-                    <span class="integration-status"
-                        [ngStyle]="{'background-color': getColorStatus(integration.status)}">{{integration.status}}</span>
-                </div>
-                <div class="col-sm-3  align-center">
-                    {{integration.trigger }}
-                </div>
-                <div class="col-sm-3  align-center">
-                    {{(integration.lastRun != '0001-01-01T00:00:00Z') ? (integration.lastRun | date:
-                    'medium') : "No
-                    Run
-                    Yet"}}
-                </div>
-                <div class="col-sm-2  align-center">
-                    <span class="integration-status"
-                        [ngStyle]="{'background-color': getLastRunColorStatus(integration.lastRunStatus)}">
-                        {{integration.lastRunStatus ? integration.lastRunStatus : "No Last Run
-                        Deployed"}}</span>
+                <div class="col-sm-1 title align-center block-title">
+                    Action
                 </div>
             </div>
+            <span *ngFor="let integration of domain.integrations">
+                <div class="row integration-list table-row" *ngIf="integration.trigger !== 'OnDemand'">
+                    <div id="business-obj-name-{{integration.target.split('/')[1]}}" class="col-sm-1  align-center">
+                        {{integration.target.split("/")[1]}}
+                    </div>
+                    <div class="col-sm-2  align-center">
+                        <span class="integration-status"
+                            [ngStyle]="{'background-color': getColorStatus(integration.status)}">{{integration.status}}</span>
+                    </div>
+                    <div class="col-sm-3  align-center">
+                        {{integration.trigger }}
+                    </div>
+                    <div class="col-sm-3  align-center">
+                        {{(integration.lastRun != '0001-01-01T00:00:00Z') ? (integration.lastRun | date:
+                        'medium') : "No
+                        Run
+                        Yet"}}
+                    </div>
+                    <div class="col-sm-2  align-center">
+                        <span class="integration-status"
+                            [ngStyle]="{'background-color': getLastRunColorStatus(integration.lastRunStatus)}">
+                            {{integration.lastRunStatus ? integration.lastRunStatus : "No Last Run
+                            Deployed"}}</span>
+                    </div>
+                    <div class="col-sm-1  align-center">
+                        <button class="btn btn-link">Run</button>
+                    </div>
+                </div>
+            </span>
+
         </div>
         <br />
         <div class="section">
@@ -228,5 +308,5 @@
                 </div>
             </div>
         </div>
+
     </div>
-</div>

@@ -5,6 +5,7 @@ import (
 	"tah/core/appregistry"
 	"tah/core/core"
 	"tah/core/customerprofiles"
+	"tah/core/db"
 	"tah/core/glue"
 	"tah/core/iam"
 	"tah/core/kms"
@@ -48,7 +49,9 @@ func TestDomainCreationDeletion(t *testing.T) {
 	iamClient := iam.Init()
 	glueClient := glue.Init(UCP_REGION, "test_glue_db")
 	profiles := customerprofiles.InitWithDomain(testDomain, UCP_REGION)
-	reg := registry.NewRegistry(UCP_REGION, &appregistryClient, &iamClient, &glueClient, &profiles)
+	dbConfig := db.Init("TEST_TABLE", "TEST_PK", "TEST_SK")
+
+	reg := registry.NewRegistry(UCP_REGION, &appregistryClient, &iamClient, &glueClient, &profiles, &dbConfig)
 	reg.AddEnv("KMS_KEY_PROFILE_DOMAIN", keyArn)
 	reg.AddEnv("LAMBDA_ENV", "dev_test")
 	reg.AddEnv("CONNECT_PROFILE_SOURCE_BUCKET", bucketName)

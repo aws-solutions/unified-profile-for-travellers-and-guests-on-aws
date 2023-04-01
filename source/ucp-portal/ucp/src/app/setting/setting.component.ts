@@ -3,7 +3,7 @@ import { UcpService } from '../service/ucpService';
 import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { SessionService } from '../service/sessionService';
-import { faCog, faBackward, faForward, faHome, faRefresh, faPlane, faUser, faExternalLink, faUsd, faHotel, faMousePointer } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faBackward, faForward, faHome, faRefresh, faPlane, faUser, faExternalLink, faUsd, faHotel, faMousePointer, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
 import { PaginationOptions } from '../model/pagination.model'
 import { Subscription } from 'rxjs';
@@ -22,6 +22,7 @@ export class SettingComponent implements OnInit {
   faForward = faForward;
   faRefresh = faRefresh;
   faExternalLink = faExternalLink;
+  faTrash = faTrash;
   domain: any = {};
   validationPagination: PaginationOptions = {
     page: 0,
@@ -31,6 +32,8 @@ export class SettingComponent implements OnInit {
     page: 0,
     pageSize: 10
   }
+  ingestionErrors = [];
+  totalErrors: number = 0;
   validationErrorsInView = [];
   industryConnectorSolutions: [];
   dataSourceLocations = [];
@@ -63,18 +66,25 @@ export class SettingComponent implements OnInit {
     }]
 
   constructor(public dialog: MatDialog, private session: SessionService, private ucpService: UcpService, private router: Router, private domainService: DomainService) {
+    this.loadSettingsData()
+
+  }
+
+  loadSettingsData() {
     this.selectedDomain = this.session.getProfileDomain()
     if (this.selectedDomain) {
       this.ucpService.getConfig(this.selectedDomain).subscribe((res: any) => {
         console.log(res)
         this.domain = res.config.domains[0];
       })
+      this.fetchErrors()
+    } else {
+      this.domain = {}
     }
     this.ucpService.listApplications().subscribe((res: any) => {
       this.industryConnectorSolutions = (res || {}).connectors;
     })
     this.fetchValidationErrors()
-
   }
 
   deleteDomain(domain: string) {
@@ -93,6 +103,7 @@ export class SettingComponent implements OnInit {
           this.session.unsetDomain()
           this.domainService.loadDomains()
           this.domainService.updateSelectedData(this.session.getProfileDomain())
+          this.loadSettingsData()
         })
       }
 
@@ -120,6 +131,14 @@ export class SettingComponent implements OnInit {
           "status": job.status
         })
       }
+    })
+  }
+
+  fetchErrors() {
+    this.ucpService.listErrors().subscribe((res: any) => {
+      console.log(res)
+      this.ingestionErrors = res.ingestionErrors || [];
+      this.totalErrors = res.totalErrors || 0;
     })
   }
 
@@ -154,25 +173,12 @@ export class SettingComponent implements OnInit {
   }
   updateValidationTable() {
     this.validationErrorsInView = [];
-    for (let i = 0; i < this.validationPagination.pageSize; i++) {
+    for (let i = 0; i < Math.min(this.validationPagination.pageSize, this.validationErrors.length); i++) {
       this.validationErrorsInView.push(this.validationErrors[i + this.validationPagination.pageSize * this.validationPagination.page])
     }
   }
 
   ngOnInit(): void {
-    this.selectDomainSubscription = this.domainService.selectedDomainObs.subscribe((selectedDomain: string) => {
-      this.selectedDomain = this.session.getProfileDomain()
-      if (this.selectedDomain) {
-          this.ucpService.getConfig(this.selectedDomain).subscribe((res: any) => {
-          console.log(res)
-          this.domain = res.config.domains[0];
-        })
-      }
-      this.ucpService.listApplications().subscribe((res: any) => {
-        this.industryConnectorSolutions = (res || {}).connectors;
-      })
-      this.fetchValidationErrors()
-    })
   }
 
   public openDeployConnectorLink(): void {
@@ -194,6 +200,15 @@ export class SettingComponent implements OnInit {
       }
     });
   }
+
+
+  deleteError(err) {
+    console.log("deleting Error", err)
+    this.ucpService.deleteError(err.error_id).subscribe(res => {
+      this.fetchErrors()
+    })
+  }
+
   public getColorStatus(status: string) {
     let statusColor: string;
 
@@ -260,6 +275,21 @@ export class SettingComponent implements OnInit {
       }
     }
     return statusColor
+  }
+
+  showReccord(rec) {
+    const dialogRef = this.dialog.open(RecordDisplayComponent, {
+      height: '80%',
+      width: '99%',
+      data: {
+        record: rec,
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('The dialog was closed');
+    });
+
   }
 
 }
@@ -360,4 +390,32 @@ export class CreateConnectorCrawler {
   public cancel() {
     this.dialogRef.close(null)
   }
+}
+
+
+@Component({
+  selector: 'display-record',
+  templateUrl: './settings.component-record-display.html',
+  styleUrls: ['./setting.component.css']
+})
+export class RecordDisplayComponent {
+  record = ""
+  constructor(public dialogRef: MatDialogRef<RecordDisplayComponent>, @Inject(MAT_DIALOG_DATA) public data: any) {
+    this.record = this.prettyfy(data.record)
+  }
+
+  public prettyfy(rec) {
+    try {
+      return JSON.stringify(JSON.parse(rec), undefined, 2)
+    }
+    catch (ex) {
+      return rec
+    }
+  }
+
+
+  public close() {
+    this.dialogRef.close(null)
+  }
+
 }

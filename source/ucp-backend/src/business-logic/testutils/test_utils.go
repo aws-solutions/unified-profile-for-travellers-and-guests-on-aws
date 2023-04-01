@@ -5,6 +5,7 @@ import (
 	"tah/core/appregistry"
 	"tah/core/core"
 	"tah/core/customerprofiles"
+	"tah/core/db"
 	"tah/core/glue"
 	"tah/core/iam"
 	model "tah/ucp/src/business-logic/model/common"
@@ -63,8 +64,9 @@ func BuildTestRegistry(region string) registry.Registry {
 	var appregistryClient = appregistry.Init(region)
 	var iamClient = iam.Init()
 	var glueClient = glue.Init(region, "test_glue_db")
+	var dbConfig = db.Init("TEST_TABLE", "TEST_PK", "TEST_SK")
 	profiles := customerprofiles.InitWithDomain("test-domain", region)
-	return registry.NewRegistry(region, &appregistryClient, &iamClient, &glueClient, &profiles)
+	return registry.NewRegistry(region, &appregistryClient, &iamClient, &glueClient, &profiles, &dbConfig)
 }
 
 func GetTestRegion() string {

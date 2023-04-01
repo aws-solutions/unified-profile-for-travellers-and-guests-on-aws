@@ -963,13 +963,19 @@ func toProfileObject(item *customerProfileSdk.ListProfileObjectsItem) ProfileObj
 }
 
 func (c CustomerProfileConfig) PutProfileObject(object, objectTypeName string) error {
+	log.Printf("[customerprofiles] Putting object type %v in domain %v", objectTypeName, c.DomainName)
 	input := customerProfileSdk.PutProfileObjectInput{
 		DomainName:     &c.DomainName,
 		Object:         &object,
 		ObjectTypeName: &objectTypeName,
 	}
-	_, err := c.Client.PutProfileObject(&input)
-	return err
+	out, err := c.Client.PutProfileObject(&input)
+	if err != nil {
+		log.Printf("[customerprofiles] Error putting object: %v", err)
+		return err
+	}
+	log.Printf("[customerprofiles] Successfully put object of type %v. Unique key: %v", objectTypeName, out.ProfileObjectUniqueKey)
+	return nil
 }
 
 func (c *CustomerProfileConfig) WaitForMappingCreation(name string) error {
@@ -1013,7 +1019,11 @@ func containsIntegration(integrations []Integration, expectedName string) bool {
 	return false
 }
 
+//Check if a profile exists
+//TODO: to be refactored in an Exist function
+//TODO: remove the hardcoded key for profile ID.
 func (c *CustomerProfileConfig) GetProfileId(profileId string) (string, error) {
+	log.Printf("[customerprofiles][GetProfileId] Searching profile with ID %v in domain %v", profileId, c.DomainName)
 	input := customerProfileSdk.SearchProfilesInput{
 		DomainName: &c.DomainName,
 		KeyName:    aws.String("profile_id"),
@@ -1021,14 +1031,18 @@ func (c *CustomerProfileConfig) GetProfileId(profileId string) (string, error) {
 	}
 	output, err := c.Client.SearchProfiles(&input)
 	if err != nil {
+		log.Printf("[customerprofiles][GetProfileId] Error searching for profile %v: %v", profileId, err)
 		return "", err
 	}
 	if len(output.Items) > 1 {
+		log.Printf("[customerprofiles][GetProfileId] Error: Found multiple profiles with same ID")
 		return "", errors.New("multiple profiles found with same id")
 	}
 	if len(output.Items) == 0 {
+		log.Printf("[customerprofiles][GetProfileId] No profile found with ID %v", profileId)
 		return "", nil
 	}
+	log.Printf("[customerprofiles][GetProfileId] successfully found profile with ID %v", profileId)
 	return *output.Items[0].ProfileId, nil
 }
 

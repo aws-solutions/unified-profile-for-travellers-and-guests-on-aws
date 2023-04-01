@@ -4,11 +4,13 @@
     white-space: nowrap;
     align-items: center;
 }
+
 .end {
     display: flex;
     white-space: nowrap;
     align-items: center;
 }
+
 .loader {
     position: fixed;
     z-index: 100000;
@@ -81,4 +83,34 @@
 .page {
     font-size: x-large;
 }
-  
+
+.dropdown-item {
+    padding: 10px;
+    font-size: large;
+    margin: 3px;
+}
+
+.dropdown-item:hover {
+    background-color: black;
+    color: white;
+}
+
+.navbar-dropdown {
+    padding: 5px;
+}
+
+.domain-selector {
+    padding: 10px;
+    width: 250px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.domain-selector-text {
+    margin-left: 10px;
+}
+
+.domain-details {
+    color: #ccc;
+    font-size: x-small;
+}

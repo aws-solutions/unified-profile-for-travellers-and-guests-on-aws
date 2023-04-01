@@ -170,6 +170,32 @@ export class UCPCodePipelinesStack extends Stack {
       },
     });
 
+    const errorLambdaBuild = new codebuild.PipelineProject(this, 'errorLambdaBuildProject' + envName, {
+      projectName: "ucp-lambda-error-" + envName,
+      role: buildProjectRole,
+      encryptionKey: codeBuildKmsKey,
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          install: {
+            "runtime-versions": {
+              golang: GO_VERSION
+            }
+          },
+          build: {
+            commands: [
+              'echo "Build and Deploy lambda Function"',
+              'cd source/ucp-error',
+              'pwd && sh lbuild.sh ' + envName + " " + artifactBucket.bucketName
+            ],
+          },
+        }
+      }),
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
+      },
+    });
+
     const realTimeLambdaBuild = new codebuild.PipelineProject(this, 'realTimeLambdaBuild' + envName, {
       projectName: "ucp-lambda-real-time-" + envName,
       role: buildProjectRole,
@@ -195,7 +221,7 @@ export class UCPCodePipelinesStack extends Stack {
         buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
       },
     });
-    
+
     const realTimeLambdaBuildIngestor = new codebuild.PipelineProject(this, 'realTimeIngestorBuild' + envName, {
       projectName: "ucp-ingestor-real-time-" + envName,
       role: buildProjectRole,
@@ -222,32 +248,6 @@ export class UCPCodePipelinesStack extends Stack {
       },
     });
 
-
-    const firehoselambdaBuild = new codebuild.PipelineProject(this, 'streamLambdaBuilProject' + envName, {
-      projectName: "ucp-stream-lambda-" + envName,
-      role: buildProjectRole,
-      encryptionKey: codeBuildKmsKey,
-      buildSpec: codebuild.BuildSpec.fromObject({
-        version: '0.2',
-        phases: {
-          install: {
-            "runtime-versions": {
-              golang: GO_VERSION
-            }
-          },
-          build: {
-            commands: [
-              'echo "Build and Deploy lambda Function"',
-              'cd source/ucp-stream-processor',
-              'pwd && sh lbuild.sh ' + envName + " " + artifactBucket.bucketName
-            ],
-          },
-        }
-      }),
-      environment: {
-        buildImage: codebuild.LinuxBuildImage.AMAZON_LINUX_2_4,
-      },
-    });
 
 
     const onboardingTest = new codebuild.PipelineProject(this, 'testProject' + envName, {
@@ -408,10 +408,10 @@ export class UCPCodePipelinesStack extends Stack {
     const cdkBuildOutputLambda = new codepipeline.Artifact('CdkBuildOutputLambda');
     const cdkBuildOutputLambdaIngestor = new codepipeline.Artifact('CdkBuildOutputLambdaIngestor');
     const cdkBuildOutputLambdaSync = new codepipeline.Artifact('cdkBuildOutputLambdaSync');
+    const cdkBuildOutputLambdaError = new codepipeline.Artifact('cdkBuildOutputLambdaError');
     const cdkBuildOutputLambdaRealTime = new codepipeline.Artifact('cdkBuildOutputLambdaRealTime');
     const cdkBuildOutputEtl = new codepipeline.Artifact('CdkBuildOutputEtl');
     const cdkBuildOutputEtlTest = new codepipeline.Artifact('CdkBuildOutputEtlTest');
-    const cdkBuildOutputFirehoseLambda = new codepipeline.Artifact('CdkBuildOutputFirehoseLambda');
     const cdkBuildOutputInfra = new codepipeline.Artifact('CdkBuildOutputInfra');
     const cdkBuildOutputTest = new codepipeline.Artifact('CdkBuildOutputTest');
     const feTestOutput = new codepipeline.Artifact('feTestOutput');
@@ -463,6 +463,13 @@ export class UCPCodePipelinesStack extends Stack {
           input: sourceOutput,
           runOrder: 2,
           outputs: [cdkBuildOutputLambdaSync],
+        }),
+        new codepipeline_actions.CodeBuildAction({
+          actionName: 'buildErrorLambdaCode',
+          project: errorLambdaBuild,
+          input: sourceOutput,
+          runOrder: 2,
+          outputs: [cdkBuildOutputLambdaError],
         }),
         new codepipeline_actions.CodeBuildAction({
           actionName: 'buildRealTimeLambdaCode',

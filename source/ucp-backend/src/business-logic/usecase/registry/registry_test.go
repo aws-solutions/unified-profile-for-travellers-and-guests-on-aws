@@ -7,6 +7,7 @@ import (
 	"tah/core/appregistry"
 	core "tah/core/core"
 	"tah/core/customerprofiles"
+	"tah/core/db"
 	"tah/core/glue"
 	"tah/core/iam"
 	model "tah/ucp/src/business-logic/model/common"
@@ -56,8 +57,9 @@ func TestGenericUseCase(t *testing.T) {
 	var appregistryClient = appregistry.Init(REGION)
 	var iamClient = iam.Init()
 	var glueClient = glue.Init(REGION, "test_glue_db")
+	var dbConfig = db.Init("TEST_TABLE", "TEST_PK", "TEST_SK")
 	profiles := customerprofiles.InitWithDomain("test-domain", REGION)
-	ucRegistry := NewRegistry(REGION, &appregistryClient, &iamClient, &glueClient, &profiles)
+	ucRegistry := NewRegistry(REGION, &appregistryClient, &iamClient, &glueClient, &profiles, &dbConfig)
 	ucRegistry.Register("POST", "test/path/{id}", &GenericUseCase{})
 
 	ucRegistry.AddEnv("TEST_ENV_VAR", "TEST_ENV_VAR_VALUE")

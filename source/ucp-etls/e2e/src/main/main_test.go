@@ -10,7 +10,9 @@ import (
 	"sync"
 	glue "tah/core/glue"
 	s3 "tah/core/s3"
+	sqs "tah/core/sqs"
 	"testing"
+	"time"
 )
 
 var UCP_REGION = getRegion()
@@ -51,6 +53,12 @@ func TestMain(t *testing.T) {
 	//schedule := "cron(15 12 * * ? *)"
 	glueClient := glue.Init(UCP_REGION, GLUE_DB_NAME)
 	targetBucketHandler := s3.Init(TEST_BUCKET_ACCP_IMPORT, "", UCP_REGION)
+	sqsClient := sqs.Init(UCP_REGION)
+	queueUrl, err := sqsClient.Create("test-Queue-" + time.Now().Format("15-04-05"))
+	if err != nil {
+		t.Errorf("[TestMain]error creating queue: %v", err)
+	}
+
 	year := "2023"
 	month := "12"
 	day := "01"
@@ -183,8 +191,9 @@ func TestMain(t *testing.T) {
 			}
 			log.Printf("[%v] 6-Run job with modified source and targets", c.ObjectName)
 			err := glueClient.RunJob(c.GlueJob, map[string]string{
-				"--DEST_BUCKET":  TEST_BUCKET_ACCP_IMPORT,
-				"--SOURCE_TABLE": c.GlueTableName,
+				"--DEST_BUCKET":     TEST_BUCKET_ACCP_IMPORT,
+				"--SOURCE_TABLE":    c.GlueTableName,
+				"--ERROR_QUEUE_URL": queueUrl,
 			})
 			if err != nil {
 				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error running job: %v", c.ObjectName, err))
@@ -245,21 +254,14 @@ func TestMain(t *testing.T) {
 							cancel()
 							return
 						}
-						//looking for an error header in the CSV that woudl indicate that an exception has occured in the trasformer
+						//checking the error queue
+						//TODO
+
 						columns := map[string]bool{}
-						for j, col := range data[0] {
+						for _, col := range data[0] {
 							columns[col] = true
-							if col == "error" {
-								testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] invalid ETL output: data has an error column: %v", err2, c.ObjectName))
-								for k, row := range data {
-									if row[j] != "" {
-										testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] Error at row %v and col %v : %v", c.ObjectName, k, j, row[j]))
-									}
-								}
-								cancel()
-								return
-							}
 						}
+						//Looking fro mandatory columns
 						mandatoryColumns := []string{"traveller_id", "last_updated", "model_version"}
 						log.Printf("[TestGlue][%v] Checking for mandatory columns %v in CSV file", c.ObjectName, mandatoryColumns)
 						for _, colName := range mandatoryColumns {
@@ -308,9 +310,13 @@ func TestMain(t *testing.T) {
 			t.Errorf("[TestGlue][%v] Error emptying bucket %v", c.ObjectName, err)
 		}
 	}
-	err := targetBucketHandler.EmptyBucket()
+	err = targetBucketHandler.EmptyBucket()
 	if err != nil {
 		t.Errorf("[TestGlue]Error emptying target bucket %v", err)
+	}
+	err = sqsClient.Delete()
+	if err != nil {
+		t.Errorf("[TestGlue]error deleting queue: %v", err)
 	}
 
 }

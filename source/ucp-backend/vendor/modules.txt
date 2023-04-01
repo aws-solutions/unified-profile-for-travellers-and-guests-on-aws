@@ -20,6 +20,7 @@ github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
 github.com/aws/aws-sdk-go/aws/credentials/processcreds
 github.com/aws/aws-sdk-go/aws/credentials/ssocreds
 github.com/aws/aws-sdk-go/aws/credentials/stscreds
+github.com/aws/aws-sdk-go/aws/crr
 github.com/aws/aws-sdk-go/aws/csm
 github.com/aws/aws-sdk-go/aws/defaults
 github.com/aws/aws-sdk-go/aws/ec2metadata
@@ -54,6 +55,9 @@ github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 github.com/aws/aws-sdk-go/service/appflow
 github.com/aws/aws-sdk-go/service/appregistry
 github.com/aws/aws-sdk-go/service/customerprofiles
+github.com/aws/aws-sdk-go/service/dynamodb
+github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute
+github.com/aws/aws-sdk-go/service/dynamodb/expression
 github.com/aws/aws-sdk-go/service/glue
 github.com/aws/aws-sdk-go/service/iam
 github.com/aws/aws-sdk-go/service/kms
@@ -65,6 +69,9 @@ github.com/aws/aws-sdk-go/service/sso
 github.com/aws/aws-sdk-go/service/sso/ssoiface
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
+# github.com/google/uuid v1.3.0
+## explicit
+github.com/google/uuid
 # github.com/jmespath/go-jmespath v0.4.0
 ## explicit; go 1.14
 github.com/jmespath/go-jmespath
@@ -89,6 +96,7 @@ tah/core/appflow
 tah/core/appregistry
 tah/core/core
 tah/core/customerprofiles
+tah/core/db
 tah/core/glue
 tah/core/iam
 tah/core/kms

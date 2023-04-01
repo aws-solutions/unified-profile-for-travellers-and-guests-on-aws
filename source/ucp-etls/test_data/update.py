@@ -22,7 +22,7 @@ def loadTestRecord(data_type, rec):
     f = open(path)
     data = json.load(f)
     f.close()
-    return transfoms[data_type](data)
+    return transfoms[data_type](data, "")
 
 
 def loadExpectedRecord(data_file):

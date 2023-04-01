@@ -20,6 +20,9 @@ var BUSINESS_OBJECT_HOTEL_STAY = "hotel_stay"
 var BUSINESS_OBJECT_GUEST_PROFILE = "guest_profile"
 var BUSINESS_OBJECT_CLICKSTREAM = "clickstream"
 
+var ERROR_PK = "ucp_ingestion_error"
+var ERROR_SK_PREFIX = "error_"
+
 var CONNECTORS_MAP = map[string][]string{
 	CONNECTOR_NAME_HAPI: {
 		BUSINESS_OBJECT_HOTEL_BOOKING,
