@@ -1,0 +1,87 @@
+.aws-logo {
+    width: 75px;
+}
+
+table {
+    width: 100%;
+}
+
+
+.header-title {
+    padding: 10px;
+    font-size: x-large;
+    color: #ccc;
+}
+
+.block {
+    background-color: #eee;
+    margin: 3px;
+    padding: 3px;
+}
+
+.block-title {
+    background-color: #eee;
+    color: 333;
+
+}
+
+.align-center {
+    text-align: center;
+}
+
+.sub-title {
+    color: #0664e9;
+
+}
+
+
+.admin-panel {
+    background-color: #eee;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+
+
+.delete-icon {
+    float: right;
+    cursor: pointer;
+    color: darkred;
+    z-index: 1000;
+}
+
+
+.compare-status-match {
+    border-radius: 10px;
+    margin: 2px;
+    text-align: center;
+    background-color: green;
+    color: white;
+    padding: 5px;
+}
+
+
+.compare-status-nomatch {
+    border-radius: 10px;
+    margin: 2px;
+    text-align: center;
+    background-color: firebrick;
+    color: white;
+    padding: 5px;
+    margin-top: 12px;
+}
+
+.profile-category {}
+
+.panel-title {
+    font-size: larger;
+}
+
+.form-button {
+    margin: 3px;
+}
+
+.traveller-title {
+    font-size: small;
+    color: #ccc
+}

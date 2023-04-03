@@ -49,7 +49,8 @@ func (u *SearchProfile) CreateRequest(req events.APIGatewayProxyRequest) (model.
 	rw.SearchRq.Phone = req.QueryStringParameters["phone"]
 	rw.SearchRq.Email = req.QueryStringParameters["email"]
 	rw.SearchRq.LoyaltyID = req.QueryStringParameters["loyaltyId"]
-	return model.RequestWrapper{}, nil
+	u.tx.Log("Search Request: %v", rw)
+	return rw, nil
 }
 
 func (u *SearchProfile) ValidateRequest(rq model.RequestWrapper) error {

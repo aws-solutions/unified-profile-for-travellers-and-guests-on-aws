@@ -1,1 +1,226 @@
-<p>profile works!</p>
+<div class="container-fluid">
+    <br />
+    <h2 class="float-right">Lifetime Revenue: $ {{this.totalRevenueGenertated | number: '1.2-2'}}</h2>
+    <div class="traveller-title">TRAVELLER</div>
+    <h1> <fa-icon [icon]="faUser"></fa-icon><span>{{guest.Title}} </span> {{guest.FirstName}} {{guest.LastName}}</h1>
+    <br />
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="profile-category">
+
+                <h3>Personal Data</h3>
+                <i>Personal Identity information about this guest</i>
+                <div><b>Date of Birth: </b> {{guest.birthDate | date : "dd.MM.y"}}</div>
+                <div><b>Address: </b> <span *ngIf="!guest.addresses" style="color:#ccc"><i>missing</i></span></div>
+                <div><b>Gender: </b> <span *ngIf="!guest.Gender" style="color:#ccc"><i>missing</i></span><span
+                        *ngIf="guest.gender">{{guest.Gender}}</span></div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="profile-category">
+                <h3>Potential Matches</h3>
+                <i>List of possible profile dupplicates for this guest</i><br />
+                <div class="row">
+
+                    <div class="col-sm-3 title align-center block-title">
+                        First Name
+                    </div>
+                    <div class="col-sm-3 title align-center block-title">
+                        Last Name
+                    </div>
+                    <div class="col-sm-3 title align-center block-title">
+                        Confidence
+                    </div>
+                    <div class="col-sm-3 title align-center block-title">
+                        Actions
+                    </div>
+                </div>
+                <div class="row" *ngFor="let match of matches">
+                    <div class="col-sm-3 ">
+                        {{match.firstName}}
+                    </div>
+                    <div class="col-sm-3">
+                        {{match.lastName}}
+                    </div>
+                    <div class="col-sm-3">
+                        {{match.confidence | number: '1.2-3'}}
+                    </div>
+                    <div class="col-sm-3">
+                        <button class="btn btn-link float-right" type="button"
+                            (click)="showSideBySide(match.id, match.confidence)">compare</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="profile-category">
+                <h3>Loyalty Profiles ({{(guest.AirLoyaltyRecords || []).length}})</h3>
+                <i>Loyalty Profiles associated to this traveller</i><br />
+                <div class="row" *ngFor="let profile of guest.AirLoyaltyRecords">
+                    <div class="col-sm-11">
+                        <div class="row">
+                            <div class="col-sm-12 title align-center block-title">
+                                # {{profile.LoyaltyID}}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-6 title">
+                                Status
+                            </div>
+                            <div class="col-sm-6">
+                                {{profile.status || 'Unknown'}}
+                            </div>
+                        </div>
+                        <div class="row ">
+                            <div class="col-sm-6 title">
+                                Miles
+                            </div>
+                            <div class="col-sm-6">
+                                {{profile.Miles || 0}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="profile-category">
+
+                <h3>Hotel Booking ({{(guest.hotelBookings || []).length}})</h3>
+                <i>List of bookings sorted by Check-in Date</i><br />
+                <div class="row">
+                    <div class="col-sm-2 title align-center block-title">
+                        Confirmation
+                    </div>
+                    <div class="col-sm-3 title align-center block-title">
+                        Products
+                    </div>
+                    <div class="col-sm-2 title align-center block-title">
+                        Check-in
+                    </div>
+                    <div class="col-sm-1 title align-center block-title">
+                        Guests
+                    </div>
+                    <div class="col-sm-1 title align-center block-title">
+                        Nights
+                    </div>
+                    <div class="col-sm-3 title align-center block-title">
+                        Property
+                    </div>
+                </div>
+                <div class="row" *ngFor="let booking of guest.hotelBookings | slice:bookStart:bookEnd">
+                    <div class="col-sm-2 ">
+                        {{booking.id}}
+                    </div>
+                    <div class="col-sm-3 ">
+                        {{booking.products | slice:0:20}}
+                    </div>
+                    <div class="col-sm-2 ">
+                        {{booking.startDate}}
+                    </div>
+                    <div class="col-sm-1 ">
+                        {{booking.nGuests}}
+                    </div>
+                    <div class="col-sm-1 ">
+                        {{booking.nNight}}
+                    </div>
+                    <div class="col-sm-3 ">
+                        {{toPropertyName(booking.hotelCode)}}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12 align-center">
+                        <button class="btn btn-link" [disabled]="bookStart==0" (click)="prev()"> Prev</button><i>Booking
+                            {{bookStart}} to {{bookEnd}}</i>
+                        <button class="btn btn-link" [disabled]="bookEnd>(guest.bookings || []).length"
+                            (click)="next()">
+                            Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+    <br />
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="profile-category">
+
+                <h3>Contact</h3>
+                <i>Contact informations for this guest in multiple bookings</i><br />
+                <div class="row">
+                    <div class="col-sm-5">
+                        <div class="row">
+                            <div class="col-sm-12 title align-center block-title">
+                                Phone Numbers
+                            </div>
+                        </div>
+                        <div class="row" *ngFor="let phone of guest.phones; let i=index">
+                            <div class="col-sm-12">
+                                <b>{{i+1}}. {{phone.value}}</b>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-1">
+                    </div>
+                    <div class="col-sm-5">
+                        <div class="row">
+                            <div class="col-sm-12 title align-center block-title">
+                                Emails
+                            </div>
+                        </div>
+                        <div class="row" *ngFor="let email of guest.emails; let i=index">
+                            <div class="col-sm-12">
+                                <b>{{i+1}}. {{email.value}}</b>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="profile-category">
+
+                <h3>Searches</h3>
+                <i>Property and Destination searched by this guest</i><br />
+                <div class="row">
+                    <div class="col-sm-5">
+                        <div class="row">
+                            <div class="col-sm-12 title align-center block-title">
+                                Destination
+                            </div>
+                        </div>
+                        <div class="row" *ngFor="let search of guest.locationSearches; let i=index">
+                            <div class="col-sm-4">
+                                <b>{{search.date}}</b>
+                            </div>
+                            <div class="col-sm-8">
+                                {{search.location}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-1"></div>
+
+                    <div class="col-sm-5">
+                        <div class="row">
+                            <div class="col-sm-12 title align-center block-title">
+                                Properties
+                            </div>
+                        </div>
+                        <div class="row" *ngFor="let search of guest.hotelSearches; let i=index">
+                            <div class="col-sm-4">
+                                <b>{{search.date}}</b>
+                            </div>
+                            <div class="col-sm-8">
+                                {{toPropertyName(search.hotel)}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

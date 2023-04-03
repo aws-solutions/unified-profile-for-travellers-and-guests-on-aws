@@ -2,7 +2,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
-import { AppComponent } from './app.component';
+import { AppComponent, DomainCreationModalComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
 import { UcpModule } from './home/ucp.module';
 
@@ -26,7 +26,7 @@ import { MatInputModule } from '@angular/material/input';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ProfileComponent } from './profile/profile.component';
+import { ProfileComponent, ProfileCompareComponent } from './profile/profile.component';
 import { SettingComponent, LinkConnectorComponent, RecordDisplayComponent } from './setting/setting.component';
 
 @NgModule({
@@ -34,9 +34,11 @@ import { SettingComponent, LinkConnectorComponent, RecordDisplayComponent } from
     AppComponent,
     LoginComponent,
     ProfileComponent,
+    ProfileCompareComponent,
     SettingComponent,
     LinkConnectorComponent,
-    RecordDisplayComponent
+    RecordDisplayComponent,
+    DomainCreationModalComponent
   ],
   imports: [
     UcpModule,
