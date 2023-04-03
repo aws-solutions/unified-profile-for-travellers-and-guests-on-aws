@@ -10,7 +10,7 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'home', component: UCPComponent },
   { path: 'setting', component: SettingComponent },
-  { path: 'profile', component: ProfileComponent },
+  { path: 'profile/:id', component: ProfileComponent },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
 ];
 

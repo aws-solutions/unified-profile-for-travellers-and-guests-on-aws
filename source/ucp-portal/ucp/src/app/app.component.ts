@@ -9,7 +9,6 @@ import { faCog, faSearch, faTimes, faPlus, faHome, faSquareCaretDown, faSignOut 
 import { Subscription } from 'rxjs';
 import { SessionService } from './service/sessionService';
 import { UcpService } from './service/ucpService';
-import { DomainCreationModalComponent } from './home/ucp.component';
 
 @Component({
   selector: 'app-root',
@@ -118,3 +117,24 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
 }
+
+@Component({
+  selector: 'delete-confirm',
+  templateUrl: './app.component-domain-creation.html',
+  styleUrls: ['./app.component.css']
+})
+export class DomainCreationModalComponent {
+  name = new FormControl();
+  constructor(public dialogRef: MatDialogRef<DomainCreationModalComponent>) { }
+
+  public create() {
+    this.dialogRef.close(this.name.value)
+  }
+  public cancel() {
+    this.dialogRef.close(null)
+  }
+
+}
+
+
+

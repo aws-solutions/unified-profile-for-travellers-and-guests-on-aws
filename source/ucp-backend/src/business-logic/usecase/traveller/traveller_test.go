@@ -45,7 +45,7 @@ func TestTraveller(t *testing.T) {
 
 	// Set up Customer Profile domain
 	tx := core.NewTransaction("ucp_test", "")
-	reg := registry.NewRegistry(UCP_REGION, nil, nil, nil, &profileClient)
+	reg := registry.NewRegistry(UCP_REGION, nil, nil, nil, &profileClient, nil)
 	reg.AddEnv("KMS_KEY_PROFILE_DOMAIN", keyArn)
 	reg.AddEnv("LAMBDA_ENV", "dev_test")
 	reg.AddEnv("CONNECT_PROFILE_SOURCE_BUCKET", s3Client.Bucket)
