@@ -325,6 +325,7 @@ export class UCPCodePipelinesStack extends Stack {
           },
           build: {
             commands: [
+              'pip3 install coverage',
               'cd source/ucp-etls',
               'echo "Deploy ETL code"',
               'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName
