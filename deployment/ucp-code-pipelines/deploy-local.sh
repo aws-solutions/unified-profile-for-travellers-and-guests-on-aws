@@ -20,6 +20,7 @@ if [ $rc -ne 0 ]; then
 fi
 unzip tah-cdk-common.zip -d ./tah-cdk-common
 rm tah-cdk-common.zip
+rm tah-cdk-common/glue.ts
 
 echo "Deploying infrastrure"
 sh deploy.sh $envName $email $token $solutionEnvName $githubUsername $buildFromUpstream
