@@ -20,7 +20,7 @@ python3 -m unittest discover
 python3 -m coverage run -m unittest discover
 python3 -m coverage xml
 cp coverage.xml ../tests/coverage-reports/etls-coverage.coverage.xml
-rm coverage.xml
+#rm coverage.xml
 
 if [ $? != 0 ]; then
     echo "Changes have been detected in the transformation code"
