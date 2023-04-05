@@ -16,11 +16,14 @@ if [ -z "$env" ] || [ -z "$bucket" ]; then
 fi
 
 echo "Running unit tests"
+coverage_report_path=../tests/coverage-reports/etls-coverage.coverage.xml
+source_dir="$(cd $PWD/..; pwd -P)"
 python3 -m unittest discover
 python3 -m coverage run -m unittest discover
 python3 -m coverage xml
-cp coverage.xml ../tests/coverage-reports/etls-coverage.coverage.xml
-#rm coverage.xml
+cp coverage.xml $coverage_report_path
+sed -i -e "s,<source>$source_dir,<source>source,g" ../tests/coverage-reports/etls-coverage.coverage.xml
+rm coverage.xml
 
 if [ $? != 0 ]; then
     echo "Changes have been detected in the transformation code"
