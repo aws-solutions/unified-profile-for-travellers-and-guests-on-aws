@@ -211,6 +211,7 @@ export class UCPCodePipelinesStack extends Stack {
           build: {
             commands: [
               'echo "Build and Deploy lambda Function"',
+              'pip3 install coverage',
               'cd source/ucp-real-time-transformer',
               'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName
             ],
@@ -236,6 +237,7 @@ export class UCPCodePipelinesStack extends Stack {
           },
           build: {
             commands: [
+              'pip3 install coverage',
               'cd source/ucp-real-time-transformer',
               'echo "Deploy Real Time code"',
               'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName,
