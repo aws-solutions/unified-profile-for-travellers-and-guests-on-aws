@@ -27,6 +27,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ProfileComponent, ProfileCompareComponent } from './profile/profile.component';
+import { AddressComponent } from './profile/common/address.component';
+
 import { SettingComponent, LinkConnectorComponent, RecordDisplayComponent } from './setting/setting.component';
 
 @NgModule({
@@ -38,7 +40,8 @@ import { SettingComponent, LinkConnectorComponent, RecordDisplayComponent } from
     SettingComponent,
     LinkConnectorComponent,
     RecordDisplayComponent,
-    DomainCreationModalComponent
+    DomainCreationModalComponent,
+    AddressComponent
   ],
   imports: [
     UcpModule,

@@ -492,9 +492,10 @@ func notIn(id string, matches []Match) bool {
 //
 // These integrations send all fields to Amazon Connect Customer Profile,
 // then Customer Profile handles mapping the data to a given Object Type.
-func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucketName string, fieldMappings []FieldMapping) error {
+func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucketName string, fieldMappings []FieldMapping, startTime time.Time) error {
 	domain, err := c.GetDomain()
 	if err != nil {
+		log.Printf("[PutIntegration] Error getting domain: %v", err)
 		return err
 	}
 
@@ -503,7 +504,7 @@ func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucket
 			Scheduled: &customerProfileSdk.ScheduledTriggerProperties{
 				ScheduleExpression: aws.String("rate(1hours)"),
 				DataPullMode:       aws.String(customerProfileSdk.DataPullModeIncremental),
-				ScheduleStartTime:  aws.Time(time.Now()),
+				ScheduleStartTime:  aws.Time(startTime),
 			},
 		},
 		TriggerType: aws.String(customerProfileSdk.TriggerTypeScheduled),
@@ -535,6 +536,7 @@ func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucket
 	// Create scheduled flow
 	_, err = c.Client.PutIntegration(&scheduledInput)
 	if err != nil {
+		log.Printf("[PutIntegration] Error Create scheduled flow: %v", err)
 		return err
 	}
 
@@ -551,12 +553,17 @@ func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucket
 	}
 	_, err = c.Client.PutIntegration(&onDemandInput)
 	if err != nil {
+		log.Printf("[PutIntegration] Error Create identical on-demand flow: %v", err)
 		return err
 	}
 
 	// Start scheduled flow
 	err = startFlow(flowNameScheduled)
-	return err
+	if err != nil {
+		log.Printf("[PutIntegration] Error Start scheduled flow %v", err)
+		return err
+	}
+	return nil
 }
 
 // There are two types of tasks that must be created:

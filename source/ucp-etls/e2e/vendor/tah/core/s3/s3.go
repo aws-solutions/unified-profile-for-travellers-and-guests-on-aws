@@ -190,7 +190,7 @@ func (s3c *S3Config) CreateBucket(name string) error {
 }
 
 func (s3c S3Config) CreateRandomBucket(prefix string) (string, error) {
-	name := prefix + "-" + core.GeneratUniqueId()
+	name := prefix + "-" + strings.ToLower(core.GeneratUniqueId())
 	err := s3c.CreateBucket(name)
 	return name, err
 }

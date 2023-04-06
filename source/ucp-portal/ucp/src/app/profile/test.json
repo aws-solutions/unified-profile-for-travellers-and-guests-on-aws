@@ -1,0 +1,156 @@
+{
+    "ModelVersion": "1",
+    "Errors": null,
+    "ConnectID": "f89f2438d37346aab0edbf99ea86cbf8",
+    "TravellerID": "4093025141",
+    "PSSID": "",
+    "GDSID": "",
+    "PMSID": "",
+    "CRSID": "",
+    "Honorific": "Ms",
+    "FirstName": "Efren",
+    "MiddleName": "Lea",
+    "LastName": "Gulgowski",
+    "Gender": "other",
+    "Pronoun": "they",
+    "BirthDate": "1928-07-06T00:00:00Z",
+    "JobTitle": "Director",
+    "CompanyName": "McGraw Hill Financial",
+    "PhoneNumber": "",
+    "MobilePhoneNumber": "",
+    "HomePhoneNumber": "",
+    "BusinessPhoneNumber": "1162389837",
+    "PersonalEmailAddress": "richmonddubuque@volkman.io",
+    "BusinessEmailAddress": "",
+    "NationalityCode": "",
+    "NationalityName": "",
+    "LanguageCode": "",
+    "LanguageName": "",
+    "HomeAddress": {
+        "Address1": "",
+        "Address2": "",
+        "Address3": "",
+        "Address4": "",
+        "City": "",
+        "State": "",
+        "Province": "",
+        "PostalCode": "",
+        "Country": ""
+    },
+    "BusinessAddress": {
+        "Address1": "",
+        "Address2": "",
+        "Address3": "",
+        "Address4": "",
+        "City": "",
+        "State": "",
+        "Province": "",
+        "PostalCode": "",
+        "Country": ""
+    },
+    "MailingAddress": {
+        "Address1": "",
+        "Address2": "",
+        "Address3": "",
+        "Address4": "",
+        "City": "",
+        "State": "",
+        "Province": "",
+        "PostalCode": "",
+        "Country": ""
+    },
+    "BillingAddress": {
+        "Address1": "",
+        "Address2": "",
+        "Address3": "",
+        "Address4": "",
+        "City": "",
+        "State": "",
+        "Province": "",
+        "PostalCode": "",
+        "Country": ""
+    },
+    "AirBookingRecords": [
+        {
+            "BookingID": "ZVT31T",
+            "SegmentID": "ZVT31T-HKG-LIM",
+            "From": "HKG",
+            "To": "LIM",
+            "FlightNumber": "AA7381",
+            "DepartureDate": "2022-10-17",
+            "DepartureTime": "17:15",
+            "ArrivalDate": "2022-10-17",
+            "ArrivalTime": "20:21",
+            "Channel": "web",
+            "Status": "tentative",
+            "Price": "0.0"
+        },
+        {
+            "BookingID": "ZVT31T",
+            "SegmentID": "ZVT31T-DFW-HKG",
+            "From": "DFW",
+            "To": "HKG",
+            "FlightNumber": "AA1582",
+            "DepartureDate": "2022-10-17",
+            "DepartureTime": "13:16",
+            "ArrivalDate": "2022-10-17",
+            "ArrivalTime": "14:56",
+            "Channel": "web",
+            "Status": "tentative",
+            "Price": "0.0"
+        },
+        {
+            "BookingID": "ZVT31T",
+            "SegmentID": "ZVT31T-LIM-ORD",
+            "From": "LIM",
+            "To": "ORD",
+            "FlightNumber": "AA5297",
+            "DepartureDate": "2022-10-17",
+            "DepartureTime": "19:27",
+            "ArrivalDate": "2022-10-18",
+            "ArrivalTime": "03:09",
+            "Channel": "web",
+            "Status": "tentative",
+            "Price": "0.0"
+        }
+    ],
+    "AirLoyaltyRecords": [
+        {
+            "LoyaltyID": "7387844115",
+            "ProgramName": "",
+            "Miles": "",
+            "MilesToNextLevel": "",
+            "Level": "",
+            "Joined": "0001-01-01T00:00:00Z"
+        },
+        {
+            "LoyaltyID": "9143352488",
+            "ProgramName": "",
+            "Miles": "",
+            "MilesToNextLevel": "",
+            "Level": "",
+            "Joined": "0001-01-01T00:00:00Z"
+        }
+    ],
+    "ClickstreamRecords": [],
+    "EmailHistoryRecords": [
+        {
+            "Address": "richmonddubuque@volkman.io",
+            "Type": "personal",
+            "LastUpdated": "0001-01-01T00:00:00Z",
+            "LastUpdatedBy": "Rowland Reynolds"
+        }
+    ],
+    "HotelBookingRecords": [],
+    "HotelLoyaltyRecords": [],
+    "HotelStayRecords": [],
+    "PhoneHistoryRecords": [
+        {
+            "Number": "1162389837",
+            "CountryCode": "75",
+            "Type": "business",
+            "LastUpdated": "0001-01-01T00:00:00Z",
+            "LastUpdatedBy": "Rowland Reynolds"
+        }
+    ]
+}

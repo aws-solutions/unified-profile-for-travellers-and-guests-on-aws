@@ -95,39 +95,39 @@ func profileToTraveller(profile customerprofiles.Profile) model.Traveller {
 			PostalCode: profile.Address.PostalCode,
 			Country:    profile.Address.Country,
 		},
-		// BusinessAddress: model.Address2{
-		// 	Address1:   profile.BusinessAddress.Address1,
-		// 	Address2:   profile.BusinessAddress.Address2,
-		// 	Address3:   profile.BusinessAddress.Address3,
-		// 	Address4:   profile.BusinessAddress.Address4,
-		// 	City:       profile.BusinessAddress.City,
-		// 	State:      profile.BusinessAddress.State,
-		// 	Province:   profile.BusinessAddress.Province,
-		// 	PostalCode: profile.BusinessAddress.PostalCode,
-		// 	Country:    profile.BusinessAddress.Country,
-		// },
-		// MailingAddress: model.Address2{
-		// 	Address1:   profile.MailingAddress.Address1,
-		// 	Address2:   profile.MailingAddress.Address2,
-		// 	Address3:   profile.MailingAddress.Address3,
-		// 	Address4:   profile.MailingAddress.Address4,
-		// 	City:       profile.MailingAddress.City,
-		// 	State:      profile.MailingAddress.State,
-		// 	Province:   profile.MailingAddress.Province,
-		// 	PostalCode: profile.MailingAddress.PostalCode,
-		// 	Country:    profile.MailingAddress.Country,
-		// },
-		// BillingAddress: model.Address2{
-		// 	Address1:   profile.BillingAddress.Address1,
-		// 	Address2:   profile.BillingAddress.Address2,
-		// 	Address3:   profile.BillingAddress.Address3,
-		// 	Address4:   profile.BillingAddress.Address4,
-		// 	City:       profile.BillingAddress.City,
-		// 	State:      profile.BillingAddress.State,
-		// 	Province:   profile.BillingAddress.Province,
-		// 	PostalCode: profile.BillingAddress.PostalCode,
-		// 	Country:    profile.BillingAddress.Country,
-		// },
+		/*BusinessAddress: model.Address{
+			Address1:   profile.BusinessAddress.Address1,
+			Address2:   profile.BusinessAddress.Address2,
+			Address3:   profile.BusinessAddress.Address3,
+			Address4:   profile.BusinessAddress.Address4,
+			City:       profile.BusinessAddress.City,
+			State:      profile.BusinessAddress.State,
+			Province:   profile.BusinessAddress.Province,
+			PostalCode: profile.BusinessAddress.PostalCode,
+			Country:    profile.BusinessAddress.Country,
+		},
+		MailingAddress: model.Address{
+			Address1:   profile.MailingAddress.Address1,
+			Address2:   profile.MailingAddress.Address2,
+			Address3:   profile.MailingAddress.Address3,
+			Address4:   profile.MailingAddress.Address4,
+			City:       profile.MailingAddress.City,
+			State:      profile.MailingAddress.State,
+			Province:   profile.MailingAddress.Province,
+			PostalCode: profile.MailingAddress.PostalCode,
+			Country:    profile.MailingAddress.Country,
+		},
+		BillingAddress: model.Address{
+			Address1:   profile.BillingAddress.Address1,
+			Address2:   profile.BillingAddress.Address2,
+			Address3:   profile.BillingAddress.Address3,
+			Address4:   profile.BillingAddress.Address4,
+			City:       profile.BillingAddress.City,
+			State:      profile.BillingAddress.State,
+			Province:   profile.BillingAddress.Province,
+			PostalCode: profile.BillingAddress.PostalCode,
+			Country:    profile.BillingAddress.Country,
+		},*/
 	}
 
 	// TODO: handle each object in one loop through object records
@@ -139,6 +139,7 @@ func profileToTraveller(profile customerprofiles.Profile) model.Traveller {
 	traveller.HotelLoyaltyRecords = generateHotelLoyaltyRecords(&profile, &errors)
 	traveller.HotelStayRecords = generateHotelStayRecords(&profile, &errors)
 	traveller.PhoneHistoryRecords = generatePhoneHistoryRecords(&profile, &errors)
+	traveller.ParsingErrors = errors
 	return traveller
 }
 
@@ -225,6 +226,7 @@ func generateClickstreamRecords(profile *customerprofiles.Profile, errors *[]str
 			NumPaxChildren:                  trySetInt(order.Attributes["num_pax_children"], errors),
 			PaxType:                         order.Attributes["pax_type"],
 			TotalPassengers:                 trySetInt(order.Attributes["total_passengers"], errors),
+			LastUpdated:                     trySetTimestamp(order.Attributes["last_updated"], errors),
 		}
 		clickstreamRecs = append(clickstreamRecs, rec)
 	}
@@ -240,7 +242,7 @@ func generateEmailHistoryRecords(profile *customerprofiles.Profile, errors *[]st
 		rec := model.EmailHistory{
 			Address:       order.Attributes["address"],
 			Type:          order.Attributes["type"],
-			LastUpdated:   trySetDate(order.Attributes["last_updated"], errors),
+			LastUpdated:   trySetTimestamp(order.Attributes["last_updated"], errors),
 			LastUpdatedBy: order.Attributes["last_updated_by"],
 		}
 		emailRecs = append(emailRecs, rec)
@@ -267,6 +269,7 @@ func generateHotelBookingRecords(profile *customerprofiles.Profile, errors *[]st
 			AttributeCodes:        order.Attributes["attribute_codes"],
 			AttributeNames:        order.Attributes["attribute_names"],
 			AttributeDescriptions: order.Attributes["attribute_descriptions"],
+			LastUpdated:           trySetTimestamp(order.Attributes["last_updated"], errors),
 		}
 		hotelBookingRecs = append(hotelBookingRecs, rec)
 	}
@@ -287,6 +290,7 @@ func generateHotelLoyaltyRecords(profile *customerprofiles.Profile, errors *[]st
 			PointsToNextLevel: order.Attributes["points_to_next_level"],
 			Level:             order.Attributes["level"],
 			Joined:            trySetDate(order.Attributes["joined"], errors),
+			LastUpdated:       trySetTimestamp(order.Attributes["last_updated"], errors),
 		}
 		hotelLoyaltyRecs = append(hotelLoyaltyRecs, rec)
 	}
@@ -315,6 +319,7 @@ func generateHotelStayRecords(profile *customerprofiles.Profile, errors *[]strin
 			Description:    order.Attributes["description"],
 			Amount:         order.Attributes["amount"],
 			Date:           trySetDate(order.Attributes["date"], errors),
+			LastUpdated:    trySetTimestamp(order.Attributes["last_updated"], errors),
 		}
 		hotelStayRecs = append(hotelStayRecs, rec)
 	}
@@ -331,7 +336,7 @@ func generatePhoneHistoryRecords(profile *customerprofiles.Profile, errors *[]st
 			Number:        order.Attributes["number"],
 			CountryCode:   order.Attributes["country_code"],
 			Type:          order.Attributes["type"],
-			LastUpdated:   trySetDate(order.Attributes["last_updated"], errors),
+			LastUpdated:   trySetTimestamp(order.Attributes["last_updated"], errors),
 			LastUpdatedBy: order.Attributes["last_updated_by"],
 		}
 		phoneHistoryRecs = append(phoneHistoryRecs, rec)
@@ -341,6 +346,15 @@ func generatePhoneHistoryRecords(profile *customerprofiles.Profile, errors *[]st
 
 func trySetDate(val string, errors *[]string) time.Time {
 	parsed, err := utils.TryParseTime(val, "2006-01-02")
+	if err != nil {
+		// TODO: decide on standard error messaging
+		*errors = append(*errors, err.Error())
+	}
+	return parsed
+}
+
+func trySetTimestamp(val string, errors *[]string) time.Time {
+	parsed, err := utils.TryParseTime(val, "2006-01-02T15:04:05.999999Z")
 	if err != nil {
 		// TODO: decide on standard error messaging
 		*errors = append(*errors, err.Error())

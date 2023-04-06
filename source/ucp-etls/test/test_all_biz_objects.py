@@ -8,23 +8,23 @@ from tah_lib.hotel_bookingTransform import buildObjectRecord as hotelBookingTran
 from tah_lib.hotel_stayTransform import buildObjectRecord as hotelStayTransform
 from tah_lib.pax_profileTransform import buildObjectRecord as paxProfileTransform
 
-objects = [{'path': 'test_data/air_booking/',
+objects = [{'path': '../test_data/air_booking/',
             'main_accp_rec': 'air_booking_recs',
             'transform': airBookingTransform
             },
-           {'path': 'test_data/guest_profile/',
+           {'path': '../test_data/guest_profile/',
             'main_accp_rec': 'guest_profile_recs',
             'transform': guestPofileTransform
             },
-           {'path': 'test_data/hotel_booking/',
+           {'path': '../test_data/hotel_booking/',
             'main_accp_rec': 'hotel_booking_recs',
             'transform': hotelBookingTransform
             },
-           {'path': 'test_data/hotel_stay/',
+           {'path': '../test_data/hotel_stay/',
             'main_accp_rec': 'hotel_stay_revenue_items',
             'transform': hotelStayTransform
             },
-           {'path': 'test_data/pax_profile/',
+           {'path': '../test_data/pax_profile/',
             'main_accp_rec': 'air_profile_recs',
             'transform': paxProfileTransform
             }]

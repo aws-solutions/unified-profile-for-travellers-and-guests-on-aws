@@ -18,14 +18,14 @@ fi
 echo "Running unit tests"
 coverage_report_path=../tests/coverage-reports/etls-coverage.coverage.xml
 source_dir="$(cd $PWD/..; pwd -P)"
-python3 -m unittest discover
 python3 -m coverage run -m unittest discover
+rc=$?
 python3 -m coverage xml
 cp coverage.xml $coverage_report_path
 sed -i -e "s,<source>$source_dir,<source>source,g" ../tests/coverage-reports/etls-coverage.coverage.xml
 rm coverage.xml
 
-if [ $? != 0 ]; then
+if [ $rc != 0 ]; then
     echo "Changes have been detected in the transformation code"
     echo "To accept these changes, run sh update-test-data.sh"
     exit 1

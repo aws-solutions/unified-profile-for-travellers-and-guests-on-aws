@@ -66,7 +66,7 @@ func TestMain(t *testing.T) {
 		BusinessObjectTestConfig{
 			ObjectName:   "air_booking",
 			GlueJob:      GLUE_JOB_NAME_AIR_BOOKING,
-			TestFilePath: "../../../test_data/air_booking/",
+			TestFilePath: "../../../../test_data/air_booking/",
 			TestFiles: []string{
 				"data1.json",
 				"data2.json",
@@ -79,7 +79,7 @@ func TestMain(t *testing.T) {
 		BusinessObjectTestConfig{
 			ObjectName:   "clickstream",
 			GlueJob:      GLUE_JOB_NAME_CLICKSTREAM,
-			TestFilePath: "../../../test_data/clickstream/",
+			TestFilePath: "../../../../test_data/clickstream/",
 			TestFiles: []string{
 				"data1.json",
 				"data2.json",
@@ -92,7 +92,7 @@ func TestMain(t *testing.T) {
 		BusinessObjectTestConfig{
 			ObjectName:   "guest_profile",
 			GlueJob:      GLUE_JOB_NAME_GUEST_PROFILES,
-			TestFilePath: "../../../test_data/guest_profile/",
+			TestFilePath: "../../../../test_data/guest_profile/",
 			TestFiles: []string{
 				"data1.json",
 				"data2.json",
@@ -105,7 +105,7 @@ func TestMain(t *testing.T) {
 		BusinessObjectTestConfig{
 			ObjectName:   "hotel_booking",
 			GlueJob:      GLUE_JOB_NAME_HOTEL_BOOKINGS,
-			TestFilePath: "../../../test_data/hotel_booking/",
+			TestFilePath: "../../../../test_data/hotel_booking/",
 			TestFiles: []string{
 				"data1.json",
 				"data2.json",
@@ -118,7 +118,7 @@ func TestMain(t *testing.T) {
 		BusinessObjectTestConfig{
 			ObjectName:   "hotel_stay",
 			GlueJob:      GLUE_JOB_NAME_STAY_REVENUE,
-			TestFilePath: "../../../test_data/hotel_stay/",
+			TestFilePath: "../../../../test_data/hotel_stay/",
 			TestFiles: []string{
 				"data1.json",
 				"data2.json",
@@ -131,7 +131,7 @@ func TestMain(t *testing.T) {
 		BusinessObjectTestConfig{
 			ObjectName:   "pax_profile",
 			GlueJob:      GLUE_JOB_NAME_PAX_PROFILES,
-			TestFilePath: "../../../test_data/pax_profile/",
+			TestFilePath: "../../../../test_data/pax_profile/",
 			TestFiles: []string{
 				"data1.json",
 				"data2.json",

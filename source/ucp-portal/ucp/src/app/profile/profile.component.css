@@ -85,3 +85,59 @@ table {
     font-size: small;
     color: #ccc
 }
+
+.box-shadow {
+    box-shadow: 3px 5px #eee;
+    border: solid 1px #eee;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.data-element {
+    padding: 3px;
+}
+
+.data-title {
+    margin: 3px;
+    ;
+    font-size: small;
+    color: #ccc
+}
+
+.data-title-icon {
+    font-size: small;
+    color: #ccc
+}
+
+.traveller-name {
+    padding: 5px;
+    font-size: 24px;
+    margin: 3px;
+}
+
+.traveller-icon {
+    margin-right: 5px;
+}
+
+.pronoun {
+    font-size: smaller;
+    color: #ccc
+}
+
+.side-bar-content {
+    padding: 3px;
+}
+
+.profile-match {
+    padding: 5px;
+}
+
+.match-content {
+    margin-left: 3px;
+    ;
+}
+
+.profile-match:hover {
+    background-color: #eee;
+    cursor: pointer;
+}

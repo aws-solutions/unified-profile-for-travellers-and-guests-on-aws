@@ -4,8 +4,9 @@ import { UcpService } from '../service/ucpService';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
-import { faUser } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faPhone, faEnvelope, faMapMarker, faBriefcase, faBirthdayCake } from '@fortawesome/free-solid-svg-icons';
 
+import { AddressComponent } from './common/address.component'
 
 @Component({
   selector: 'app-profile',
@@ -14,7 +15,13 @@ import { faUser } from '@fortawesome/free-solid-svg-icons';
 })
 export class ProfileComponent implements OnInit {
   faUser = faUser
-  guest: any = {};
+  faPhone = faPhone
+  faEnvelope = faEnvelope
+  faMapMarker = faMapMarker
+  faBriefcase = faBriefcase
+  faBirthdayCake = faBirthdayCake
+
+  traveller: any = {};
   matches: any = []
   propertyMap: any = {};
   bookStart = 0;
@@ -33,7 +40,7 @@ export class ProfileComponent implements OnInit {
       height: '80%',
       width: '99%',
       data: {
-        id1: this.guest.unique_id,
+        id1: this.traveller.ConnectID,
         id2: matchId,
         matchScore: matchScore
       }
@@ -76,10 +83,10 @@ export class ProfileComponent implements OnInit {
   afterRetreive(response) {
     console.log(response)
     this.matches = response.matches
-    this.guest = response.profiles[0]
+    this.traveller = response.profiles[0]
     let hotelSearches = {}
     let locationSearches = {}
-    this.guest.searches.forEach((search) => {
+    this.traveller.searches.forEach((search) => {
       if (search.location) {
         locationSearches[search.date + search.location] = {
           "date": moment(search.date).format("MMM-YYYY"), "location": search.location
@@ -91,8 +98,8 @@ export class ProfileComponent implements OnInit {
         }
       }
     });
-    this.guest.hotelSearches = Object.values(hotelSearches)
-    this.guest.locationSearches = Object.values(locationSearches)
+    this.traveller.hotelSearches = Object.values(hotelSearches)
+    this.traveller.locationSearches = Object.values(locationSearches)
   }
 
 }

@@ -62,6 +62,7 @@ func GeneratUniqueId() string {
 const letterBytes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 func UniqueIdOfLength(n int) string {
+	rand.Seed(time.Now().UnixNano())
 	b := make([]byte, n)
 	for i := range b {
 		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
@@ -355,6 +356,22 @@ func ParseIntParam(param string) int64 {
 type JSONObject interface {
 	//ParseBody(body io.ReadCloser) (interface{}, error)
 	Decode(dec json.Decoder) (error, JSONObject)
+}
+
+/********************
+* Utility Functions
+*********************/
+
+func IsEqual[T comparable](a, b []T) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 /********************

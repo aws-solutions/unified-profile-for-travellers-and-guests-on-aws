@@ -56,6 +56,8 @@ type Traveller struct {
 	HotelLoyaltyRecords []HotelLoyalty
 	HotelStayRecords    []HotelStay
 	PhoneHistoryRecords []PhoneHistory
+
+	ParsingErrors []string
 }
 
 type AirBooking struct {
@@ -71,6 +73,8 @@ type AirBooking struct {
 	Channel       string
 	Status        string
 	Price         string
+	LastUpdated   time.Time
+	LastUpdatedBy string
 }
 
 type AirLoyalty struct {
@@ -80,6 +84,8 @@ type AirLoyalty struct {
 	MilesToNextLevel string
 	Level            string
 	Joined           time.Time
+	LastUpdated      time.Time
+	LastUpdatedBy    string
 }
 
 type Clickstream struct {
@@ -106,6 +112,8 @@ type Clickstream struct {
 	NumPaxChildren                  int
 	PaxType                         string
 	TotalPassengers                 int
+	LastUpdated                     time.Time
+	LastUpdatedBy                   string
 }
 
 type EmailHistory struct {
@@ -128,6 +136,8 @@ type HotelBooking struct {
 	AttributeCodes        string
 	AttributeNames        string
 	AttributeDescriptions string
+	LastUpdated           time.Time
+	LastUpdatedBy         string
 }
 
 type HotelLoyalty struct {
@@ -138,6 +148,8 @@ type HotelLoyalty struct {
 	PointsToNextLevel string
 	Level             string
 	Joined            time.Time
+	LastUpdated       time.Time
+	LastUpdatedBy     string
 }
 
 type HotelStay struct {
@@ -156,6 +168,8 @@ type HotelStay struct {
 	Description    string
 	Amount         string
 	Date           time.Time
+	LastUpdated    time.Time
+	LastUpdatedBy  string
 }
 
 type PhoneHistory struct {

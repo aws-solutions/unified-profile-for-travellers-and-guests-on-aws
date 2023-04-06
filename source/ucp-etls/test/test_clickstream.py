@@ -2,12 +2,13 @@ import unittest
 import json
 from tah_lib.clickstreamTransform import buildObjectRecord
 
-data_path = 'test_data/clickstream/'
+data_path = '../test_data/clickstream/'
 
 
 def loadTestRecord(data_file):
     f = open(data_file)
-    data = json.load(f)
+    first_line = f.readline().strip()
+    data = json.loads(first_line)
     f.close()
     return buildObjectRecord(data, "")
 

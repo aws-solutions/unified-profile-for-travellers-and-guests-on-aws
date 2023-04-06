@@ -1,23 +1,96 @@
 <div class="container-fluid">
     <br />
-    <h2 class="float-right">Lifetime Revenue: $ {{this.totalRevenueGenertated | number: '1.2-2'}}</h2>
-    <div class="traveller-title">TRAVELLER</div>
-    <h1> <fa-icon [icon]="faUser"></fa-icon><span>{{guest.Title}} </span> {{guest.FirstName}} {{guest.LastName}}</h1>
-    <br />
-    <div class="row">
-        <div class="col-sm-6">
-            <div class="profile-category">
 
-                <h3>Personal Data</h3>
-                <i>Personal Identity information about this guest</i>
-                <div><b>Date of Birth: </b> {{guest.birthDate | date : "dd.MM.y"}}</div>
-                <div><b>Address: </b> <span *ngIf="!guest.addresses" style="color:#ccc"><i>missing</i></span></div>
-                <div><b>Gender: </b> <span *ngIf="!guest.Gender" style="color:#ccc"><i>missing</i></span><span
-                        *ngIf="guest.gender">{{guest.Gender}}</span></div>
+    <br />
+
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="box-shadow">
+                <div class="profile-category">
+                    <h2 class="float-right">Lifetime Revenue: $ {{this.totalRevenueGenertated | number: '1.2-2'}}</h2>
+                    <div class="traveller-title">TRAVELLER</div>
+                    <div class="traveller-name"><fa-icon class="traveller-icon" [icon]="faUser"></fa-icon>
+                        <span *ngIf="traveller.Honorific">{{traveller.Honorific}}</span> {{traveller.FirstName}}
+                        {{traveller.MiddleName}}
+                        {{traveller.LastName}} <span class="pronoun"
+                            *ngIf="traveller.Pronoun">({{traveller.Pronoun}})</span>
+                    </div>
+                    <br />
+                    <div class="row">
+                        <div class="col-sm-3"><fa-icon class="data-title-icon" [icon]="faPhone"></fa-icon><span
+                                class="data-title">PHONE</span>
+                            <div class="data-element">{{traveller.PhoneNumber ||
+                                traveller.BusinessPhoneNumber || "none"}}</div>
+                        </div>
+                        <div class="col-sm-3"><fa-icon class="data-title-icon" [icon]="faEnvelope"></fa-icon><span
+                                class="data-title">EMAIL</span>
+                            <div class="data-element">
+                                <div *ngIf="traveller.PersonalEmailAddress">{{traveller.PersonalEmailAddress}}</div>
+                                <div *ngIf="traveller.BusinessEmailAddress">{{traveller.BusinessEmailAddress}}</div>
+                                <div *ngIf="!traveller.BusinessEmailAddress && !traveller.PersonalEmailAddress">None
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-3"><fa-icon class="data-title-icon" [icon]="faMapMarker"></fa-icon><span
+                                class="data-title">ADDRESS</span>
+                            <div class="data-element">
+                                <ucp-address *ngIf="traveller.HomeAddress"
+                                    address="traveller.HomeAddress"></ucp-address>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-3"><fa-icon class="data-title-icon" [icon]="faBirthdayCake"></fa-icon><span
+                                class="data-title">BIRTHDATE</span>
+                            <div class="data-element">{{traveller.BirthDate | date: 'YYYY-MM-dd'}}</div>
+                        </div>
+                    </div>
+                    <br />
+                    <div class="row">
+                        <div class="col-sm-3"><fa-icon class="data-title-icon" [icon]="faBriefcase"></fa-icon>
+                            <span class="data-title">WORK</span>
+                            <div class="data-element">{{traveller.JobTitle || "Works"}} <span
+                                    *ngIf="traveller.CompanyName">at</span> {{traveller.CompanyName}}</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-sm-6">
-            <div class="profile-category">
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-sm-9">
+            <div class="box-shadow">
+                <div class="widget-container"></div>
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="box-shadow">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <span class="data-title">MATCHING PROFILES</span>
+                        <div class="side-bar-content">
+                            <div *ngFor="let match of matches">
+                                <div class="profile-match">
+                                    <fa-icon [icon]="faUser"></fa-icon> <span class="match-content">{{match.firstName}}
+                                        {{match.lastName}}
+                                        ({{match.confidence}})</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br />
+                <div class="row">
+                    <div class="col-sm-12">
+                        <span class="data-title">INGESTION ERRORS</span>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--<div class="profile-category">
                 <h3>Potential Matches</h3>
                 <i>List of possible profile dupplicates for this guest</i><br />
                 <div class="row">
@@ -133,7 +206,8 @@
                 </div>
                 <div class="row">
                     <div class="col-sm-12 align-center">
-                        <button class="btn btn-link" [disabled]="bookStart==0" (click)="prev()"> Prev</button><i>Booking
+                        <button class="btn btn-link" [disabled]="bookStart==0" (click)="prev()">
+                            Prev</button><i>Booking
                             {{bookStart}} to {{bookEnd}}</i>
                         <button class="btn btn-link" [disabled]="bookEnd>(guest.bookings || []).length"
                             (click)="next()">
@@ -223,4 +297,4 @@
             </div>
         </div>
     </div>
-</div>
+</div>-->
