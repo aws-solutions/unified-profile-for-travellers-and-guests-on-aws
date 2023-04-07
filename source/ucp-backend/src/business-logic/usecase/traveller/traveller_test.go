@@ -91,7 +91,7 @@ func TestTraveller(t *testing.T) {
 		time.Sleep(duration)
 	}
 	if i == max {
-		t.Errorf("[TestTraveller] Error: unable to retrieve customer profile")
+		t.Errorf("[TestTraveller] Error: unable to retrieve customer profile id")
 	}
 
 	// Test Traveller functions
@@ -103,12 +103,17 @@ func TestTraveller(t *testing.T) {
 	if err != nil {
 		t.Errorf("[TestTraveller] Error searching for user: %v", err)
 	}
-
-	profile, err := profileClient.GetProfile(res.Profiles[0].ConnectID)
-	if err != nil {
-		t.Errorf("[TestTraveller] Error getting orders for user: %v", err)
+	// Get profile if one was returned, otherwise skip and show error. Prevents out of range panic on Profiles[0].
+	if len(res.Profiles) > 0 {
+		profile, err := profileClient.GetProfile(res.Profiles[0].ConnectID, COMBINED_PROFILE_OBJECT_TYPES)
+		if err != nil {
+			t.Errorf("[TestTraveller] Error getting orders for user: %v", err)
+		}
+		traveller360 := profileToTraveller(profile)
+		log.Printf("[TestTraveller] Traveller 360: %v", traveller360)
+	} else {
+		t.Errorf("[TestTraveller] Error: unable to retrieve customer profile")
 	}
-	log.Printf("[TestTraveller] Traveller 360: %v", profile)
 
 	// Clean up resources
 	s3Client.EmptyAndDelete()
