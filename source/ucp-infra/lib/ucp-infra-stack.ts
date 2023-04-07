@@ -402,20 +402,26 @@ export class UCPInfraStack extends Stack {
         DYNAMO_PK: dynamo_pk,
         DYNAMO_SK: dynamo_sk,
 
-
-        HOTEL_BOOKING_TABLE_NAME_CUSTOMER: hotelBookingOutput.tableName,
-        AIR_BOOKING_TABLE_NAME_CUSTOMER: airBookingOutput.tableName,
-        GUEST_PROFILE_TABLE_NAME_CUSTOMER: guestProfileOutput.tableName,
-        PAX_PROFILE_TABLE_NAME_CUSTOMER: paxProfileOutput.tableName,
-        CLICKSTREAM_TABLE_NAME_CUSTOMER: clickstreamOutput.tableName,
-        HOTEL_STAY_TABLE_NAME_CUSTOMER: hotelStayOutput.tableName,
-
         S3_HOTEL_BOOKING: hotelBookingOutput.bucket.bucketName,
         S3_AIR_BOOKING: airBookingOutput.bucket.bucketName,
         S3_GUEST_PROFILE: guestProfileOutput.bucket.bucketName,
         S3_PAX_PROFILE: paxProfileOutput.bucket.bucketName,
         S3_STAY_REVENUE: hotelStayOutput.bucket.bucketName,
         S3_CLICKSTREAM: clickstreamOutput.bucket.bucketName,
+
+        HOTEL_BOOKING_JOB_NAME_CUSTOMER: hotelBookingOutput.customerJobName,
+        AIR_BOOKING_JOB_NAME_CUSTOMER: airBookingOutput.customerJobName,
+        GUEST_PROFILE_JOB_NAME_CUSTOMER: guestProfileOutput.customerJobName,
+        PAX_PROFILE_JOB_NAME_CUSTOMER: paxProfileOutput.customerJobName,
+        CLICKSTREAM_JOB_NAME_CUSTOMER: clickstreamOutput.customerJobName,
+        HOTEL_STAY_JOB_NAME_CUSTOMER: hotelStayOutput.customerJobName,
+
+        HOTEL_BOOKING_DLQ: hotelBookingOutput.errorQueue.queueUrl,
+        AIR_BOOKING_DLQ: airBookingOutput.errorQueue.queueUrl,
+        GUEST_PROFILE_DLQ: guestProfileOutput.errorQueue.queueUrl,
+        PAX_PROFILE_DLQ: paxProfileOutput.errorQueue.queueUrl,
+        CLICKSTREAM_DLQ: clickstreamOutput.errorQueue.queueUrl,
+        HOTEL_STAY_DLQ: hotelStayOutput.errorQueue.queueUrl,
       }
     });
 

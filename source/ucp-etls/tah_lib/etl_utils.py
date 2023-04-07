@@ -27,14 +27,16 @@ def writeToS3(glueContext, dataFrame, bucketName: str, folder: str):
         "overwrite").save("s3://"+bucketName + "/" + folder)
 
 
-def explodeAndWrite(glueContext, df, accpType, bucketName, folder):
+def explodeAndWrite(glueContext, df, accpType, bucketName, folder, accpDomain):
     print("[explodeAndWrite] exploding acptype ", accpType)
     dfExploded = df.select(explode(df[accpType]))
     dfExploded.printSchema()
     if dfExploded.schema["col"].dataType.typeName() == "struct":
         accpObjectDf = dfExploded.select("col.*")
         accpObjectDf.printSchema()
-        print("[explodeAndWrite] writting to S3 at ", bucketName, "/", folder)
-        writeToS3(glueContext, accpObjectDf, bucketName, folder)
+        print("[explodeAndWrite] writting to S3 at ",
+              bucketName, "/", accpDomain, "/", folder)
+        writeToS3(glueContext, accpObjectDf,
+                  bucketName, accpDomain + '/' + folder)
     else:
         print("[explodeAndWrite] No ACCP records to write for type " + accpType)

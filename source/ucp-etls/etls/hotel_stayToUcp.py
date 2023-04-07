@@ -13,7 +13,7 @@ from tah_lib.etl_utils import explodeAndWrite
 
 glueContext = GlueContext(SparkContext.getOrCreate())
 args = getResolvedOptions(
-    sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET', 'ERROR_QUEUE_URL'])
+    sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET', 'ERROR_QUEUE_URL', 'ACCP_DOMAIN'])
 
 businessObjects = glueContext.create_dynamic_frame.from_catalog(
     database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"], additional_options={"recurse": True})
@@ -38,4 +38,4 @@ accpReccords = Map.apply(
 accpReccordsDF = accpReccords.toDF()
 
 explodeAndWrite(glueContext, accpReccordsDF, "hotel_stay_revenue_items",
-                args["DEST_BUCKET"], "hotel_stay_revenue_items")
+                args["DEST_BUCKET"], "hotel_stay_revenue_items", args["ACCP_DOMAIN"])

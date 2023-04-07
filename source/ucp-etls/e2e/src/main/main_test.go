@@ -194,6 +194,7 @@ func TestMain(t *testing.T) {
 				"--DEST_BUCKET":     TEST_BUCKET_ACCP_IMPORT,
 				"--SOURCE_TABLE":    c.GlueTableName,
 				"--ERROR_QUEUE_URL": queueUrl,
+				"--ACCP_DOMAIN":     "test_domain",
 			})
 			if err != nil {
 				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error running job: %v", c.ObjectName, err))
