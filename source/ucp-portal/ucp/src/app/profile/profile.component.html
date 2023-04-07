@@ -67,11 +67,11 @@
             <div class="box-shadow">
                 <div class="row">
                     <div class="col-sm-12">
-                        <span class="data-title">MATCHING PROFILES</span>
+                        <span class="data-title"><fa-icon [icon]="faUser"></fa-icon> MATCHING PROFILES</span>
                         <div class="side-bar-content">
                             <div *ngFor="let match of matches">
                                 <div class="profile-match">
-                                    <fa-icon [icon]="faUser"></fa-icon> <span class="match-content">{{match.firstName}}
+                                    <span class="match-content">{{match.firstName}}
                                         {{match.lastName}}
                                         ({{match.confidence}})</span>
                                 </div>
@@ -82,7 +82,24 @@
                 <br />
                 <div class="row">
                     <div class="col-sm-12">
-                        <span class="data-title">INGESTION ERRORS</span>
+                        <span class="data-title"> <fa-icon [icon]="faExclamationTriangle"></fa-icon> INGESTION
+                            ERRORS</span>
+                        <div class="side-bar-content">
+                            <div *ngFor="let error of ingestionErrors">
+                                <div class="profile-match">
+
+                                    <fa-icon *ngIf="error.businessObjectType"
+                                        [icon]="objectTypeIcons[error.businessObjectType].icon"></fa-icon>
+
+                                    <span class="match-content">
+                                        <span class="error-timestamp">{{error.timestamp | date: "YYYY-mm-dd hh:MM:ss"}}
+                                        </span><br />
+                                        <span class="error-message">{{error.message}}</span>
+
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
 
                     </div>
                 </div>

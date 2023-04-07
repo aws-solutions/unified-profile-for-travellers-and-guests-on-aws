@@ -106,7 +106,7 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 			}
 			integrationName := keyBusiness + "_" + req.Domain.Name
 			//we create each flow with a minute delay compared to he previous to avoid concurtency issues at the ACCP level
-			startTime := time.Now().Add(time.Duration(i) * time.Minute)
+			startTime := time.Now().Add(time.Duration(index) * time.Minute)
 			//we introduce 100 ms delay to avoid
 			wait := (1000 * time.Millisecond) * time.Duration(index)
 			time.Sleep(wait)
@@ -116,7 +116,7 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 				time.Sleep((1000 * time.Millisecond))
 				//we update the flow name to avoid conflict during retry
 				integrationName = keyBusiness + "_" + req.Domain.Name + "_1"
-				startTime = time.Now().Add(time.Duration(i) * time.Minute)
+				startTime = time.Now().Add(time.Duration(index) * time.Minute)
 				err = u.reg.Accp.PutIntegration(integrationName, keyBusiness, accpSourceBucket, businessMap[keyBusiness](), startTime)
 				if err != nil {
 					u.tx.Log("Error after retry %s", err)

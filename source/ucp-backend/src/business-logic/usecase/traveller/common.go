@@ -7,36 +7,28 @@ import (
 	"time"
 )
 
-// To be used while creating customer profile mappings for custom attributes
-var ATTRIBUTE_KEY_HOTEL_BOOKING_HOTEL_CODE string = "hotelCode"
-var ATTRIBUTE_KEY_HOTEL_BOOKING_PRODUCTS string = "products"
-var ATTRIBUTE_KEY_HOTEL_BOOKING_N_NIGHTS string = "nNights"
-var ATTRIBUTE_KEY_HOTEL_BOOKING_N_GUESTS string = "nGuests"
-var ATTRIBUTE_KEY_HOTEL_BOOKING_CONFIRMATION_NUMBER string = "confirmationNumber"
-var ATTRIBUTE_KEY_HOTEL_BOOKING_START_DATE string = "startDate"
-var ATTRIBUTE_KEY_CLICKSTREAM_SESSION_ID string = "sessionId"
-var ATTRIBUTE_KEY_CLICKSTREAM_START_DATE string = "startDate"
-var ATTRIBUTE_KEY_CLICKSTREAM_ORIGIN string = "origin"
-var ATTRIBUTE_KEY_CLICKSTREAM_LOCATION string = "location"
-var ATTRIBUTE_KEY_CLICKSTREAM_HOTEL string = "hotelCode"
-var ATTRIBUTE_KEY_CLICKSTREAM_SAILING string = "sailing"
-var ATTRIBUTE_KEY_LOYALTY_PROFILE_LOYALTY_ID string = "loyaltyId"
-var ATTRIBUTE_KEY_LOYALTY_PROFILE_STATUS string = "status"
-var ATTRIBUTE_KEY_LOYALTY_PROFILE_POINTS string = "points"
-var ATTRIBUTE_KEY_LOYALTY_PROFILE_PROGRAM string = "program"
-var ATTRIBUTE_KEY_LOYALTY_PROFILE_JOINED string = "joined"
-
 // Customer Profile object types
 const (
 	OBJECT_TYPE_AIR_BOOKING   string = "air_booking"
 	OBJECT_TYPE_AIR_LOYALTY   string = "air_loyalty"
-	OBJECT_TYPE_CLICKSTREAM   string = "clickstream_event"
+	OBJECT_TYPE_CLICKSTREAM   string = "clickstream"
 	OBJECT_TYPE_EMAIL_HISTORY string = "email_history"
 	OBJECT_TYPE_HOTEL_BOOKING string = "hotel_booking"
 	OBJECT_TYPE_HOTEL_LOYALTY string = "hotel_loyalty"
-	OBJECT_TYPE_HOTEL_STAY    string = "hotel_stay_revenue"
+	OBJECT_TYPE_HOTEL_STAY    string = "hotel_stay_revenue_items"
 	OBJECT_TYPE_PHONE_HISTORY string = "phone_history"
 )
+
+var COMBINED_PROFILE_OBJECT_TYPES = []string{
+	OBJECT_TYPE_AIR_BOOKING,
+	OBJECT_TYPE_AIR_LOYALTY,
+	OBJECT_TYPE_CLICKSTREAM,
+	OBJECT_TYPE_EMAIL_HISTORY,
+	OBJECT_TYPE_HOTEL_BOOKING,
+	OBJECT_TYPE_HOTEL_LOYALTY,
+	OBJECT_TYPE_HOTEL_STAY,
+	OBJECT_TYPE_PHONE_HISTORY,
+}
 
 func profilesToTravellers(profiles []customerprofiles.Profile) []model.Traveller {
 	travellers := []model.Traveller{}
@@ -145,23 +137,23 @@ func profileToTraveller(profile customerprofiles.Profile) model.Traveller {
 
 func generateAirBookingRecords(profile *customerprofiles.Profile) []model.AirBooking {
 	airBookingRecs := []model.AirBooking{}
-	for _, order := range profile.Orders {
-		if order.Attributes["object_type"] != OBJECT_TYPE_AIR_BOOKING {
+	for _, obj := range profile.ProfileObjects {
+		if obj.Type != OBJECT_TYPE_AIR_BOOKING {
 			continue
 		}
 		rec := model.AirBooking{
-			BookingID:     order.Attributes["booking_id"],
-			SegmentID:     order.Attributes["segment_id"],
-			From:          order.Attributes["from"],
-			To:            order.Attributes["to"],
-			FlightNumber:  order.Attributes["flight_number"],
-			DepartureDate: order.Attributes["departure_date"],
-			DepartureTime: order.Attributes["departure_time"],
-			ArrivalDate:   order.Attributes["arrival_date"],
-			ArrivalTime:   order.Attributes["arrival_time"],
-			Channel:       order.Attributes["channel"],
-			Status:        order.Attributes["status"],
-			Price:         order.Attributes["price"],
+			BookingID:     obj.Attributes["booking_id"],
+			SegmentID:     obj.Attributes["segment_id"],
+			From:          obj.Attributes["from"],
+			To:            obj.Attributes["to"],
+			FlightNumber:  obj.Attributes["flight_number"],
+			DepartureDate: obj.Attributes["departure_date"],
+			DepartureTime: obj.Attributes["departure_time"],
+			ArrivalDate:   obj.Attributes["arrival_date"],
+			ArrivalTime:   obj.Attributes["arrival_time"],
+			Channel:       obj.Attributes["channel"],
+			Status:        obj.Attributes["status"],
+			Price:         obj.Attributes["price"],
 		}
 		airBookingRecs = append(airBookingRecs, rec)
 	}
@@ -170,18 +162,19 @@ func generateAirBookingRecords(profile *customerprofiles.Profile) []model.AirBoo
 
 func generateAirLoyaltyRecords(profile *customerprofiles.Profile, errors *[]string) []model.AirLoyalty {
 	airLoyaltyRecs := []model.AirLoyalty{}
-	for _, order := range profile.Orders {
-		if order.Attributes["object_type"] != OBJECT_TYPE_AIR_LOYALTY {
+	for _, obj := range profile.ProfileObjects {
+		if obj.Type != OBJECT_TYPE_AIR_LOYALTY {
 			continue
 		}
 		rec := model.AirLoyalty{
-			LoyaltyID:        order.Attributes["loyalty_id"],
-			ProgramName:      order.Attributes["program_name"],
-			Miles:            order.Attributes["miles"],
-			MilesToNextLevel: order.Attributes["miles_to_next_level"],
-			Level:            order.Attributes["level"],
+			LoyaltyID:        obj.Attributes["loyalty_id"],
+			ProgramName:      obj.Attributes["program_name"],
+			Miles:            obj.Attributes["miles"],
+			MilesToNextLevel: obj.Attributes["miles_to_next_level"],
+			Level:            obj.Attributes["level"],
+			LastUpdated:      trySetTimestamp(obj.Attributes["last_updated"], errors),
 		}
-		joined := order.Attributes["joined"]
+		joined := obj.Attributes["joined"]
 		if joined != "" {
 			parsed, err := utils.TryParseTime(profile.BirthDate, "2006-01-02")
 			if err == nil {
@@ -198,35 +191,35 @@ func generateAirLoyaltyRecords(profile *customerprofiles.Profile, errors *[]stri
 
 func generateClickstreamRecords(profile *customerprofiles.Profile, errors *[]string) []model.Clickstream {
 	clickstreamRecs := []model.Clickstream{}
-	for _, order := range profile.Orders {
-		if order.Attributes["object_type"] != OBJECT_TYPE_CLICKSTREAM {
+	for _, obj := range profile.ProfileObjects {
+		if obj.Type != OBJECT_TYPE_CLICKSTREAM {
 			continue
 		}
 		rec := model.Clickstream{
-			SessionID:                       order.Attributes["session_id"],
-			EventTimestamp:                  trySetDate(order.Attributes["event_timestamp"], errors),
-			EventType:                       order.Attributes["event_type"],
-			EventVersion:                    order.Attributes["event_version"],
-			ArrivalTimestamp:                trySetDate(order.Attributes["arrival_timestamp"], errors),
-			UserAgent:                       order.Attributes["user_agent"],
-			Products:                        order.Attributes["products"],
-			FareClass:                       order.Attributes["fare_class"],
-			FareType:                        order.Attributes["fare_type"],
-			FlightSegmentsDepartureDateTime: trySetDate(order.Attributes["flight_segments_departure_date_time"], errors),
-			FlightNumbers:                   order.Attributes["flight_numbers"],
-			FlightMarket:                    order.Attributes["flight_market"],
-			FlightType:                      order.Attributes["flight_type"],
-			OriginDate:                      order.Attributes["origin_date"],
-			OriginDateTime:                  trySetDate(order.Attributes["origin_date_time"], errors),
-			ReturnDate:                      order.Attributes["return_date"],
-			ReturnDateTime:                  trySetDate(order.Attributes["return_date_time"], errors),
-			ReturnFlightRoute:               order.Attributes["return_flight_route"],
-			NumPaxAdults:                    trySetInt(order.Attributes["num_pax_adults"], errors),
-			NumPaxInf:                       trySetInt(order.Attributes["num_pax_inf"], errors),
-			NumPaxChildren:                  trySetInt(order.Attributes["num_pax_children"], errors),
-			PaxType:                         order.Attributes["pax_type"],
-			TotalPassengers:                 trySetInt(order.Attributes["total_passengers"], errors),
-			LastUpdated:                     trySetTimestamp(order.Attributes["last_updated"], errors),
+			SessionID:                       obj.Attributes["session_id"],
+			EventTimestamp:                  trySetDate(obj.Attributes["event_timestamp"], errors),
+			EventType:                       obj.Attributes["event_type"],
+			EventVersion:                    obj.Attributes["event_version"],
+			ArrivalTimestamp:                trySetDate(obj.Attributes["arrival_timestamp"], errors),
+			UserAgent:                       obj.Attributes["user_agent"],
+			Products:                        obj.Attributes["products"],
+			FareClass:                       obj.Attributes["fare_class"],
+			FareType:                        obj.Attributes["fare_type"],
+			FlightSegmentsDepartureDateTime: trySetDate(obj.Attributes["flight_segments_departure_date_time"], errors),
+			FlightNumbers:                   obj.Attributes["flight_numbers"],
+			FlightMarket:                    obj.Attributes["flight_market"],
+			FlightType:                      obj.Attributes["flight_type"],
+			OriginDate:                      obj.Attributes["origin_date"],
+			OriginDateTime:                  trySetDate(obj.Attributes["origin_date_time"], errors),
+			ReturnDate:                      obj.Attributes["return_date"],
+			ReturnDateTime:                  trySetDate(obj.Attributes["return_date_time"], errors),
+			ReturnFlightRoute:               obj.Attributes["return_flight_route"],
+			NumPaxAdults:                    trySetInt(obj.Attributes["num_pax_adults"], errors),
+			NumPaxInf:                       trySetInt(obj.Attributes["num_pax_inf"], errors),
+			NumPaxChildren:                  trySetInt(obj.Attributes["num_pax_children"], errors),
+			PaxType:                         obj.Attributes["pax_type"],
+			TotalPassengers:                 trySetInt(obj.Attributes["total_passengers"], errors),
+			LastUpdated:                     trySetTimestamp(obj.Attributes["last_updated"], errors),
 		}
 		clickstreamRecs = append(clickstreamRecs, rec)
 	}
@@ -235,15 +228,15 @@ func generateClickstreamRecords(profile *customerprofiles.Profile, errors *[]str
 
 func generateEmailHistoryRecords(profile *customerprofiles.Profile, errors *[]string) []model.EmailHistory {
 	emailRecs := []model.EmailHistory{}
-	for _, order := range profile.Orders {
-		if order.Attributes["object_type"] != OBJECT_TYPE_EMAIL_HISTORY {
+	for _, obj := range profile.ProfileObjects {
+		if obj.Type != OBJECT_TYPE_EMAIL_HISTORY {
 			continue
 		}
 		rec := model.EmailHistory{
-			Address:       order.Attributes["address"],
-			Type:          order.Attributes["type"],
-			LastUpdated:   trySetTimestamp(order.Attributes["last_updated"], errors),
-			LastUpdatedBy: order.Attributes["last_updated_by"],
+			Address:       obj.Attributes["address"],
+			Type:          obj.Attributes["type"],
+			LastUpdated:   trySetTimestamp(obj.Attributes["last_updated"], errors),
+			LastUpdatedBy: obj.Attributes["last_updated_by"],
 		}
 		emailRecs = append(emailRecs, rec)
 	}
@@ -252,24 +245,25 @@ func generateEmailHistoryRecords(profile *customerprofiles.Profile, errors *[]st
 
 func generateHotelBookingRecords(profile *customerprofiles.Profile, errors *[]string) []model.HotelBooking {
 	hotelBookingRecs := []model.HotelBooking{}
-	for _, order := range profile.Orders {
-		if order.Attributes["object_type"] != OBJECT_TYPE_HOTEL_BOOKING {
+	for _, obj := range profile.ProfileObjects {
+		if obj.Type != OBJECT_TYPE_HOTEL_BOOKING {
 			continue
 		}
 		rec := model.HotelBooking{
-			BookingID:             order.Attributes["booking_id"],
-			HotelCode:             order.Attributes["hotel_code"],
-			NumNights:             trySetInt(order.Attributes["n_nights"], errors),
-			NumGuests:             trySetInt(order.Attributes["n_guests"], errors),
-			ProductID:             order.Attributes["product_id"],
-			CheckInDate:           trySetDate(order.Attributes["check_in_date"], errors),
-			RoomTypeCode:          order.Attributes["room_type_code"],
-			RoomTypeName:          order.Attributes["room_type_name"],
-			RoomTypeDescription:   order.Attributes["room_type_description"],
-			AttributeCodes:        order.Attributes["attribute_codes"],
-			AttributeNames:        order.Attributes["attribute_names"],
-			AttributeDescriptions: order.Attributes["attribute_descriptions"],
-			LastUpdated:           trySetTimestamp(order.Attributes["last_updated"], errors),
+
+			BookingID:             obj.Attributes["booking_id"],
+			HotelCode:             obj.Attributes["hotel_code"],
+			NumNights:             trySetInt(obj.Attributes["n_nights"], errors),
+			NumGuests:             trySetInt(obj.Attributes["n_guests"], errors),
+			ProductID:             obj.Attributes["product_id"],
+			CheckInDate:           trySetDate(obj.Attributes["check_in_date"], errors),
+			RoomTypeCode:          obj.Attributes["room_type_code"],
+			RoomTypeName:          obj.Attributes["room_type_name"],
+			RoomTypeDescription:   obj.Attributes["room_type_description"],
+			AttributeCodes:        obj.Attributes["attribute_codes"],
+			AttributeNames:        obj.Attributes["attribute_names"],
+			AttributeDescriptions: obj.Attributes["attribute_descriptions"],
+			LastUpdated:           trySetTimestamp(obj.Attributes["last_updated"], errors),
 		}
 		hotelBookingRecs = append(hotelBookingRecs, rec)
 	}
@@ -278,19 +272,19 @@ func generateHotelBookingRecords(profile *customerprofiles.Profile, errors *[]st
 
 func generateHotelLoyaltyRecords(profile *customerprofiles.Profile, errors *[]string) []model.HotelLoyalty {
 	hotelLoyaltyRecs := []model.HotelLoyalty{}
-	for _, order := range profile.Orders {
-		if order.Attributes["object_type"] != OBJECT_TYPE_HOTEL_LOYALTY {
+	for _, obj := range profile.ProfileObjects {
+		if obj.Type != OBJECT_TYPE_HOTEL_LOYALTY {
 			continue
 		}
 		rec := model.HotelLoyalty{
-			LoyaltyID:         order.Attributes["loyalty_id"],
-			ProgramName:       order.Attributes["program_name"],
-			Points:            order.Attributes["points"],
-			Units:             order.Attributes["units"],
-			PointsToNextLevel: order.Attributes["points_to_next_level"],
-			Level:             order.Attributes["level"],
-			Joined:            trySetDate(order.Attributes["joined"], errors),
-			LastUpdated:       trySetTimestamp(order.Attributes["last_updated"], errors),
+			LoyaltyID:         obj.Attributes["loyalty_id"],
+			ProgramName:       obj.Attributes["program_name"],
+			Points:            obj.Attributes["points"],
+			Units:             obj.Attributes["units"],
+			PointsToNextLevel: obj.Attributes["points_to_next_level"],
+			Level:             obj.Attributes["level"],
+			Joined:            trySetDate(obj.Attributes["joined"], errors),
+			LastUpdated:       trySetTimestamp(obj.Attributes["last_updated"], errors),
 		}
 		hotelLoyaltyRecs = append(hotelLoyaltyRecs, rec)
 	}
@@ -299,27 +293,27 @@ func generateHotelLoyaltyRecords(profile *customerprofiles.Profile, errors *[]st
 
 func generateHotelStayRecords(profile *customerprofiles.Profile, errors *[]string) []model.HotelStay {
 	hotelStayRecs := []model.HotelStay{}
-	for _, order := range profile.Orders {
-		if order.Attributes["object_type"] != OBJECT_TYPE_HOTEL_STAY {
+	for _, obj := range profile.ProfileObjects {
+		if obj.Type != OBJECT_TYPE_HOTEL_STAY {
 			continue
 		}
 		rec := model.HotelStay{
-			ID:             order.Attributes["id"],
-			BookingID:      order.Attributes["booking_id"],
-			CurrencyCode:   order.Attributes["currency_code"],
-			CurrencyName:   order.Attributes["currency_name"],
-			CurrencySymbol: order.Attributes["currency_symbol"],
-			FirstName:      order.Attributes["first_name"],
-			LastName:       order.Attributes["last_name"],
-			Email:          order.Attributes["email"],
-			Phone:          order.Attributes["phone"],
-			StartDate:      trySetDate(order.Attributes["start_date"], errors),
-			HotelCode:      order.Attributes["hotel_code"],
-			Type:           order.Attributes["type"],
-			Description:    order.Attributes["description"],
-			Amount:         order.Attributes["amount"],
-			Date:           trySetDate(order.Attributes["date"], errors),
-			LastUpdated:    trySetTimestamp(order.Attributes["last_updated"], errors),
+			ID:             obj.Attributes["id"],
+			BookingID:      obj.Attributes["booking_id"],
+			CurrencyCode:   obj.Attributes["currency_code"],
+			CurrencyName:   obj.Attributes["currency_name"],
+			CurrencySymbol: obj.Attributes["currency_symbol"],
+			FirstName:      obj.Attributes["first_name"],
+			LastName:       obj.Attributes["last_name"],
+			Email:          obj.Attributes["email"],
+			Phone:          obj.Attributes["phone"],
+			StartDate:      trySetDate(obj.Attributes["start_date"], errors),
+			HotelCode:      obj.Attributes["hotel_code"],
+			Type:           obj.Attributes["type"],
+			Description:    obj.Attributes["description"],
+			Amount:         obj.Attributes["amount"],
+			Date:           trySetDate(obj.Attributes["date"], errors),
+			LastUpdated:    trySetTimestamp(obj.Attributes["last_updated"], errors),
 		}
 		hotelStayRecs = append(hotelStayRecs, rec)
 	}
@@ -328,16 +322,16 @@ func generateHotelStayRecords(profile *customerprofiles.Profile, errors *[]strin
 
 func generatePhoneHistoryRecords(profile *customerprofiles.Profile, errors *[]string) []model.PhoneHistory {
 	phoneHistoryRecs := []model.PhoneHistory{}
-	for _, order := range profile.Orders {
-		if order.Attributes["object_type"] != OBJECT_TYPE_PHONE_HISTORY {
+	for _, obj := range profile.ProfileObjects {
+		if obj.Type != OBJECT_TYPE_PHONE_HISTORY {
 			continue
 		}
 		rec := model.PhoneHistory{
-			Number:        order.Attributes["number"],
-			CountryCode:   order.Attributes["country_code"],
-			Type:          order.Attributes["type"],
-			LastUpdated:   trySetTimestamp(order.Attributes["last_updated"], errors),
-			LastUpdatedBy: order.Attributes["last_updated_by"],
+			Number:        obj.Attributes["number"],
+			CountryCode:   obj.Attributes["country_code"],
+			Type:          obj.Attributes["type"],
+			LastUpdated:   trySetTimestamp(obj.Attributes["last_updated"], errors),
+			LastUpdatedBy: obj.Attributes["last_updated_by"],
 		}
 		phoneHistoryRecs = append(phoneHistoryRecs, rec)
 	}

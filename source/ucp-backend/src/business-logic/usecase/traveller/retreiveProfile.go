@@ -49,7 +49,7 @@ func (u *RetreiveProfile) ValidateRequest(rq model.RequestWrapper) error {
 }
 
 func (u *RetreiveProfile) Run(req model.RequestWrapper) (model.ResponseWrapper, error) {
-	profile, err := u.reg.Accp.GetProfile(req.ID)
+	profile, err := u.reg.Accp.GetProfile(req.ID, COMBINED_PROFILE_OBJECT_TYPES)
 	return model.ResponseWrapper{Profiles: []travModel.Traveller{profileToTraveller(profile)}, Matches: profileToMatches(profile)}, err
 }
 
@@ -70,7 +70,7 @@ func profileToMatches(profile customerprofiles.Profile) []model.Match {
 			EmailAddress:    m.EmailAddress,
 		})
 	}
-	//Demo stub. to remove
+	// TODO: Demo stub. to remove
 	matches = append(matches, model.Match{
 		ConfidenceScore: 0.99,
 		ID:              "4caf3d602b84460db31650159dcff896",

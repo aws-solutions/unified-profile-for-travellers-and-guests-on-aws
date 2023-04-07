@@ -4,26 +4,13 @@ import customerprofiles "tah/core/customerprofiles"
 
 func BuildHotelBookingMapping() customerprofiles.FieldMappings {
 	return []customerprofiles.FieldMapping{
-		// Metadata
+		// Profile Object Unique Key
 		{
-			Type:   "STRING",
-			Source: "_source.model_version",
-			Target: "_order.Attributes.model_version",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.object_type",
-			Target: "_order.Attributes.object_type",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.last_updated",
-			Target: "_order.Attributes.last_updated",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.last_updated_by",
-			Target: "_order.Attributes.last_updated_by",
+			Type:    "STRING",
+			Source:  "_source.booking_id",
+			Target:  "booking_id",
+			Indexes: []string{"UNIQUE"},
+			KeyOnly: true,
 		},
 
 		// Profile Data
@@ -346,70 +333,6 @@ func BuildHotelBookingMapping() customerprofiles.FieldMappings {
 			Type:   "STRING",
 			Source: "_source.phone_business",
 			Target: "_profile.Attributes.phone_business",
-		},
-
-		// Order Data
-		{
-			Type:        "STRING",
-			Source:      "_source.booking_id",
-			Target:      "_order.Attributes.booking_id",
-			Searcheable: true,
-			Indexes:     []string{"UNIQUE", "ORDER"},
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.hotel_code",
-			Target: "_order.Attributes.hotel_code",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.n_nights",
-			Target: "_order.Attributes.n_nights",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.n_guests",
-			Target: "_order.Attributes.n_guests",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.product_id",
-			Target: "_order.Attributes.product_id",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.check_in_date",
-			Target: "_order.Attributes.check_in_date",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.room_type_code",
-			Target: "_order.Attributes.room_type_code",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.room_type_name",
-			Target: "_order.Attributes.room_type_name",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.room_type_description",
-			Target: "_order.Attributes.room_type_description",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.attribute_codes",
-			Target: "_order.Attributes.attribute_codes",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.attribute_names",
-			Target: "_order.Attributes.attribute_names",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.attribute_descriptions",
-			Target: "_order.Attributes.attribute_descriptions",
 		},
 	}
 }

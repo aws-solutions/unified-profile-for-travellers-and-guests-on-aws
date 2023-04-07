@@ -4,9 +4,11 @@ import { UcpService } from '../service/ucpService';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
-import { faUser, faPhone, faEnvelope, faMapMarker, faBriefcase, faBirthdayCake } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faPhone, faEnvelope, faMapMarker, faBriefcase, faBirthdayCake, faExclamationTriangle, faPlane, faMousePointer, faHotel, faUsd } from '@fortawesome/free-solid-svg-icons';
+import { PaginationOptions } from '../model/pagination.model'
 
 import { AddressComponent } from './common/address.component'
+import { Common } from '../model/common.model'
 
 @Component({
   selector: 'app-profile',
@@ -20,7 +22,14 @@ export class ProfileComponent implements OnInit {
   faMapMarker = faMapMarker
   faBriefcase = faBriefcase
   faBirthdayCake = faBirthdayCake
+  faExclamationTriangle = faExclamationTriangle
+  objectTypeIcons = {}
 
+
+  errorsPagination: PaginationOptions = {
+    page: 0,
+    pageSize: 15
+  }
   traveller: any = {};
   matches: any = []
   propertyMap: any = {};
@@ -28,10 +37,18 @@ export class ProfileComponent implements OnInit {
   bookPageSize = 10
   bookEnd = this.bookPageSize;
   totalRevenueGenertated = 0;
+  ingestionErrors = []
   constructor(public dialog: MatDialog,
     private route: ActivatedRoute,
     private ucpService: UcpService) {
     this.retreive(this.route.snapshot.params.id)
+    this.fetchErrors()
+    this.objectTypeIcons[Common.OBJECT_TYPE_AIR_BOOKING] = { text: "Air Booking", icon: faPlane }
+    this.objectTypeIcons[Common.OBJECT_TYPE_CLICKSTREAM] = { text: "Clickstream", icon: faMousePointer }
+    this.objectTypeIcons[Common.OBJECT_TYPE_GUEST_PROFILE] = { text: "Guest Profiles", icon: faUser }
+    this.objectTypeIcons[Common.OBJECT_TYPE_HOTEL_BOOKING] = { text: "Hotel Booking", icon: faHotel }
+    this.objectTypeIcons[Common.OBJECT_TYPE_PAX_PROFILE] = { text: "Passenger Profiles", icon: faUser }
+    this.objectTypeIcons[Common.OBJECT_TYPE_STAY_REVENUE] = { text: "Stay Revenue", icon: faUsd }
 
   }
 
@@ -77,6 +94,13 @@ export class ProfileComponent implements OnInit {
     } else {
       console.log("no ID for guest 360 retreive")
     }
+  }
+
+  fetchErrors() {
+    this.ucpService.listErrors(this.errorsPagination).subscribe((res: any) => {
+      console.log(res)
+      this.ingestionErrors = res.ingestionErrors || [];
+    })
   }
 
 

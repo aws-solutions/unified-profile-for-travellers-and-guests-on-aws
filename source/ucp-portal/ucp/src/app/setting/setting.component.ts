@@ -32,6 +32,10 @@ export class SettingComponent implements OnInit {
     page: 0,
     pageSize: 10
   }
+  ingestionPagination: PaginationOptions = {
+    page: 0,
+    pageSize: 15
+  }
   ingestionErrors = [];
   totalErrors: number = 0;
   validationErrorsInView = [];
@@ -76,15 +80,24 @@ export class SettingComponent implements OnInit {
       this.ucpService.getConfig(this.selectedDomain).subscribe((res: any) => {
         console.log(res)
         this.domain = res.config.domains[0];
+        this.dataSourceLocations = []
+        for (let obj of Object.keys(res.awsResources.S3Buckets)) {
+          this.dataSourceLocations.push({
+            "objectName": this.objectBucketNameMappning[obj].text,
+            "bucketName": res.awsResources.S3Buckets[obj],
+            "icon": this.objectBucketNameMappning[obj].icon
+          })
+        }
       })
       this.fetchErrors()
+      this.fetchJobsStatus()
     } else {
       this.domain = {}
     }
     this.ucpService.listApplications().subscribe((res: any) => {
       this.industryConnectorSolutions = (res || {}).connectors;
     })
-    this.fetchValidationErrors()
+    //this.fetchValidationErrors()
   }
 
   deleteDomain(domain: string) {
@@ -108,6 +121,20 @@ export class SettingComponent implements OnInit {
       }
 
     });
+  }
+
+  fetchJobsStatus() {
+    this.ucpService.getJobs().subscribe((res: any) => {
+      this.jobs = []
+      for (let job of res.awsResources.jobs) {
+        this.jobs.push({
+          "name": job.jobName,
+          "lastRunTime": job.lastRunTime,
+          "status": job.status
+        })
+      }
+    })
+
   }
 
   fetchValidationErrors() {
@@ -135,7 +162,7 @@ export class SettingComponent implements OnInit {
   }
 
   fetchErrors() {
-    this.ucpService.listErrors().subscribe((res: any) => {
+    this.ucpService.listErrors(this.ingestionPagination).subscribe((res: any) => {
       console.log(res)
       this.ingestionErrors = res.ingestionErrors || [];
       this.totalErrors = res.totalErrors || 0;

@@ -4,26 +4,13 @@ import customerprofiles "tah/core/customerprofiles"
 
 func BuildAirBookingMapping() customerprofiles.FieldMappings {
 	return []customerprofiles.FieldMapping{
-		// Metadata
+		// Profile Object Unique Key
 		{
-			Type:   "STRING",
-			Source: "_source.model_version",
-			Target: "_order.Attributes.model_version",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.object_type",
-			Target: "_order.Attributes.object_type",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.last_updated",
-			Target: "_order.Attributes.last_updated",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.last_updated_by",
-			Target: "_order.Attributes.last_updated_by",
+			Type:    "STRING",
+			Source:  "_source.segment_id",
+			Target:  "segment_id",
+			Indexes: []string{"UNIQUE"},
+			KeyOnly: true,
 		},
 
 		// Profile Data
@@ -341,71 +328,6 @@ func BuildAirBookingMapping() customerprofiles.FieldMappings {
 			Type:   "STRING",
 			Source: "_source.phone_business",
 			Target: "_profile.Attributes.phone_business",
-		},
-
-		//Order Data
-		{
-			Type:        "STRING",
-			Source:      "_source.booking_id",
-			Target:      "_order.Attributes.booking_id",
-			Searcheable: true,
-		},
-		{
-			Type:        "STRING",
-			Source:      "_source.segment_id",
-			Target:      "_order.Attributes.segment_id",
-			Indexes:     []string{"UNIQUE", "ORDER"},
-			Searcheable: true,
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.from",
-			Target: "_order.Attributes.from",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.to",
-			Target: "_order.Attributes.to",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.flight_number",
-			Target: "_order.Attributes.flight_number",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.departure_date",
-			Target: "_order.Attributes.departure_date",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.departure_time",
-			Target: "_order.Attributes.departure_time",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.arrival_date",
-			Target: "_order.Attributes.arrival_date",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.arrival_time",
-			Target: "_order.Attributes.arrival_time",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.channel",
-			Target: "_order.Attributes.channel",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.status",
-			Target: "_order.Attributes.status",
-		},
-		{
-			Type:   "STRING",
-			Source: "_source.price",
-			Target: "_order.Attributes.price",
 		},
 	}
 }

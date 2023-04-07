@@ -133,6 +133,7 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	reg.Register("GET", "/ucp/error", admin.NewListErrors())
 	reg.Register("DELETE", "/ucp/error/{id}", admin.NewDeleteError())
 	reg.Register("GET", "/ucp/data", admin.NewGetDataValidationStatus())
+	reg.Register("GET", "/ucp/jobs", admin.NewGetJobsStatus())
 
 	return reg.Run(req)
 }

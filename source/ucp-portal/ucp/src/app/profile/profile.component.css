@@ -141,3 +141,13 @@ table {
     background-color: #eee;
     cursor: pointer;
 }
+
+.error-timestamp {
+    margin-left: 5px;
+}
+
+.error-message {
+    font-size: small;
+    color: #ccc;
+    margin-left: 5px;
+}

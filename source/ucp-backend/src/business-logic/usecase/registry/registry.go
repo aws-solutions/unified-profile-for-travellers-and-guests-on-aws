@@ -125,6 +125,7 @@ func (r Registry) Run(req events.APIGatewayProxyRequest) (events.APIGatewayProxy
 		}
 		r.Log("[Run][%s] Use case execusion successfully completed in %v", uc.Name(), ucDuration)
 		responseWrapper.TxID = r.Tx.TransactionID
+		responseWrapper = r.Enrich(responseWrapper)
 		apiGatewayResponse, err3 := uc.CreateResponse(responseWrapper)
 		if err3 != nil {
 			r.Log("[Run][%s] Could not create response: %v", uc.Name(), err3)
@@ -135,6 +136,26 @@ func (r Registry) Run(req events.APIGatewayProxyRequest) (events.APIGatewayProxy
 		return apiGatewayResponse, nil
 	}
 	return r.BuildErrorResponse(400, errors.New(fmt.Sprintf("No use case registered for path %s and Method %s", resource, method))), nil
+}
+
+func (r Registry) Enrich(res model.ResponseWrapper) model.ResponseWrapper {
+	s3BucketsToReturn := map[string]string{
+		"S3_HOTEL_BOOKING":              r.Env["S3_HOTEL_BOOKING"],
+		"S3_AIR_BOOKING":                r.Env["S3_AIR_BOOKING"],
+		"S3_GUEST_PROFILE":              r.Env["S3_GUEST_PROFILE"],
+		"S3_PAX_PROFILE":                r.Env["S3_PAX_PROFILE"],
+		"S3_STAY_REVENUE":               r.Env["S3_STAY_REVENUE"],
+		"S3_CLICKSTREAM":                r.Env["S3_CLICKSTREAM"],
+		"CONNECT_PROFILE_SOURCE_BUCKET": r.Env["CONNECT_PROFILE_SOURCE_BUCKET"],
+	}
+	if res.AwsResources.S3Buckets == nil {
+		res.AwsResources.S3Buckets = map[string]string{}
+	}
+	for k, v := range s3BucketsToReturn {
+
+		res.AwsResources.S3Buckets[k] = v
+	}
+	return res
 }
 
 func (r Registry) BuildErrorResponse(statusCode int, err error) events.APIGatewayProxyResponse {

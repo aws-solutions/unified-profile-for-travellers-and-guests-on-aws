@@ -40,8 +40,11 @@ export class UcpService {
     public deleteDomain(name: string) {
         return this.service.delete(name, {}, <RestOptions>{ subEndpoint: "admin" });
     }
-    public listErrors() {
-        return this.service.query({}, <RestOptions>{ subEndpoint: "error" });
+    public listErrors(pagination: PaginationOptions) {
+        return this.service.query(pagination, <RestOptions>{ subEndpoint: "error" });
+    }
+    public getJobs() {
+        return this.service.query({}, <RestOptions>{ subEndpoint: "jobs" });
     }
     public deleteError(id) {
         return this.service.delete(id, {}, <RestOptions>{ subEndpoint: "error" });
