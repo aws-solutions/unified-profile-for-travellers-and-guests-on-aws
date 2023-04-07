@@ -54,6 +54,7 @@ func TestMain(t *testing.T) {
 	glueClient := glue.Init(UCP_REGION, GLUE_DB_NAME)
 	targetBucketHandler := s3.Init(TEST_BUCKET_ACCP_IMPORT, "", UCP_REGION)
 	sqsClient := sqs.Init(UCP_REGION)
+	domain := "etl_e2e_test_domain"
 	queueUrl, err := sqsClient.Create("test-Queue-" + time.Now().Format("15-04-05"))
 	if err != nil {
 		t.Errorf("[TestMain]error creating queue: %v", err)
@@ -194,7 +195,7 @@ func TestMain(t *testing.T) {
 				"--DEST_BUCKET":     TEST_BUCKET_ACCP_IMPORT,
 				"--SOURCE_TABLE":    c.GlueTableName,
 				"--ERROR_QUEUE_URL": queueUrl,
-				"--ACCP_DOMAIN":     "test_domain",
+				"--ACCP_DOMAIN":     domain,
 			})
 			if err != nil {
 				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error running job: %v", c.ObjectName, err))
@@ -226,7 +227,7 @@ func TestMain(t *testing.T) {
 			default: // Default is must to avoid blocking
 			}
 			log.Printf("[%v] 8-Check csv File", c.ObjectName)
-			csvs, err1 := targetBucketHandler.Search(c.TargetPrefix, 500)
+			csvs, err1 := targetBucketHandler.Search(domain+"/"+c.TargetPrefix, 500)
 			if err1 != nil {
 				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error listing s3 buckets after ETLs: %v", c.ObjectName, err1))
 				cancel()
