@@ -44,8 +44,24 @@ func (u *DeleteDomain) ValidateRequest(rq model.RequestWrapper) error {
 }
 
 func (u *DeleteDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, error) {
-	err := u.reg.Accp.DeleteDomain()
-	return model.ResponseWrapper{}, err
+	env := u.reg.Env["LAMBDA_ENV"]
+	err0 := u.reg.Accp.DeleteDomain()
+	if err0 != nil {
+		return model.ResponseWrapper{}, err0
+	}
+
+	if u.reg.Glue != nil {
+		businessObjectList := []string{HOTEL_BOOKING, HOTEL_STAY_REVENUE, AIR_BOOKING, CLICKSTREAM, GUEST_PROFILE, PASSENGER_PROFILE}
+		for _, bizObject := range businessObjectList {
+			err := u.reg.Glue.DeleteTable("ucp_" + env + "_" + req.Domain.Name + "_" + bizObject)
+			if err != nil {
+				return model.ResponseWrapper{}, err
+			}
+		}
+	} else {
+		u.tx.Log("[DeleteUcpDomain][warning] No tables in domain as glueClient unavailable, no tables deleted")
+	}
+	return model.ResponseWrapper{}, nil
 }
 
 func (u *DeleteDomain) CreateResponse(res model.ResponseWrapper) (events.APIGatewayProxyResponse, error) {

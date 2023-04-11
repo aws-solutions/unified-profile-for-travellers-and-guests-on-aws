@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"io/ioutil"
 	"log"
 	"tah/core/appregistry"
 	"tah/core/core"
@@ -47,7 +48,25 @@ func TestDomainCreationDeletion(t *testing.T) {
 	tx := core.NewTransaction("ucp_test", "")
 	appregistryClient := appregistry.Init(UCP_REGION)
 	iamClient := iam.Init()
-	glueClient := glue.Init(UCP_REGION, "test_glue_db")
+	glueClient := glue.Init(UCP_REGION, "glue_db_create_delete_domain")
+	err0 = glueClient.CreateDatabase(glueClient.DbName)
+	if err0 != nil {
+		t.Errorf("Error creating database: %v", err0)
+	}
+	//TODO: Centralize
+	businessObjectList := []string{HOTEL_BOOKING, HOTEL_STAY_REVENUE, AIR_BOOKING, CLICKSTREAM, GUEST_PROFILE, PASSENGER_PROFILE}
+	for _, bizObject := range businessObjectList {
+		filename := bizObject + ".glue.json"
+
+		schemaBytes, err := ioutil.ReadFile("../../model/assetsSchema/" + filename)
+		if err != nil {
+			t.Errorf("Error reading file: %v", err)
+		}
+		err = glueClient.AddNewSchema(bizObject, string(schemaBytes))
+		if err != nil {
+			t.Errorf("Error Adding and Parsing Schema %v", err)
+		}
+	}
 	profiles := customerprofiles.InitWithDomain(testDomain, UCP_REGION)
 	dbConfig := db.Init("TEST_TABLE", "TEST_PK", "TEST_SK")
 
@@ -67,14 +86,36 @@ func TestDomainCreationDeletion(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error creating UCP domain: %v", err)
 	}
-	log.Printf("Testing domain deletion")
+	log.Printf("Verifying all Glue Tables created")
+
+	tables, err := glueClient.GetTables()
+	if err != nil {
+		t.Errorf("Error retrieving tables after creation")
+	}
+	if len(tables) != len(businessObjectList) {
+		t.Errorf("Wrong number of tables in list, %v tables in database, creation", len(tables))
+	}
+	log.Printf("Testing domain deletions")
 	_, err = deleteUc.Run(req)
 	if err != nil {
 		t.Errorf("Error deleting UCP domain: %v", err)
 	}
+	log.Printf("Verifying all tables are gone")
+	tablesAfterDeletion, err := glueClient.GetTables()
+	if err != nil {
+		t.Errorf("Error retrieving tables after deletion")
+	}
+	if len(tablesAfterDeletion) != 0 {
+		t.Errorf("Wrong number of tables in list, %v tables in database, deletion", len(tablesAfterDeletion))
+	}
 	err = s3c.DeleteBucket(bucketName)
 	if err != nil {
 		t.Errorf("Error deleting bucket %v", err)
+	}
+	log.Printf("Deleting Databases")
+	err = glueClient.DeleteDatabase(glueClient.DbName)
+	if err != nil {
+		t.Errorf("Error deleting database %v", err)
 	}
 	err = kmsc.DeleteKey(keyArn)
 	if err != nil {
