@@ -117,6 +117,11 @@ func TestTraveller(t *testing.T) {
 	log.Printf("[TestTraveller] Traveller 360: %v", profile)
 
 	// Clean up resources
+	log.Printf("Deleting Databases")
+	err = glueClient.DeleteDatabase(glueClient.DbName)
+	if err != nil {
+		t.Errorf("Error deleting database %v", err)
+	}
 	s3Client.EmptyAndDelete()
 	kmsClient.DeleteKey(keyArn)
 	profileClient.DeleteDomain()
