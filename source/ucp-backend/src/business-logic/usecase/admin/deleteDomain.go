@@ -2,6 +2,8 @@ package admin
 
 import (
 	"tah/core/core"
+	common "tah/ucp-common/src/constant/admin"
+	services "tah/ucp-common/src/services/admin"
 	model "tah/ucp/src/business-logic/model/common"
 	"tah/ucp/src/business-logic/usecase/registry"
 
@@ -50,16 +52,12 @@ func (u *DeleteDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 		return model.ResponseWrapper{}, err0
 	}
 
-	if u.reg.Glue != nil {
-		businessObjectList := []string{HOTEL_BOOKING, HOTEL_STAY_REVENUE, AIR_BOOKING, CLICKSTREAM, GUEST_PROFILE, PASSENGER_PROFILE}
-		for _, bizObject := range businessObjectList {
-			err := u.reg.Glue.DeleteTable("ucp_" + env + "_" + req.Domain.Name + "_" + bizObject)
-			if err != nil {
-				return model.ResponseWrapper{}, err
-			}
+	for _, bizObject := range common.BUSINESS_OBJECTS {
+		tableName := services.BuildTableName(env, bizObject, req.Domain.Name)
+		err := u.reg.Glue.DeleteTable(tableName)
+		if err != nil {
+			return model.ResponseWrapper{}, err
 		}
-	} else {
-		u.tx.Log("[DeleteUcpDomain][warning] No tables in domain as glueClient unavailable, no tables deleted")
 	}
 	return model.ResponseWrapper{}, nil
 }

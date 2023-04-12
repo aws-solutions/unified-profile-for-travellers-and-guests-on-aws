@@ -4,6 +4,7 @@ import (
 	"log"
 	"tah/core/core"
 	"tah/core/customerprofiles"
+	glue "tah/core/glue"
 	"tah/core/kms"
 	"tah/core/s3"
 	model "tah/ucp/src/business-logic/model/common"
@@ -23,6 +24,11 @@ var guest = `{"traveller_id":"` + guestProfileId + `","first_name":"Thomas","las
 func TestTraveller(t *testing.T) {
 	// Set up resources
 	s3Client := s3.InitRegion(UCP_REGION)
+	glueClient := glue.Init(UCP_REGION, "traveller_test")
+	err0 := glueClient.CreateDatabase(glueClient.DbName)
+	if err0 != nil {
+		t.Errorf("Error creating database: %v", err0)
+	}
 	bucketName, err := s3Client.CreateRandomBucket("travellertest")
 	if err != nil {
 		t.Errorf("[TestTraveller] Error creating test bucket: %v", err)
@@ -45,7 +51,7 @@ func TestTraveller(t *testing.T) {
 
 	// Set up Customer Profile domain
 	tx := core.NewTransaction("ucp_test", "")
-	reg := registry.NewRegistry(UCP_REGION, nil, nil, nil, &profileClient, nil)
+	reg := registry.NewRegistry(UCP_REGION, nil, nil, &glueClient, &profileClient, nil)
 	reg.AddEnv("KMS_KEY_PROFILE_DOMAIN", keyArn)
 	reg.AddEnv("LAMBDA_ENV", "dev_test")
 	reg.AddEnv("CONNECT_PROFILE_SOURCE_BUCKET", s3Client.Bucket)

@@ -6,20 +6,15 @@ import (
 	"strings"
 	"tah/core/core"
 	"tah/core/customerprofiles"
+	common "tah/ucp-common/src/constant/admin"
+	services "tah/ucp-common/src/services/admin"
 	accpmappings "tah/ucp/src/business-logic/model/accp-mappings"
+	assetsSchema "tah/ucp/src/business-logic/model/assetsSchema"
 	model "tah/ucp/src/business-logic/model/common"
 	"tah/ucp/src/business-logic/usecase/registry"
 
 	"github.com/aws/aws-lambda-go/events"
 )
-
-// Key Names for Business Objects
-const HOTEL_BOOKING string = "hotel_booking"
-const HOTEL_STAY_REVENUE string = "hotel_stay_revenue"
-const CLICKSTREAM string = "clickevent"
-const AIR_BOOKING string = "air_booking"
-const GUEST_PROFILE string = "guest_profile"
-const PASSENGER_PROFILE string = "pax_profile"
 
 type CreateDomain struct {
 	name string
@@ -94,15 +89,13 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 		ACCP_SUB_FOLDER_HOTEL_STAY_MAPPING: accpmappings.BuildHotelStayMapping,
 	}
 
-	businessObjectList := []string{HOTEL_BOOKING, HOTEL_STAY_REVENUE, AIR_BOOKING, CLICKSTREAM, GUEST_PROFILE, PASSENGER_PROFILE}
-
 	bizObjectBuckets := map[string]string{
-		HOTEL_BOOKING:      u.reg.Env["S3_HOTEL_BOOKING"],
-		AIR_BOOKING:        u.reg.Env["S3_AIR_BOOKING"],
-		GUEST_PROFILE:      u.reg.Env["S3_GUEST_PROFILE"],
-		PASSENGER_PROFILE:  u.reg.Env["S3_PAX_PROFILE"],
-		HOTEL_STAY_REVENUE: u.reg.Env["S3_STAY_REVENUE"],
-		CLICKSTREAM:        u.reg.Env["S3_CLICKSTREAM"],
+		common.BIZ_OBJECT_HOTEL_BOOKING: u.reg.Env["S3_HOTEL_BOOKING"],
+		common.BIZ_OBJECT_AIR_BOOKING:   u.reg.Env["S3_AIR_BOOKING"],
+		common.BIZ_OBJECT_GUEST_PROFILE: u.reg.Env["S3_GUEST_PROFILE"],
+		common.BIZ_OBJECT_PAX_PROFILE:   u.reg.Env["S3_PAX_PROFILE"],
+		common.BIZ_OBJECT_CLICKSTREAM:   u.reg.Env["S3_STAY_REVENUE"],
+		common.BIZ_OBJECT_STAY_REVENUE:  u.reg.Env["S3_CLICKSTREAM"],
 	}
 
 	for keyBusiness := range businessMap {
@@ -124,19 +117,21 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 		}
 	}
 
-	if u.reg.Glue != nil {
-		for _, bizObject := range businessObjectList {
-			schema := u.reg.Glue.SchemaMap[bizObject]
-
-			err2 := u.reg.Glue.CreateTable("ucp_"+env+"_"+req.Domain.Name+"_"+bizObject, bizObjectBuckets[bizObject], map[string]string{"year": "int", "month": "int", "day": "int"}, schema)
-			if err2 != nil {
-				u.tx.Log("[CreateUcpDomain] Error creating table: %v", err2)
-				return model.ResponseWrapper{}, err2
-			}
+	for _, bizObject := range common.BUSINESS_OBJECTS {
+		schema, err := assetsSchema.LoadSchema(bizObject)
+		if err != nil {
+			u.tx.Log("[CreateUcpDomain] Error loading schema: %v", err)
+			return model.ResponseWrapper{}, err
 		}
-	} else {
-		u.tx.Log("[CreateUcpDomain][warning] No Glue Client in registry, no table will be created")
+		tableName := services.BuildTableName(env, bizObject, req.Domain.Name)
+
+		err2 := u.reg.Glue.CreateTable(tableName, bizObjectBuckets[bizObject.Name], map[string]string{"year": "int", "month": "int", "day": "int"}, schema)
+		if err2 != nil {
+			u.tx.Log("[CreateUcpDomain] Error creating table: %v", err2)
+			return model.ResponseWrapper{}, err2
+		}
 	}
+
 	return model.ResponseWrapper{}, err
 }
 

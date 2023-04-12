@@ -17,6 +17,7 @@ else
 echo "1-Setting up environement"
 #export GOPATH=$(pwd)
 #echo "GOPATH set to $GOPATH"
+go get -u github.com/go-bindata/go-bindata/...
 
 echo "2-removing existing executables"
 rm main main.zip
@@ -33,6 +34,7 @@ echo "4-Building Executable in Vendor Mode"
 export GOOS=linux
 export GOARCH=amd64
 go build -mod=vendor -o main src/main/main.go
+go-bindata -pkg assetsSchema -o src/business-logic/model/assetsSchema/bizobj.go tah-common-glue-schemas/
 rc=$?
 if [ $rc -ne 0 ]; then
   echo "Existing Build with status $rc" >&2

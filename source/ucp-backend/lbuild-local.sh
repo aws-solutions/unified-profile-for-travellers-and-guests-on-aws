@@ -30,4 +30,7 @@ fi
 unzip tah-common-glue-schemas.zip -d ./tah-common-glue-schemas
 rm tah-common-glue-schemas.zip
 
+echo "Copying ucp-common"
+cp -r ../ucp-common src/.
+
 sh lbuild.sh $envName $artifactBucket

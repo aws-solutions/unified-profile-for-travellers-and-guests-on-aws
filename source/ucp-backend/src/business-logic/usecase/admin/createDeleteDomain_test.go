@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"io/ioutil"
 	"log"
 	"tah/core/appregistry"
 	"tah/core/core"
@@ -11,6 +10,7 @@ import (
 	"tah/core/iam"
 	"tah/core/kms"
 	"tah/core/s3"
+	common "tah/ucp-common/src/constant/admin"
 	model "tah/ucp/src/business-logic/model/common"
 	testutils "tah/ucp/src/business-logic/testutils"
 	"tah/ucp/src/business-logic/usecase/registry"
@@ -53,20 +53,7 @@ func TestDomainCreationDeletion(t *testing.T) {
 	if err0 != nil {
 		t.Errorf("Error creating database: %v", err0)
 	}
-	//TODO: Centralize
-	businessObjectList := []string{HOTEL_BOOKING, HOTEL_STAY_REVENUE, AIR_BOOKING, CLICKSTREAM, GUEST_PROFILE, PASSENGER_PROFILE}
-	for _, bizObject := range businessObjectList {
-		filename := bizObject + ".glue.json"
 
-		schemaBytes, err := ioutil.ReadFile("../../model/assetsSchema/" + filename)
-		if err != nil {
-			t.Errorf("Error reading file: %v", err)
-		}
-		err = glueClient.AddNewSchema(bizObject, string(schemaBytes))
-		if err != nil {
-			t.Errorf("Error Adding and Parsing Schema %v", err)
-		}
-	}
 	profiles := customerprofiles.InitWithDomain(testDomain, UCP_REGION)
 	dbConfig := db.Init("TEST_TABLE", "TEST_PK", "TEST_SK")
 
@@ -88,11 +75,11 @@ func TestDomainCreationDeletion(t *testing.T) {
 	}
 	log.Printf("Verifying all Glue Tables created")
 
-	tables, err := glueClient.GetTables()
+	tables, err := glueClient.ListTables()
 	if err != nil {
 		t.Errorf("Error retrieving tables after creation")
 	}
-	if len(tables) != len(businessObjectList) {
+	if len(tables) != len(common.BUSINESS_OBJECTS) {
 		t.Errorf("Wrong number of tables in list, %v tables in database, creation", len(tables))
 	}
 	log.Printf("Testing domain deletions")
@@ -101,7 +88,7 @@ func TestDomainCreationDeletion(t *testing.T) {
 		t.Errorf("Error deleting UCP domain: %v", err)
 	}
 	log.Printf("Verifying all tables are gone")
-	tablesAfterDeletion, err := glueClient.GetTables()
+	tablesAfterDeletion, err := glueClient.ListTables()
 	if err != nil {
 		t.Errorf("Error retrieving tables after deletion")
 	}
