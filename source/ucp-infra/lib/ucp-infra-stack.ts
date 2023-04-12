@@ -280,12 +280,6 @@ export class UCPInfraStack extends Stack {
         PAX_PROFILE_JOB_NAME: paxProfileOutput.connectorJobName,
         CLICKSTREAM_JOB_NAME: clickstreamOutput.connectorJobName,
         HOTEL_STAY_JOB_NAME: hotelStayOutput.connectorJobName,
-        HOTEL_BOOKING_JOB_NAME_CUSTOMER: hotelBookingOutput.customerJobName,
-        AIR_BOOKING_JOB_NAME_CUSTOMER: airBookingOutput.customerJobName,
-        GUEST_PROFILE_JOB_NAME_CUSTOMER: guestProfileOutput.customerJobName,
-        PAX_PROFILE_JOB_NAME_CUSTOMER: paxProfileOutput.customerJobName,
-        CLICKSTREAM_JOB_NAME_CUSTOMER: clickstreamOutput.customerJobName,
-        HOTEL_STAY_JOB_NAME_CUSTOMER: hotelStayOutput.customerJobName,
         CONNECTOR_CRAWLER_QUEUE: connectorCrawlerQueue.queueArn,
         CONNECTOR_CRAWLER_DLQ: connectorCrawlerDlq.queueArn,
         GLUE_DB: glueDb.databaseName,
@@ -408,13 +402,6 @@ export class UCPInfraStack extends Stack {
         S3_PAX_PROFILE: paxProfileOutput.bucket.bucketName,
         S3_STAY_REVENUE: hotelStayOutput.bucket.bucketName,
         S3_CLICKSTREAM: clickstreamOutput.bucket.bucketName,
-
-        HOTEL_BOOKING_JOB_NAME_CUSTOMER: hotelBookingOutput.customerJobName,
-        AIR_BOOKING_JOB_NAME_CUSTOMER: airBookingOutput.customerJobName,
-        GUEST_PROFILE_JOB_NAME_CUSTOMER: guestProfileOutput.customerJobName,
-        PAX_PROFILE_JOB_NAME_CUSTOMER: paxProfileOutput.customerJobName,
-        CLICKSTREAM_JOB_NAME_CUSTOMER: clickstreamOutput.customerJobName,
-        HOTEL_STAY_JOB_NAME_CUSTOMER: hotelStayOutput.customerJobName,
 
         HOTEL_BOOKING_DLQ: hotelBookingOutput.errorQueue.queueUrl,
         AIR_BOOKING_DLQ: airBookingOutput.errorQueue.queueUrl,
@@ -937,22 +924,12 @@ export class UCPInfraStack extends Stack {
     bucketRaw.grantReadWrite(dataLakeAdminRole)
     testBucketRaw.grantReadWrite(dataLakeAdminRole)
 
-    //3-Creating Glue Tables
-    let table = this.table(this, businessObjectName, envName, glueDb, glueSchemas, bucketRaw)
-    let testTable = this.table(this, businessObjectName, "Test" + envName, glueDb, glueSchemas, testBucketRaw)
-
     //3-Creating SQS error queue
     const errQueue = new Queue(this, businessObjectName + "-errors-" + envName)
     errQueue.grantSendMessages(dataLakeAdminRole)
 
     //4- Creating Jobs
     let toUcpScript = businessObjectName.replace('-', '_') + "ToUcp"
-    let job = this.job(businessObjectName + "FromCustomer", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
-      ["SOURCE_TABLE", table.tableName],
-      ["DEST_BUCKET", connectProfileImportBucket.bucketName],
-      ["ERROR_QUEUE_URL", errQueue.queueUrl],
-      ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
-    ]))
     let industryConnectorJob = this.job(businessObjectName + "FromConnector", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
       // SOURCE_TABLE provided by customer when linking connector
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
@@ -960,8 +937,6 @@ export class UCPInfraStack extends Stack {
       ["ERROR_QUEUE_URL", errQueue.queueUrl],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
-    //6- Job Triggers
-    this.scheduledJobTrigger("ucp" + businessObjectName, envName, job, "cron(0 * * * ? *)")
     //7-Cfn Output
     new CfnOutput(this, 'customerBucket' + businessObjectName, {
       value: bucketRaw.bucketName
@@ -969,24 +944,10 @@ export class UCPInfraStack extends Stack {
     new CfnOutput(this, 'customerTestBucket' + businessObjectName, {
       value: testBucketRaw.bucketName
     });
-    new CfnOutput(this, 'tableName' + businessObjectName, {
-      value: table.tableName
-    });
-    new CfnOutput(this, 'testTableName' + businessObjectName, {
-      value: testTable.tableName
-    });
-    new CfnOutput(this, 'customerJobName' + businessObjectName, {
-      value: job.name || "",
-    });
-    new CfnOutput(this, 'industryConnectorJobName' + businessObjectName, {
-      value: job.name || "",
-    });
 
     return {
       connectorJobName: industryConnectorJob.name ?? "",
-      customerJobName: job.name ?? "",
       bucket: bucketRaw,
-      tableName: table.tableName,
       errorQueue: errQueue,
     }
   }

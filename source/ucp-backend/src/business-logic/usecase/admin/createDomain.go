@@ -4,9 +4,11 @@ import (
 	"errors"
 	"regexp"
 	"strings"
+	"sync"
 	"tah/core/core"
 	"tah/core/customerprofiles"
 	common "tah/ucp-common/src/constant/admin"
+	commonModel "tah/ucp-common/src/model/admin"
 	services "tah/ucp-common/src/services/admin"
 	accpmappings "tah/ucp/src/business-logic/model/accp-mappings"
 	assetsSchema "tah/ucp/src/business-logic/model/assetsSchema"
@@ -117,19 +119,29 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 		}
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(len(common.BUSINESS_OBJECTS))
+	output := make(chan error, 100)
 	for _, bizObject := range common.BUSINESS_OBJECTS {
-		schema, err := assetsSchema.LoadSchema(bizObject)
-		if err != nil {
-			u.tx.Log("[CreateUcpDomain] Error loading schema: %v", err)
-			return model.ResponseWrapper{}, err
-		}
-		tableName := services.BuildTableName(env, bizObject, req.Domain.Name)
+		go func(bizObject commonModel.BusinessObject) {
+			schema, err := assetsSchema.LoadSchema(bizObject)
+			if err != nil {
+				u.tx.Log("[CreateUcpDomain] Error loading schema: %v", err)
+				output <- err
+			}
+			tableName := services.BuildTableName(env, bizObject, req.Domain.Name)
 
-		err2 := u.reg.Glue.CreateTable(tableName, bizObjectBuckets[bizObject.Name], map[string]string{"year": "int", "month": "int", "day": "int"}, schema)
-		if err2 != nil {
-			u.tx.Log("[CreateUcpDomain] Error creating table: %v", err2)
-			return model.ResponseWrapper{}, err2
-		}
+			err2 := u.reg.Glue.CreateTable(tableName, bizObjectBuckets[bizObject.Name], map[string]string{"year": "int", "month": "int", "day": "int"}, schema)
+			if err2 != nil {
+				u.tx.Log("[CreateUcpDomain] Error creating table: %v", err2)
+				output <- err2
+			}
+			defer wg.Done()
+		}(bizObject)
+	}
+	wg.Wait()
+	if len(output) > 0 {
+		return model.ResponseWrapper{}, errors.New("Error occured during table creation")
 	}
 
 	return model.ResponseWrapper{}, err
