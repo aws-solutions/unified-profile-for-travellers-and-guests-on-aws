@@ -2,8 +2,6 @@ package admin
 
 import (
 	"errors"
-	"regexp"
-	"strings"
 	"sync"
 	"tah/core/core"
 	"tah/core/customerprofiles"
@@ -61,16 +59,6 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 
 	if kmsArn == "" || env == "" || accpSourceBucket == "" {
 		return model.ResponseWrapper{}, errors.New("Missing Registry Environment (KMS_KEY_PROFILE_DOMAIN,LAMBDA_ENV,CONNECT_PROFILE_SOURCE_BUCKET)")
-	}
-
-	pattern := "^[a-z0-9.-]+$"
-	r, err0 := regexp.Compile(pattern)
-	if err0 != nil {
-		return model.ResponseWrapper{}, err0
-	}
-	if !r.MatchString(req.Domain.Name) || strings.Contains(req.Domain.Name, "--") {
-		u.tx.Log("[CreateUcpDomain] Domain name not valid, must match s3 naming convention")
-		return model.ResponseWrapper{}, errors.New("Domain name not valid")
 	}
 
 	err := u.reg.Accp.CreateDomain(req.Domain.Name, true, kmsArn, map[string]string{DOMAIN_TAG_ENV_NAME: env})
