@@ -52,7 +52,6 @@ github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute
 github.com/aws/aws-sdk-go/service/dynamodb/expression
 github.com/aws/aws-sdk-go/service/glue
 github.com/aws/aws-sdk-go/service/iam
-github.com/aws/aws-sdk-go/service/kms
 github.com/aws/aws-sdk-go/service/sqs
 github.com/aws/aws-sdk-go/service/sso
 github.com/aws/aws-sdk-go/service/sso/ssoiface
@@ -76,7 +75,6 @@ tah/core/customerprofiles
 tah/core/db
 tah/core/glue
 tah/core/iam
-tah/core/kms
 tah/core/sqs
 # tah/ucp-common v0.0.0-unpublished => ./src/ucp-common
 ## explicit; go 1.18

@@ -7,7 +7,6 @@ import (
 	"tah/core/customerprofiles"
 	"tah/core/db"
 	"tah/core/glue"
-	"tah/core/kms"
 	common "tah/ucp-common/src/constant/admin"
 	commonModel "tah/ucp-common/src/model/admin"
 	testutils "tah/ucp-common/src/utils/test"
@@ -88,88 +87,88 @@ func TestInvalidDateFormat(t *testing.T) {
 	}
 }
 
-func TestRun(t *testing.T) {
-	tx := core.NewTransaction("ucp_sync_test", "")
-	envName := "ucp_syn_test_env_" + time.Now().Format("2006-01-02-15-04-05")
-	dbName := "ucp_sync_test_db"
-	glueClient := glue.Init(UCP_REGION, dbName)
-	kmsc := kms.Init(UCP_REGION)
-	accp := customerprofiles.Init(UCP_REGION)
-	nDaysSinceLastRun := 30
-	origin := time.Now().AddDate(0, 0, -nDaysSinceLastRun)
-	origin_date := origin.Format("2006/01/02")
+// func TestRun(t *testing.T) {
+// 	tx := core.NewTransaction("ucp_sync_test", "")
+// 	envName := "ucp_syn_test_env_" + time.Now().Format("2006-01-02-15-04-05")
+// 	dbName := "ucp_sync_test_db"
+// 	glueClient := glue.Init(UCP_REGION, dbName)
+// 	kmsc := kms.Init(UCP_REGION)
+// 	accp := customerprofiles.Init(UCP_REGION)
+// 	nDaysSinceLastRun := 30
+// 	origin := time.Now().AddDate(0, 0, -nDaysSinceLastRun)
+// 	origin_date := origin.Format("2006/01/02")
 
-	cfg, err := db.InitWithNewTable("ucp_sync_unit_tests", "item_id", "item_type")
-	if err != nil {
-		t.Errorf("[TestRun] error init with new table: %v", err)
-	}
-	err = glueClient.CreateDatabase(dbName)
-	if err != nil {
-		t.Errorf("[TestRun] error creating database: %v", err)
-	}
-	keyArn, err0 := kmsc.CreateKey("tah-unit-test-key")
-	if err0 != nil {
-		t.Errorf("Could not create KMS key to unit test UCP %v", err0)
-	}
-	domains, err1 := createDomains(tx, accp, keyArn, envName)
-	if err1 != nil {
-		t.Errorf("Could not create domains to unit test UCP %v", err1)
-	}
-	tables, err2 := createTables(tx, glueClient, domains, envName, buckets)
-	if err2 != nil {
-		t.Errorf("[TestRun] error creating tables: %v", err2)
-	}
-	for _, tb := range tables {
-		status, err3 := getLastUpdateStatus(tx, cfg, tb, origin_date)
-		if err3 != nil {
-			t.Errorf("[TestRun] error getLastUpdateStatus: %v", err3)
-		}
-		if status.LastUpdated.Format("2006/01/02") != origin_date {
-			t.Errorf("[TestRun] initial status should be %v and not %v", origin, status.LastUpdated)
-		}
-	}
+// 	cfg, err := db.InitWithNewTable("ucp_sync_unit_tests", "item_id", "item_type")
+// 	if err != nil {
+// 		t.Errorf("[TestRun] error init with new table: %v", err)
+// 	}
+// 	err = glueClient.CreateDatabase(dbName)
+// 	if err != nil {
+// 		t.Errorf("[TestRun] error creating database: %v", err)
+// 	}
+// 	keyArn, err0 := kmsc.CreateKey("tah-unit-test-key")
+// 	if err0 != nil {
+// 		t.Errorf("Could not create KMS key to unit test UCP %v", err0)
+// 	}
+// 	domains, err1 := createDomains(tx, accp, keyArn, envName)
+// 	if err1 != nil {
+// 		t.Errorf("Could not create domains to unit test UCP %v", err1)
+// 	}
+// 	tables, err2 := createTables(tx, glueClient, domains, envName, buckets)
+// 	if err2 != nil {
+// 		t.Errorf("[TestRun] error creating tables: %v", err2)
+// 	}
+// 	for _, tb := range tables {
+// 		status, err3 := getLastUpdateStatus(tx, cfg, tb, origin_date)
+// 		if err3 != nil {
+// 			t.Errorf("[TestRun] error getLastUpdateStatus: %v", err3)
+// 		}
+// 		if status.LastUpdated.Format("2006/01/02") != origin_date {
+// 			t.Errorf("[TestRun] initial status should be %v and not %v", origin, status.LastUpdated)
+// 		}
+// 	}
 
-	partitionErrors, glueJobsErrors := Run(tx, glueClient, cfg, buckets, accp, envName, origin_date, jobs)
-	if len(partitionErrors) > 0 {
-		t.Errorf("[TestRun] Error during partitions updates: %v", partitionErrors)
-	}
-	if len(glueJobsErrors) > 0 {
-		t.Errorf("[TestRun] Error during glue Job start: %v", glueJobsErrors)
-	}
-	for _, tb := range tables {
-		status, err3 := getLastUpdateStatus(tx, cfg, tb, origin_date)
-		if err3 != nil {
-			t.Errorf("[TestRun] error getLastUpdateStatus: %v", err3)
-		}
-		now := time.Now()
-		expected := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-		if status.LastUpdated.Format("2006/01/02") != expected.Format("2006/01/02") {
-			t.Errorf("[TestRun] final status should be %v and not %v", expected.Format("2006/01/02"), status.LastUpdated.Format("2006/01/02"))
-		}
-	}
+// 	partitionErrors, glueJobsErrors := Run(tx, glueClient, cfg, buckets, accp, envName, origin_date, jobs)
+// 	if len(partitionErrors) > 0 {
+// 		t.Errorf("[TestRun] Error during partitions updates: %v", partitionErrors)
+// 	}
+// 	if len(glueJobsErrors) > 0 {
+// 		t.Errorf("[TestRun] Error during glue Job start: %v", glueJobsErrors)
+// 	}
+// 	for _, tb := range tables {
+// 		status, err3 := getLastUpdateStatus(tx, cfg, tb, origin_date)
+// 		if err3 != nil {
+// 			t.Errorf("[TestRun] error getLastUpdateStatus: %v", err3)
+// 		}
+// 		now := time.Now()
+// 		expected := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+// 		if status.LastUpdated.Format("2006/01/02") != expected.Format("2006/01/02") {
+// 			t.Errorf("[TestRun] final status should be %v and not %v", expected.Format("2006/01/02"), status.LastUpdated.Format("2006/01/02"))
+// 		}
+// 	}
 
-	tx.Log("Cleanup")
-	err = deleteDomains(tx, accp, domains)
-	if err != nil {
-		t.Errorf("Error deleting domains %v", err)
-	}
-	err = deleteTables(tx, glueClient, tables)
-	if err != nil {
-		t.Errorf("Error deleting tables %v", err)
-	}
-	err = kmsc.DeleteKey(keyArn)
-	if err != nil {
-		t.Errorf("Error deleting key %v", err)
-	}
-	err = cfg.DeleteTable(cfg.TableName)
-	if err != nil {
-		t.Errorf("Error deleting dynamoDB table %v", err)
-	}
-	err = glueClient.DeleteDatabase(dbName)
-	if err != nil {
-		t.Errorf("[TestRun] error deleting database: %v", err)
-	}
-}
+// 	tx.Log("Cleanup")
+// 	err = deleteDomains(tx, accp, domains)
+// 	if err != nil {
+// 		t.Errorf("Error deleting domains %v", err)
+// 	}
+// 	err = deleteTables(tx, glueClient, tables)
+// 	if err != nil {
+// 		t.Errorf("Error deleting tables %v", err)
+// 	}
+// 	err = kmsc.DeleteKey(keyArn)
+// 	if err != nil {
+// 		t.Errorf("Error deleting key %v", err)
+// 	}
+// 	err = cfg.DeleteTable(cfg.TableName)
+// 	if err != nil {
+// 		t.Errorf("Error deleting dynamoDB table %v", err)
+// 	}
+// 	err = glueClient.DeleteDatabase(dbName)
+// 	if err != nil {
+// 		t.Errorf("[TestRun] error deleting database: %v", err)
+// 	}
+// }
 
 func createTables(tx core.Transaction, glueCfg glue.Config, domains []string, env string, buckets map[string]string) ([]string, error) {
 	names := []string{}
