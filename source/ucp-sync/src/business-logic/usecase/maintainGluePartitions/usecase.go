@@ -127,7 +127,8 @@ func getLastUpdateStatus(tx core.Transaction, configDb db.DBConfig, tableName st
 	}
 	err = configDb.Get(CONFIG_PK_LAST_PARTITION_UPDATE, buildSk(tableName), &status)
 	if err != nil {
-		tx.Log("Could not fetch last updated status form dynamoDB: %v", err)
+		tx.Log("No updated status in DynamoDB. returning origin date %v: %v", origin, err)
+		return model.PartitionUpdateStatus{LastUpdated: origin}, nil
 	}
 	if status.LastUpdated.Before(origin) {
 		tx.Log("No last updated date in config DB. Running update since origin %v", origin)

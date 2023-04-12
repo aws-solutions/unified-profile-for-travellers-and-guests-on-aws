@@ -17,7 +17,6 @@ import (
 	customerProfileSdk "github.com/aws/aws-sdk-go/service/customerprofiles"
 )
 
-var OBJECT_TYPE_NAME_ORDER = "_order"
 var PROFILE_ID_KEY = "_profileId"
 
 var STANDARD_IDENTIFIER_PROFILE = customerProfileSdk.StandardIdentifierProfile
@@ -52,7 +51,7 @@ type Profile struct {
 	EmailAddress         string
 	Attributes           map[string]string
 	Address              Address
-	Orders               []Order
+	ProfileObjects       []ProfileObject
 	Matches              []Match
 }
 
@@ -71,40 +70,7 @@ type ProfileObject struct {
 	ID          string
 	Type        string
 	JSONContent string
-	Order       Order
-}
-
-type Order struct {
-	OrderId               string
-	CustomerEmail         string
-	CustomerPhone         string
-	CreatedDate           string
-	UpdatedDate           string
-	ProcessedDate         string
-	ClosedDate            string
-	CancelledDate         string
-	CancelReason          string
-	Name                  string
-	AdditionalInformation string
-	Gateway               string
-	Status                string
-	StatusCode            string
-	StatusUrl             string
-	CreditCardNumber      string
-	CreditCardCompany     string
-	FulfillmentStatus     string
-	TotalPrice            string
-	TotalTax              string
-	TotalDiscounts        string
-	TotalItemsPrice       string
-	TotalShippingPrice    string
-	TotalTipReceived      string
-	Currency              string
-	TotalWeight           string
-	BillingAddress        string
-	ShippingAddress       string
-	OrderItems            string
-	Attributes            map[string]string
+	Attributes  map[string]string
 }
 
 type IngestionError struct {
@@ -143,12 +109,20 @@ type ObjectMapping struct {
 	Fields []FieldMapping `json:"fields"`
 }
 
+// Creates the mapping for Customer Profiles.
+//
+// Target fields are currently only supported for profile/order/asset/case
+// types. We use custom objects, which just send/receive json strings without
+// any mappings. However, we still need to create a mapping for object keys.
+// This is done by creating the mapping and setting KeyOnly to true.
+// See TestCustomerProfiles for implementation example.
 type FieldMapping struct {
 	Type        string   `json:"type"`
 	Source      string   `json:"source"`
 	Target      string   `json:"target"`
 	Indexes     []string `json:"indexes"`
 	Searcheable bool     `json:"searchable"`
+	KeyOnly     bool     `json:"keyOnly"`
 }
 
 type FieldMappings []FieldMapping
@@ -335,9 +309,9 @@ func (c *CustomerProfileConfig) GetMapping(name string) (ObjectMapping, error) {
 	}
 	for _, val := range out.Fields {
 		mapping.Fields = append(mapping.Fields, FieldMapping{
-			Type:   *val.ContentType,
-			Source: *val.Source,
-			Target: *val.Target,
+			Type:   aws.StringValue(val.ContentType),
+			Source: aws.StringValue(val.Source),
+			Target: aws.StringValue(val.Target),
 		})
 	}
 	return mapping, nil
@@ -373,10 +347,20 @@ func toObjectTypeFieldMap(fieldMappings []FieldMapping) map[string]*customerProf
 		result[keyName] = &customerProfileSdk.ObjectTypeField{
 			ContentType: aws.String(fm.Type),
 			Source:      aws.String(fm.Source),
-			Target:      aws.String(fm.Target),
+			Target:      setTarget(fm),
 		}
 	}
 	return result
+}
+
+// When using custom object types, we need to create keys that don't map to
+// a target field. This allows us to supply the source without trying to map.
+func setTarget(fm FieldMapping) *string {
+	if fm.KeyOnly {
+		return nil
+	} else {
+		return aws.String(fm.Target)
+	}
 }
 
 func buildMappingKey(fieldMapping FieldMapping) string {
@@ -819,7 +803,8 @@ func (c CustomerProfileConfig) SearchProfiles(key string, values []string) ([]Pr
 }
 
 // TODO: parallelize the calls
-func (c CustomerProfileConfig) GetProfile(id string) (Profile, error) {
+// Search for a profile by ProfileID, and return data for specified object types.
+func (c CustomerProfileConfig) GetProfile(id string, objectTypeNames []string) (Profile, error) {
 	log.Printf("[core][customerProfiles][GetProfile] 0-retreiving profile with ID : %+v", id)
 	log.Printf("[core][customerProfiles][GetProfile] 1-Search profile")
 	res, err := c.SearchProfiles(PROFILE_ID_KEY, []string{id})
@@ -829,16 +814,36 @@ func (c CustomerProfileConfig) GetProfile(id string) (Profile, error) {
 	if len(res) == 0 {
 		return Profile{}, errors.New("Profile with id " + id + " not found ")
 	}
+	if len(res) > 1 {
+		return Profile{}, errors.New("Multiple profiles found for ID " + id)
+	}
 	p := res[0]
 	log.Printf("[core][customerProfiles][GetProfile] 2-Get profile objects")
-	objects, err2 := c.GetProfileObject(OBJECT_TYPE_NAME_ORDER, id)
-	if err2 != nil {
-		log.Printf("[core][customerProfiles] Error getting orders for profile %+v", id)
-		return Profile{}, err2
+
+	// Concurrently get data for all profile object types
+	wg := sync.WaitGroup{}
+	mu := sync.Mutex{}
+	errs := []error{}
+	wg.Add(len(objectTypeNames))
+	for _, objectType := range objectTypeNames {
+		go func(objectType, id string) {
+			obj, err := c.GetProfileObject(objectType, id)
+			mu.Lock()
+			if err != nil {
+				errs = append(errs, err)
+			} else {
+				p.ProfileObjects = append(p.ProfileObjects, obj...)
+			}
+			mu.Unlock()
+			wg.Done()
+		}(objectType, id)
 	}
-	for _, obj := range objects {
-		p.Orders = append(p.Orders, obj.Order)
+	wg.Wait()
+	// TODO: decide on error handling strategy
+	if len(errs) > 0 {
+		log.Printf("[core][customerprofiles][GetProfile] Errors while fetching profile objects: %v", errs)
 	}
+
 	log.Printf("[core][customerProfiles][GetProfile] 3-Get profile matching")
 	matches, err3 := c.GetMatchesById(id)
 	if err3 != nil {
@@ -916,23 +921,21 @@ func (c CustomerProfileConfig) GetProfileObject(objectTypeName string, profileID
 	}
 	for i, order := range objects {
 		//{\"OrderId\":\"464669299a74418a85f0e7b02cef7548\",\"CustomerEmail\":null,\"CustomerPhone\":null,\"CreatedDate\":null,\"UpdatedDate\":null,\"ProcessedDate\":null,\"ClosedDate\":null,\"CancelledDate\":null,\"CancelReason\":null,\"Name\":\"cloudrack_simulator\",\"AdditionalInformation\":null,\"Gateway\":null,\"Status\":\"confirmed\",\"StatusCode\":null,\"StatusUrl\":null,\"CreditCardNumber\":null,\"CreditCardCompany\":null,\"FulfillmentStatus\":null,\"TotalPrice\":\"700.0\",\"TotalTax\":null,\"TotalDiscounts\":null,\"TotalItemsPrice\":null,\"TotalShippingPrice\":null,\"TotalTipReceived\":null,\"Currency\":null,\"TotalWeight\":null,\"BillingAddress\":null,\"ShippingAddress\":null,\"OrderItems\":null,\"Attributes\":{\"confirmationNumber\":\"3P0SPWP4GL\",\"nNights\":\"2\",\"hotelCode\":\"2273445359\",\"nGuests\":\"1\",\"startDate\":\"20220815\",\"products\":\"DBL_SUITE-\"}}",
-		if objectTypeName == OBJECT_TYPE_NAME_ORDER {
-			log.Printf("[core][customerProfiles] Parse object json body %+v", order.JSONContent)
-			objects[i].Order, err = parseOrderObject(order.JSONContent)
-			if err != nil {
-				log.Printf("[core][customerProfiles] Error Pasring order object: %+v", err)
-				return []ProfileObject{}, err
-			}
+		log.Printf("[core][customerProfiles] Parse object json body %+v", order.JSONContent)
+		objects[i].Attributes, err = parseProfileObject(order.JSONContent)
+		if err != nil {
+			log.Printf("[core][customerProfiles] Error Pasring order object: %+v", err)
+			return []ProfileObject{}, err
 		}
 	}
 	log.Printf("[core][customerProfiles] Final Response : %+v", out)
 	return objects, nil
 }
 
-func parseOrderObject(jsonObject string) (Order, error) {
-	order := Order{}
-	err := json.Unmarshal([]byte(jsonObject), &order)
-	return order, err
+func parseProfileObject(jsonObject string) (map[string]string, error) {
+	attributes := make(map[string]string)
+	err := json.Unmarshal([]byte(jsonObject), &attributes)
+	return attributes, err
 }
 
 func toMatchList(item *customerProfileSdk.MatchItem) MatchList {
@@ -1039,9 +1042,9 @@ func containsIntegration(integrations []Integration, expectedName string) bool {
 	return false
 }
 
-//Check if a profile exists
-//TODO: to be refactored in an Exist function
-//TODO: remove the hardcoded key for profile ID.
+// Check if a profile exists
+// TODO: to be refactored in an Exist function
+// TODO: remove the hardcoded key for profile ID.
 func (c *CustomerProfileConfig) GetProfileId(profileId string) (string, error) {
 	log.Printf("[customerprofiles][GetProfileId] Searching profile with ID %v in domain %v", profileId, c.DomainName)
 	input := customerProfileSdk.SearchProfilesInput{

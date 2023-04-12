@@ -175,9 +175,28 @@ func createTables(tx core.Transaction, glueCfg glue.Config, domains []string, en
 	names := []string{}
 	for _, domain := range domains {
 		for _, bo := range common.BUSINESS_OBJECTS {
+			schemaRawData := `{
+				"columns": [
+					{
+						"name": "model_num",
+						"type": {
+							"isPrimitive": true,
+							"inputString": "int"
+						}
+					},
+					{
+						"name": "id_num",
+						"type": {
+							"isPrimitive": true,
+							"inputString": "int"
+						}
+					}
+				]
+			}`
+			schema, _ := glue.ParseSchema(schemaRawData)
 			tName := "ucp_" + env + "_" + bo.Name + "_" + domain
 			tx.Log("Creating table %v", tName)
-			err := glueCfg.CreateTable(tName, buckets[bo.Name], map[string]string{"year": "int", "month": "int", "day": "int"})
+			err := glueCfg.CreateTable(tName, buckets[bo.Name], map[string]string{"year": "int", "month": "int", "day": "int"}, schema)
 			if err != nil {
 				return names, err
 			}
