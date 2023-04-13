@@ -7,7 +7,7 @@ import (
 	"tah/core/customerprofiles"
 	common "tah/ucp-common/src/constant/admin"
 	commonModel "tah/ucp-common/src/model/admin"
-	services "tah/ucp-common/src/services/admin"
+	commonServices "tah/ucp-common/src/services/admin"
 	accpmappings "tah/ucp/src/business-logic/model/accp-mappings"
 	assetsSchema "tah/ucp/src/business-logic/model/assetsSchema"
 	model "tah/ucp/src/business-logic/model/common"
@@ -117,7 +117,7 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 				u.tx.Log("[CreateUcpDomain] Error loading schema: %v", err)
 				output <- err
 			}
-			tableName := services.BuildTableName(env, bizObject, req.Domain.Name)
+			tableName := commonServices.BuildTableName(env, bizObject, req.Domain.Name)
 
 			err2 := u.reg.Glue.CreateTable(tableName, bizObjectBuckets[bizObject.Name], map[string]string{"year": "int", "month": "int", "day": "int"}, schema)
 			if err2 != nil {

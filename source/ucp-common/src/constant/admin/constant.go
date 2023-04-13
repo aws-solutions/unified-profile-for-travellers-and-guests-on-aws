@@ -6,8 +6,8 @@ import (
 
 const DOMAIN_TAG_ENV_NAME = "envName"
 
-const BIZ_OBJECT_HOTEL_BOOKING = "air_booking"
-const BIZ_OBJECT_AIR_BOOKING = "hotel_booking"
+const BIZ_OBJECT_AIR_BOOKING = "air_booking"
+const BIZ_OBJECT_HOTEL_BOOKING = "hotel_booking"
 const BIZ_OBJECT_GUEST_PROFILE = "guest_profile"
 const BIZ_OBJECT_PAX_PROFILE = "pax_profile"
 const BIZ_OBJECT_CLICKSTREAM = "clickstream"

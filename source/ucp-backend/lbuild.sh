@@ -33,7 +33,7 @@ echo "4-Building Executable in Vendor Mode"
 export GOOS=linux
 export GOARCH=amd64
 go build -mod=vendor -o main src/main/main.go
-cp -R tah-common-glue-schemas src/business-logic/usecase/
+cp -R tah-common-glue-schemas src/business-logic/usecase/task
 rc=$?
 if [ $rc -ne 0 ]; then
   echo "Existing Build with status $rc" >&2
@@ -57,5 +57,5 @@ if [ $env == $LOCAL_ENV_NAME ]; then
   echo "8-e2e testing (local Only, e2e are run in a separate pipeline step for staging and prod)"
   cd e2e && sh test.sh $env && cd ..
 fi
-rm -rf tah-common-glue-schemas
+#rm -rf tah-common-glue-schemas
 fi
