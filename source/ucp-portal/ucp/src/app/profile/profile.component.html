@@ -10,46 +10,46 @@
                     <h2 class="float-right">Lifetime Revenue: $ {{this.totalRevenueGenertated | number: '1.2-2'}}</h2>
                     <div class="traveller-title">TRAVELLER</div>
                     <div class="traveller-name"><fa-icon class="traveller-icon" [icon]="faUser"></fa-icon>
-                        <span *ngIf="traveller.Honorific">{{traveller.Honorific}}</span> {{traveller.FirstName}}
-                        {{traveller.MiddleName}}
-                        {{traveller.LastName}} <span class="pronoun"
-                            *ngIf="traveller.Pronoun">({{traveller.Pronoun}})</span>
+                        <span *ngIf="traveller.honorific">{{traveller.honorific}}</span> {{traveller.firstName}}
+                        {{traveller.middleName}}
+                        {{traveller.lastName}} <span class="pronoun"
+                            *ngIf="traveller.pronoun">({{traveller.pronoun}})</span>
                     </div>
                     <br />
                     <div class="row">
                         <div class="col-sm-3"><fa-icon class="data-title-icon" [icon]="faPhone"></fa-icon><span
                                 class="data-title">PHONE</span>
-                            <div class="data-element">{{traveller.PhoneNumber ||
-                                traveller.BusinessPhoneNumber || "none"}}</div>
+                            <div class="data-element">{{traveller.phoneNumber ||
+                                traveller.businessPhoneNumber || traveller.homePhoneNumber || "-"}}</div>
                         </div>
                         <div class="col-sm-3"><fa-icon class="data-title-icon" [icon]="faEnvelope"></fa-icon><span
                                 class="data-title">EMAIL</span>
                             <div class="data-element">
-                                <div *ngIf="traveller.PersonalEmailAddress">{{traveller.PersonalEmailAddress}}</div>
-                                <div *ngIf="traveller.BusinessEmailAddress">{{traveller.BusinessEmailAddress}}</div>
-                                <div *ngIf="!traveller.BusinessEmailAddress && !traveller.PersonalEmailAddress">None
+                                <div *ngIf="traveller.personalEmailAddress">{{traveller.personalEmailAddress}}</div>
+                                <div *ngIf="traveller.businessEmailAddress">{{traveller.businessEmailAddress}}</div>
+                                <div *ngIf="!traveller.businessEmailAddress && !traveller.personalEmailAddress">None
                                 </div>
                             </div>
                         </div>
                         <div class="col-sm-3"><fa-icon class="data-title-icon" [icon]="faMapMarker"></fa-icon><span
                                 class="data-title">ADDRESS</span>
                             <div class="data-element">
-                                <ucp-address *ngIf="traveller.HomeAddress"
-                                    address="traveller.HomeAddress"></ucp-address>
+                                <ucp-address *ngIf="traveller.homeAddress"
+                                    address="traveller.homeAddress"></ucp-address>
                             </div>
                         </div>
 
                         <div class="col-sm-3"><fa-icon class="data-title-icon" [icon]="faBirthdayCake"></fa-icon><span
                                 class="data-title">BIRTHDATE</span>
-                            <div class="data-element">{{traveller.BirthDate | date: 'YYYY-MM-dd'}}</div>
+                            <div class="data-element">{{traveller.birthDate | date: 'YYYY-MM-dd'}}</div>
                         </div>
                     </div>
                     <br />
                     <div class="row">
                         <div class="col-sm-3"><fa-icon class="data-title-icon" [icon]="faBriefcase"></fa-icon>
                             <span class="data-title">WORK</span>
-                            <div class="data-element">{{traveller.JobTitle || "Works"}} <span
-                                    *ngIf="traveller.CompanyName">at</span> {{traveller.CompanyName}}</div>
+                            <div class="data-element">{{traveller.jobTitle || "Works"}} <span
+                                    *ngIf="traveller.companyName">at</span> {{traveller.companyName}}</div>
                         </div>
                     </div>
                 </div>
@@ -60,7 +60,38 @@
     <div class="row">
         <div class="col-sm-9">
             <div class="box-shadow">
-                <div class="widget-container"></div>
+                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                    <air-booking-widget [traveller]="traveller" [config]="widgetConfig"
+                        (pageChange)="onWidgetChange($event)" [objectType]="'air_booking'"></air-booking-widget>
+                </div>
+                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                    <hotel-booking-widget [traveller]="traveller" [config]="widgetConfig"
+                        (pageChange)="onWidgetChange($event)" [objectType]="'hotel_booking'"></hotel-booking-widget>
+                </div>
+                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                    <air-loyalty-widget [traveller]="traveller" [config]="widgetConfig"
+                        (pageChange)="onWidgetChange($event)" [objectType]="'air_loyalty'"></air-loyalty-widget>
+                </div>
+                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                    <hotel-loyalty-widget [traveller]="traveller" [config]="widgetConfig"
+                        (pageChange)="onWidgetChange($event)" [objectType]="'hotel_loyalty'"></hotel-loyalty-widget>
+                </div>
+                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                    <email-history-widget [traveller]="traveller" [config]="widgetConfig"
+                        (pageChange)="onWidgetChange($event)" [objectType]="'email_history'"></email-history-widget>
+                </div>
+                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                    <phone-history-widget [traveller]="traveller" [config]="widgetConfig"
+                        (pageChange)="onWidgetChange($event)" [objectType]="'phone_history'"></phone-history-widget>
+                </div>
+                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                    <stay-revenue-widget [traveller]="traveller" [config]="widgetConfig"
+                        (pageChange)="onWidgetChange($event)" [objectType]="'stay_revenue'"></stay-revenue-widget>
+                </div>
+                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                    <clickstream-widget [traveller]="traveller" [config]="widgetConfig"
+                        (pageChange)="onWidgetChange($event)" [objectType]="'clickstream'"></clickstream-widget>
+                </div>
             </div>
         </div>
         <div class="col-sm-3">
@@ -88,8 +119,12 @@
                             <div *ngFor="let error of ingestionErrors">
                                 <div class="profile-match">
 
-                                    <fa-icon *ngIf="error.businessObjectType"
+                                    <fa-icon
+                                        *ngIf="error.businessObjectType && objectTypeIcons[error.businessObjectType]"
                                         [icon]="objectTypeIcons[error.businessObjectType].icon"></fa-icon>
+                                    <fa-icon
+                                        *ngIf="!error.businessObjectType || !objectTypeIcons[error.businessObjectType]"
+                                        [icon]="faQuestion"></fa-icon>
 
                                     <span class="match-content">
                                         <span class="error-timestamp">{{error.timestamp | date: "YYYY-mm-dd hh:MM:ss"}}

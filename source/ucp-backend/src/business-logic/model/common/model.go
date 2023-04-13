@@ -42,7 +42,7 @@ type RequestWrapper struct {
 	LinkIndustryConnectorRq  LinkIndustryConnectorRq   `json:"linkIndustryConnectorRq"`
 	CreateConnectorCrawlerRq CreateConnectorCrawlerRq  `json:"createConnectorCrawlerRq"`
 	UcpErrorToDelete         UcpIngestionErrorToDelete `json:"ucpErrorToDelete"`
-	Pagination               PaginationOptions         `json:"pagination"`
+	Pagination               []PaginationOptions       `json:"pagination"`
 }
 
 type ResponseWrapper struct {
@@ -54,7 +54,7 @@ type ResponseWrapper struct {
 	UCPConfig       UCPConfig                  `json:"config"`
 	Matches         []Match                    `json:"matches"`
 	Error           core.ResError              `json:"error"`
-	Pagination      PaginationOptions          `json:"pagination"`
+	Pagination      []PaginationOptions        `json:"pagination"`
 	Connectors      []Connector                `json:"connectors"`
 	AwsResources    AwsResources               `json:"awsResources"`
 }
@@ -95,8 +95,9 @@ var PAGINATION_OPTION_PAGE = "page"
 var PAGINATION_OPTION_PAGE_SIZE = "pageSize"
 
 type PaginationOptions struct {
-	Page     int `json:"page"`
-	PageSize int `json:"pageSize"`
+	Page       int    `json:"page"`
+	PageSize   int    `json:"pageSize"`
+	ObjectType string `json:"objectType"`
 }
 
 type Match struct {
@@ -150,6 +151,7 @@ type Integration struct {
 	LastRunStatus  string    `json:"lastRunStatus"`
 	LastRunMessage string    `json:"lastRunMessage"`
 	Trigger        string    `json:"trigger"`
+	FlowName       string    `json:"flowName"`
 }
 
 var ERR_TYPE_MISSING_MAPPING_FIELD = "missing_column_mapping"

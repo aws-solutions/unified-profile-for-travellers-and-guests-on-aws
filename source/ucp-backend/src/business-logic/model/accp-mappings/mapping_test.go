@@ -66,18 +66,33 @@ func testMapping(sourceNames []string, filePath string, t *testing.T) {
 	f.Close()
 
 	// Compare actual vs expected fields
+	missings := []string{}
 	for _, v := range expectedFields {
 		key := v[0]
 		_, ok := sourceMap[key]
 		if ok {
 			delete(sourceMap, key)
 		} else {
-			t.Errorf("Field %v not found", key)
+
+			missings = append(missings, key)
 		}
+	}
+	if len(missings) > 0 {
+		toaAdd := ""
+		for _, key := range missings {
+			toaAdd += `{
+				Type:    "STRING",
+				Source:  "_source.` + key + `",
+				Target:  "` + key + `",
+				KeyOnly: true,
+			},
+			`
+		}
+		t.Errorf("***************************\n %v: %v mapping missings\n**********************\n\n Add the following \n%v", filePath, len(missings), toaAdd)
 	}
 	if len(sourceMap) > 0 {
 		for k := range sourceMap {
-			t.Errorf("Field %v found but not expected", k)
+			t.Errorf("[%s] Field %v found but not expected", filePath, k)
 		}
 	}
 }

@@ -1,0 +1,36 @@
+<div class="data-title"><fa-icon class="data-title-icon"
+        [icon]="(config.objectTypeIcons || {})[objectType].icon"></fa-icon>
+    PHONE HISTORY</div>
+<ucp-pagination [nRecords]="records.length" *ngIf="records.length >= pageSize && page===0" [pageSize]="pageSize"
+    (pageChange)="onPageChange($event)"></ucp-pagination>
+<div class="table-container">
+    <div class="row table-header">
+        <div class="col-sm-3 title align-center block-title">
+            Type
+        </div>
+        <div class="col-sm-3 title align-center block-title">
+            Country Code
+        </div>
+        <div class="col-sm-4 title align-center block-title">
+            Phone
+        </div>
+        <div class="col-sm-2 title align-center block-title">
+            Last Updated
+        </div>
+    </div>
+    <div class="row table-row" *ngFor="let rec of records">
+        <div class="col-sm-3 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'type'" [data]="rec.type"></ucp-data>
+        </div>
+        <div class="col-sm-3 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'countryCode'" [data]="rec.countryCode"></ucp-data>
+        </div>
+        <div class="col-sm-4 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'number'" [data]="rec.number"></ucp-data>
+        </div>
+        <div class="col-sm-2 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'lastUpdated'"
+                [data]="rec.lastUpdated | date: 'YYYY-MM-dd hh:mm'"></ucp-data>
+        </div>
+    </div>
+</div>

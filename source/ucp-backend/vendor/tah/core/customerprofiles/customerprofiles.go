@@ -139,6 +139,12 @@ type Integration struct {
 	Trigger        string
 }
 
+type PaginationOptions struct {
+	Page       int    `json:"page"`
+	PageSize   int    `json:"pageSize"`
+	ObjectType string `json:"objectType"`
+}
+
 func InitWithDomain(domainName string, region string) CustomerProfileConfig {
 	session := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
@@ -804,8 +810,15 @@ func (c CustomerProfileConfig) SearchProfiles(key string, values []string) ([]Pr
 
 // TODO: parallelize the calls
 // Search for a profile by ProfileID, and return data for specified object types.
-func (c CustomerProfileConfig) GetProfile(id string, objectTypeNames []string) (Profile, error) {
+func (c CustomerProfileConfig) GetProfile(id string, objectTypeNames []string, pagination []PaginationOptions) (Profile, error) {
 	log.Printf("[core][customerProfiles][GetProfile] 0-retreiving profile with ID : %+v", id)
+	//putting pagination options in a map to allow for qiuck access
+	poMap := map[string]PaginationOptions{}
+	for _, po := range pagination {
+		poMap[po.ObjectType] = po
+	}
+	log.Printf("[core][customerProfiles][GetProfile] 0-building pagination opion map: %v", poMap)
+
 	log.Printf("[core][customerProfiles][GetProfile] 1-Search profile")
 	res, err := c.SearchProfiles(PROFILE_ID_KEY, []string{id})
 	if err != nil {
@@ -827,7 +840,7 @@ func (c CustomerProfileConfig) GetProfile(id string, objectTypeNames []string) (
 	wg.Add(len(objectTypeNames))
 	for _, objectType := range objectTypeNames {
 		go func(objectType, id string) {
-			obj, err := c.GetProfileObject(objectType, id)
+			obj, err := c.GetProfileObject(objectType, id, poMap[objectType])
 			mu.Lock()
 			if err != nil {
 				errs = append(errs, err)
@@ -892,13 +905,19 @@ func (c CustomerProfileConfig) DeleteProfile(id string) error {
 	return err
 }
 
-func (c CustomerProfileConfig) GetProfileObject(objectTypeName string, profileID string) ([]ProfileObject, error) {
-	log.Printf("[core][customerProfiles] List objects of type %s, for profile %v", objectTypeName, profileID)
+func (c CustomerProfileConfig) GetProfileObject(objectTypeName string, profileID string, pagination PaginationOptions) ([]ProfileObject, error) {
+	log.Printf("[core][customerProfiles] List objects of type %s, for profile %v and pagination options: %+v", objectTypeName, profileID, pagination)
 	input := &customerProfileSdk.ListProfileObjectsInput{
 		DomainName:     aws.String(c.DomainName),
 		ObjectTypeName: aws.String(objectTypeName),
 		ProfileId:      aws.String(profileID),
+		MaxResults:     aws.Int64(100),
 	}
+	//If PageSize==0, we assume that no pagination is provided
+	if pagination.PageSize > 0 {
+		input.MaxResults = aws.Int64(int64(pagination.PageSize))
+	}
+	page := 0
 	out, err := c.Client.ListProfileObjects(input)
 	log.Printf("[core][customerProfiles] Objects Search response: %+v", out)
 	objects := []ProfileObject{}
@@ -908,7 +927,8 @@ func (c CustomerProfileConfig) GetProfileObject(objectTypeName string, profileID
 	for _, item := range out.Items {
 		objects = append(objects, toProfileObject(item))
 	}
-	for out.NextToken != nil {
+	for out.NextToken != nil && (pagination.PageSize == 0 || pagination.Page > page) {
+		page++
 		log.Printf("[core][customerProfiles] response is paginated. getting next batch from token: %+v", out.NextToken)
 		input.NextToken = out.NextToken
 		out, err = c.Client.ListProfileObjects(input)
@@ -929,6 +949,9 @@ func (c CustomerProfileConfig) GetProfileObject(objectTypeName string, profileID
 		}
 	}
 	log.Printf("[core][customerProfiles] Final Response : %+v", out)
+	if pagination.PageSize > 0 {
+		objects = objects[pagination.Page*pagination.PageSize:]
+	}
 	return objects, nil
 }
 

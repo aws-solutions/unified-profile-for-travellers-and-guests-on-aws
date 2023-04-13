@@ -28,6 +28,19 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ProfileComponent, ProfileCompareComponent } from './profile/profile.component';
 import { AddressComponent } from './profile/common/address.component';
+import { DataElementComponent } from './profile/common/data-element.component';
+import { PaginationComponent } from './profile/common/pagination.component';
+
+
+import { AirBookingWidget } from './profile/widgets/air-booking/air-booking.widget';
+import { AirLoyaltyWidget } from './profile/widgets/air-loyalty/air-loyalty.widget'
+import { ClickstreamWidget } from './profile/widgets/clickstream/clickstream.widget'
+import { EmailHistoryWidget } from './profile/widgets/email-history/email-history.widget'
+import { HotelBookingWidget } from './profile/widgets/hotel-booking/hotel-booking.widget'
+import { HotelLoyaltyWidget } from './profile/widgets/hotel-loyalty/hotel-loyalty.widget'
+import { PhoneHistoryWidget } from './profile/widgets/phone-history/phone-history.widget'
+import { StayRevenueWidget } from './profile/widgets/stay-revenue/stay-revenue.widget'
+
 
 import { SettingComponent, LinkConnectorComponent, RecordDisplayComponent } from './setting/setting.component';
 
@@ -41,7 +54,17 @@ import { SettingComponent, LinkConnectorComponent, RecordDisplayComponent } from
     LinkConnectorComponent,
     RecordDisplayComponent,
     DomainCreationModalComponent,
-    AddressComponent
+    AddressComponent,
+    DataElementComponent,
+    PaginationComponent,
+    AirBookingWidget,
+    AirLoyaltyWidget,
+    ClickstreamWidget,
+    EmailHistoryWidget,
+    HotelBookingWidget,
+    HotelLoyaltyWidget,
+    PhoneHistoryWidget,
+    StayRevenueWidget
   ],
   imports: [
     UcpModule,

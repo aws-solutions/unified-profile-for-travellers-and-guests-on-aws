@@ -662,6 +662,7 @@ export class UCPInfraStack extends Stack {
     const ucpEndpointDataValidation = "data"
     const ucpEndpointErrors = "error"
     const ucpEndpointJobs = "jobs"
+    const ucpEndpointFlows = "flows"
     const stageName = "api"
     //partner api enpoint
     let allRoutes: Array<HttpRoute>;
@@ -777,6 +778,16 @@ export class UCPInfraStack extends Stack {
       path: '/' + ucpEndpointName + "/" + ucpEndpointJobs,
       authorizer: authorizer,
       methods: [HttpMethod.GET],
+      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationJobs', ucpBackEndLambda, {
+        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
+      })
+    }).forEach(route => {
+      allRoutes.push(route)
+    });
+    apiV2.addRoutes({
+      path: '/' + ucpEndpointName + "/" + ucpEndpointFlows,
+      authorizer: authorizer,
+      methods: [HttpMethod.GET, HttpMethod.POST],
       integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationJobs', ucpBackEndLambda, {
         payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
       })

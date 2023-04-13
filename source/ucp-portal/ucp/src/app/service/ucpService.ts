@@ -18,9 +18,23 @@ export class UcpService {
     public searchProfiles(searchRq: any) {
         return this.service.query(searchRq, <RestOptions>{ subEndpoint: "profile" });
     }
-    public retreiveProfile(id: string) {
-        return this.service.get(id, {}, <RestOptions>{ subEndpoint: "profile" });
+    public retreiveProfile(id: string, poMap?: Map<string, PaginationOptions>) {
+
+        return this.service.get(id, this.buildMultiPaginationQueryParams(poMap), <RestOptions>{ subEndpoint: "profile" });
     }
+
+    buildMultiPaginationQueryParams(poMap: Map<string, PaginationOptions>) {
+        let objects: string[] = []
+        let pages: number[] = []
+        let pageSizes: number[] = []
+        poMap.forEach((value: PaginationOptions, key: string) => {
+            objects.push(key)
+            pages.push(value.page)
+            pageSizes.push(value.pageSize)
+        });
+        return { objects: objects, pages: pages, pageSizes: pageSizes }
+    }
+
     public getConfig(domain: string) {
         return this.service.get(domain, null, <RestOptions>{ subEndpoint: "admin" });
     }

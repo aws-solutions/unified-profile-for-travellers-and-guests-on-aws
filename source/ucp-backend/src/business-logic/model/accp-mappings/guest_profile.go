@@ -4,6 +4,60 @@ import customerprofiles "tah/core/customerprofiles"
 
 func BuildGuestProfileMapping() customerprofiles.FieldMappings {
 	return []customerprofiles.FieldMapping{
+		{
+			Type:    "STRING",
+			Source:  "_source.email_type",
+			Target:  "email_type",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.last_updated_by",
+			Target:  "last_updated_by",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.last_updated",
+			Target:  "last_updated",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.created_on",
+			Target:  "created_on",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.created_by",
+			Target:  "created_by",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.object_type",
+			Target:  "object_type",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.model_version",
+			Target:  "model_version",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.address_type",
+			Target:  "address_type",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.phone_type",
+			Target:  "phone_type",
+			KeyOnly: true,
+		},
 		// Profile Data
 		{
 			Type:        "STRING",

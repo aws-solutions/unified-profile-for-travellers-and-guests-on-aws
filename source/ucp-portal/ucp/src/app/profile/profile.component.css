@@ -151,3 +151,14 @@ table {
     color: #ccc;
     margin-left: 5px;
 }
+
+.widget-container {
+    width: 100%;
+    display: inline-block;
+    font-size: small;
+    padding: 5px;
+}
+
+.table-container {
+    padding: 5px;
+}

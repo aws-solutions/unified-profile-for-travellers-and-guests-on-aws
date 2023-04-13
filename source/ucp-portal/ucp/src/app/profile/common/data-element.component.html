@@ -1,0 +1,4 @@
+<span *ngIf="config.externalUrl[accpRecord+fieldName]"><a target="_blank"
+        href={{config.externalUrl[accpRecord+fieldName]}}><fa-icon class="data-title-icon"
+            [icon]="faExternalLink"></fa-icon> {{data}}</a></span>
+<span *ngIf="!config.externalUrl[accpRecord+fieldName]">{{data}}</span>

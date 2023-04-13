@@ -85,6 +85,7 @@ func parseIntegrations(profileIntegrations []customerprofiles.Integration) []mod
 			LastRunStatus:  pi.LastRunStatus,
 			LastRunMessage: pi.LastRunMessage,
 			Trigger:        pi.Trigger,
+			FlowName:       pi.Name,
 		})
 	}
 	return integrations

@@ -69,3 +69,11 @@ func TryParseInt(val string) (int, error) {
 	}
 	return parsed, nil
 }
+
+func ParseIntArray(array []string) []int {
+	res := []int{}
+	for _, val := range array {
+		res = append(res, ParseInt(val))
+	}
+	return res
+}

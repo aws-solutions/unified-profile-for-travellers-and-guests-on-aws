@@ -199,10 +199,11 @@ func CreateRequest(uc Usecase, req events.APIGatewayProxyRequest) (model.Request
 	if req.Body != "" {
 		wrapper, err = DecodeBody(uc, req)
 	}
-	wrapper.Pagination = model.PaginationOptions{
-		Page:     utils.ParseInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE]),
-		PageSize: utils.ParseInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE_SIZE]),
-	}
+	wrapper.Pagination = []model.PaginationOptions{
+		model.PaginationOptions{
+			Page:     utils.ParseInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE]),
+			PageSize: utils.ParseInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE_SIZE]),
+		}}
 	return wrapper, err
 }
 

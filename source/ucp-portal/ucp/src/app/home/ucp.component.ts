@@ -8,6 +8,7 @@ import { SessionService } from '../service/sessionService';
 import { DomainService } from '../service/domainService';
 import { faCog, faSearch, faTimes, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
+import { Traveller } from '../model/traveller.model'
 
 
 @Component({
@@ -17,7 +18,7 @@ import { Subscription } from 'rxjs';
 })
 export class UCPComponent implements OnInit, OnDestroy {
   displayedColumns: string[] = ['id', 'firstName', 'lastName', 'email', 'actions'];
-  profiles = [];
+  profiles: Traveller[] = [];
   faCog = faCog;
   faSearch = faSearch;
   faTimes = faTimes;

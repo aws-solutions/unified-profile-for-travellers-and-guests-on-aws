@@ -105,7 +105,7 @@ func TestTraveller(t *testing.T) {
 	}
 	// Get profile if one was returned, otherwise skip and show error. Prevents out of range panic on Profiles[0].
 	if len(res.Profiles) > 0 {
-		profile, err := profileClient.GetProfile(res.Profiles[0].ConnectID, COMBINED_PROFILE_OBJECT_TYPES)
+		profile, err := profileClient.GetProfile(res.Profiles[0].ConnectID, COMBINED_PROFILE_OBJECT_TYPES, []customerprofiles.PaginationOptions{})
 		if err != nil {
 			t.Errorf("[TestTraveller] Error getting orders for user: %v", err)
 		}

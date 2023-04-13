@@ -1,6 +1,7 @@
 package traveller
 
 import (
+	"sort"
 	"tah/core/customerprofiles"
 	model "tah/ucp/src/business-logic/model/traveller"
 	"tah/ucp/src/business-logic/utils"
@@ -123,7 +124,7 @@ func profileToTraveller(profile customerprofiles.Profile) model.Traveller {
 	}
 
 	// TODO: handle each object in one loop through object records
-	traveller.AirBookingRecords = generateAirBookingRecords(&profile)
+	traveller.AirBookingRecords = generateAirBookingRecords(&profile, &errors)
 	traveller.AirLoyaltyRecords = generateAirLoyaltyRecords(&profile, &errors)
 	traveller.ClickstreamRecords = generateClickstreamRecords(&profile, &errors)
 	traveller.EmailHistoryRecords = generateEmailHistoryRecords(&profile, &errors)
@@ -132,10 +133,22 @@ func profileToTraveller(profile customerprofiles.Profile) model.Traveller {
 	traveller.HotelStayRecords = generateHotelStayRecords(&profile, &errors)
 	traveller.PhoneHistoryRecords = generatePhoneHistoryRecords(&profile, &errors)
 	traveller.ParsingErrors = errors
+
+	//sorting data
+	//TODO: to parallelize
+	sort.Sort(model.AirBookingByLastUpdated(traveller.AirBookingRecords))
+	sort.Sort(model.AirLoyaltyByLastUpdated(traveller.AirLoyaltyRecords))
+	sort.Sort(model.ClickstreamByLastUpdated(traveller.ClickstreamRecords))
+	sort.Sort(model.EmailHistoryByLastUpdated(traveller.EmailHistoryRecords))
+	sort.Sort(model.HotelBookingByLastUpdated(traveller.HotelBookingRecords))
+	sort.Sort(model.HotelLoyaltyByLastUpdated(traveller.HotelLoyaltyRecords))
+	sort.Sort(model.HotelStayByLastUpdated(traveller.HotelStayRecords))
+	sort.Sort(model.PhoneHistoryByLastUpdated(traveller.PhoneHistoryRecords))
+
 	return traveller
 }
 
-func generateAirBookingRecords(profile *customerprofiles.Profile) []model.AirBooking {
+func generateAirBookingRecords(profile *customerprofiles.Profile, errors *[]string) []model.AirBooking {
 	airBookingRecs := []model.AirBooking{}
 	for _, obj := range profile.ProfileObjects {
 		if obj.Type != OBJECT_TYPE_AIR_BOOKING {
@@ -154,6 +167,7 @@ func generateAirBookingRecords(profile *customerprofiles.Profile) []model.AirBoo
 			Channel:       obj.Attributes["channel"],
 			Status:        obj.Attributes["status"],
 			Price:         obj.Attributes["price"],
+			LastUpdated:   trySetTimestamp(obj.Attributes["last_updated"], errors),
 		}
 		airBookingRecs = append(airBookingRecs, rec)
 	}
