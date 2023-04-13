@@ -33,3 +33,12 @@ source/test_data/*
 source/ucp-backend/src/business-logic/usecase/traveller/traveller_test.go
 #real time
 source/ucp-real-time-transformer/vendor/*
+#sync vendor
+source/ucp-sync/vendor/github.com/aws/aws-sdk-go/service/customerprofiles/api.go 
+source/ucp-sync/vendor/github.com/aws/aws-sdk-go/service/customerprofiles/api.go
+#common vendor
+source/ucp-common/vendor/github.com/aws/aws-sdk-go/service/customerprofiles/api.go 
+source/ucp-common/vendor/github.com/aws/aws-sdk-go/service/customerprofiles/api.go
+#backend common vendor
+source/ucp-backend/src/ucp-common/vendor/github.com/aws/aws-sdk-go/service/customerprofiles/api.go
+source/ucp-backend/src/ucp-common/vendor/github.com/aws/aws-sdk-go/service/customerprofiles/api.go
