@@ -669,6 +669,8 @@ func (dbc DBConfig) FindStartingWithAndFilterWithIndex(pk string, value string, 
 	dbc.Tx.Log("[FindStartingWithAndFilterWithIndex] Pk: %v, Sk start with: %s", pk, value)
 	filter := queryOptions.Filter
 	index := queryOptions.Index
+	reverseOrder := queryOptions.ReverseOrder
+	paginOptions := queryOptions.PaginOptions
 
 	pkName := dbc.PrimaryKey
 	skName := dbc.SortKey
@@ -704,6 +706,10 @@ func (dbc DBConfig) FindStartingWithAndFilterWithIndex(pk string, value string, 
 		queryInput.IndexName = aws.String(index.Name)
 	}
 
+	if reverseOrder {
+		queryInput.ScanIndexForward = aws.Bool(false)
+	}
+
 	//Building Filter expression
 	if filter.HasFilter() {
 		expr, err := dbc.BuildQueryFilter(filter)
@@ -716,7 +722,7 @@ func (dbc DBConfig) FindStartingWithAndFilterWithIndex(pk string, value string, 
 		queryInput.FilterExpression = expr.Filter()
 	}
 	//Run query with support for pagination
-	allItems, err := dbc.RunQuery(queryInput, DynamoPaginationOptions{})
+	allItems, err := dbc.RunQuery(queryInput, paginOptions)
 	if err != nil {
 		dbc.Tx.Log("[FindStartingWithAndFilterWithIndex] Run query failed: %v", err)
 		return err

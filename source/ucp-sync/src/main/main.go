@@ -6,8 +6,10 @@ import (
 	"sync"
 	athena "tah/core/athena"
 	core "tah/core/core"
+	customerprofiles "tah/core/customerprofiles"
 	db "tah/core/db"
 	glue "tah/core/glue"
+	common "tah/ucp-common/src/constant/admin"
 	model "tah/ucp-sync/src/business-logic/model"
 	maintainGluePartitions "tah/ucp-sync/src/business-logic/usecase/maintainGluePartitions"
 
@@ -25,12 +27,12 @@ var ATHENA_TABLE = os.Getenv("ATHENA_TABLE")
 var ATHENA_DB = os.Getenv("ATHENA_DB")
 
 //Athena Table Names
-var HOTEL_BOOKING_TABLE_NAME = os.Getenv("HOTEL_BOOKING_TABLE_NAME_CUSTOMER")
-var AIR_BOOKING_TABLE_NAME = os.Getenv("AIR_BOOKING_TABLE_NAME_CUSTOMER")
-var GUEST_PROFILE_TABLE_NAME = os.Getenv("GUEST_PROFILE_TABLE_NAME_CUSTOMER")
-var PAX_PROFILE_TABLE_NAME = os.Getenv("PAX_PROFILE_TABLE_NAME_CUSTOMER")
-var CLICKSTREAM_TABLE_NAME = os.Getenv("CLICKSTREAM_TABLE_NAME_CUSTOMER")
-var HOTEL_STAY_TABLE_NAME = os.Getenv("HOTEL_STAY_TABLE_NAME_CUSTOMER")
+var HOTEL_BOOKING_JOB_NAME = os.Getenv("HOTEL_BOOKING_JOB_NAME_CUSTOMER")
+var AIR_BOOKING_JOB_NAME = os.Getenv("AIR_BOOKING_JOB_NAME_CUSTOMER")
+var GUEST_PROFILE_JOB_NAME = os.Getenv("GUEST_PROFILE_JOB_NAME_CUSTOMER")
+var PAX_PROFILE_JOB_NAME = os.Getenv("PAX_PROFILE_JOB_NAME_CUSTOMER")
+var CLICKSTREAM_JOB_NAME = os.Getenv("CLICKSTREAM_JOB_NAME_CUSTOMER")
+var HOTEL_STAY_JOB_NAME = os.Getenv("HOTEL_STAY_JOB_NAME_CUSTOMER")
 
 var S3_HOTEL_BOOKING = os.Getenv("S3_HOTEL_BOOKING")
 var S3_AIR_BOOKING = os.Getenv("S3_AIR_BOOKING")
@@ -43,26 +45,29 @@ var DYNAMO_TABLE = os.Getenv("DYNAMO_TABLE")
 var DYNAMO_PK = os.Getenv("DYNAMO_PK")
 var DYNAMO_SK = os.Getenv("DYNAMO_SK")
 
+var ORIGIN_DATE = "2010/01/01"
+
 var configDb = db.Init(DYNAMO_TABLE, DYNAMO_PK, DYNAMO_SK)
 
 var athenaCfg = athena.Init(ATHENA_DB, ATHENA_TABLE, ATHENA_WORKGROUP)
 var glueCfg = glue.Init(LAMBDA_REGION, ATHENA_DB)
+var accpCfg = customerprofiles.Init(LAMBDA_REGION)
 
-var athenaTables = []string{
-	HOTEL_BOOKING_TABLE_NAME,
-	AIR_BOOKING_TABLE_NAME,
-	GUEST_PROFILE_TABLE_NAME,
-	PAX_PROFILE_TABLE_NAME,
-	CLICKSTREAM_TABLE_NAME,
-	HOTEL_STAY_TABLE_NAME,
+var buckets = map[string]string{
+	common.BIZ_OBJECT_HOTEL_BOOKING: S3_HOTEL_BOOKING,
+	common.BIZ_OBJECT_AIR_BOOKING:   S3_AIR_BOOKING,
+	common.BIZ_OBJECT_GUEST_PROFILE: S3_GUEST_PROFILE,
+	common.BIZ_OBJECT_PAX_PROFILE:   S3_PAX_PROFILE,
+	common.BIZ_OBJECT_CLICKSTREAM:   S3_CLICKSTREAM,
+	common.BIZ_OBJECT_STAY_REVENUE:  S3_STAY_REVENUE,
 }
-var buckets = []string{
-	S3_HOTEL_BOOKING,
-	S3_AIR_BOOKING,
-	S3_GUEST_PROFILE,
-	S3_PAX_PROFILE,
-	S3_CLICKSTREAM,
-	S3_STAY_REVENUE,
+var jobs = map[string]string{
+	common.BIZ_OBJECT_HOTEL_BOOKING: HOTEL_BOOKING_JOB_NAME,
+	common.BIZ_OBJECT_AIR_BOOKING:   AIR_BOOKING_JOB_NAME,
+	common.BIZ_OBJECT_GUEST_PROFILE: GUEST_PROFILE_JOB_NAME,
+	common.BIZ_OBJECT_PAX_PROFILE:   PAX_PROFILE_JOB_NAME,
+	common.BIZ_OBJECT_CLICKSTREAM:   CLICKSTREAM_JOB_NAME,
+	common.BIZ_OBJECT_STAY_REVENUE:  HOTEL_STAY_JOB_NAME,
 }
 
 func HandleRequest(ctx context.Context, req events.CloudWatchEvent) (model.ResponseWrapper, error) {
@@ -73,7 +78,7 @@ func HandleRequest(ctx context.Context, req events.CloudWatchEvent) (model.Respo
 
 	go func() {
 		tx.Log("Starting use case %+v", "maintainGluePartitions")
-		maintainGluePartitions.Run(tx, glueCfg, configDb, athenaTables, buckets)
+		maintainGluePartitions.Run(tx, glueCfg, configDb, buckets, accpCfg, LAMBDA_ENV, ORIGIN_DATE, jobs)
 		wg.Done()
 	}()
 	wg.Wait()

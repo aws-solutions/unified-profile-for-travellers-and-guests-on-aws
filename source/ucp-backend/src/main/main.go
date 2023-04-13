@@ -17,7 +17,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-//Resources
+// Resources
 var LAMBDA_ENV = os.Getenv("LAMBDA_ENV")
 var LAMBDA_ACCOUNT_ID = os.Getenv("LAMBDA_ACCOUNT_ID")
 var LAMBDA_REGION = os.Getenv("AWS_REGION")
@@ -29,7 +29,7 @@ var CONNECTOR_CRAWLER_DLQ = os.Getenv("CONNECTOR_CRAWLER_DLQ")
 var GLUE_DB = os.Getenv("GLUE_DB")
 var DATALAKE_ADMIN_ROLE_ARN = os.Getenv("DATALAKE_ADMIN_ROLE_ARN")
 
-//S3 buckets
+// S3 buckets
 var CONNECT_PROFILE_SOURCE_BUCKET = os.Getenv("CONNECT_PROFILE_SOURCE_BUCKET")
 var S3_HOTEL_BOOKING = os.Getenv("S3_HOTEL_BOOKING")
 var S3_AIR_BOOKING = os.Getenv("S3_AIR_BOOKING")
@@ -38,7 +38,7 @@ var S3_PAX_PROFILE = os.Getenv("S3_PAX_PROFILE")
 var S3_STAY_REVENUE = os.Getenv("S3_STAY_REVENUE")
 var S3_CLICKSTREAM = os.Getenv("S3_CLICKSTREAM")
 
-//Job Names
+// Job Names
 var HOTEL_BOOKING_JOB_NAME = os.Getenv("HOTEL_BOOKING_JOB_NAME")
 var AIR_BOOKING_JOB_NAME = os.Getenv("AIR_BOOKING_JOB_NAME")
 var GUEST_PROFILE_JOB_NAME = os.Getenv("GUEST_PROFILE_JOB_NAME")
@@ -60,7 +60,7 @@ var ERROR_TABLE_NAME = os.Getenv("ERROR_TABLE_NAME")
 var ERROR_TABLE_PK = os.Getenv("ERROR_TABLE_PK")
 var ERROR_TABLE_SK = os.Getenv("ERROR_TABLE_SK")
 
-//Use cases
+// Use cases
 var FN_RETREIVE_UCP_PROFILE = "retreive_ucp_profile"
 var FN_DELETE_UCP_PROFILE = "delete_ucp_profile"
 var FN_SEARCH_UCP_PROFILES = "search_ucp_profiles"

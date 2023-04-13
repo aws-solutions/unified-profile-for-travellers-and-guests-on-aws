@@ -328,6 +328,8 @@ export class UCPInfraStack extends Stack {
         'glue:GetTrigger',
         'glue:UpdateTrigger',
         'glue:DeleteTrigger',
+        'glue:CreateTable',
+        'glue:DeleteTable',
         'glue:GetTags',
         'glue:TagResource',
         'glue:GetJob',
@@ -402,20 +404,26 @@ export class UCPInfraStack extends Stack {
         DYNAMO_PK: dynamo_pk,
         DYNAMO_SK: dynamo_sk,
 
-
-        HOTEL_BOOKING_TABLE_NAME_CUSTOMER: hotelBookingOutput.tableName,
-        AIR_BOOKING_TABLE_NAME_CUSTOMER: airBookingOutput.tableName,
-        GUEST_PROFILE_TABLE_NAME_CUSTOMER: guestProfileOutput.tableName,
-        PAX_PROFILE_TABLE_NAME_CUSTOMER: paxProfileOutput.tableName,
-        CLICKSTREAM_TABLE_NAME_CUSTOMER: clickstreamOutput.tableName,
-        HOTEL_STAY_TABLE_NAME_CUSTOMER: hotelStayOutput.tableName,
-
         S3_HOTEL_BOOKING: hotelBookingOutput.bucket.bucketName,
         S3_AIR_BOOKING: airBookingOutput.bucket.bucketName,
         S3_GUEST_PROFILE: guestProfileOutput.bucket.bucketName,
         S3_PAX_PROFILE: paxProfileOutput.bucket.bucketName,
         S3_STAY_REVENUE: hotelStayOutput.bucket.bucketName,
         S3_CLICKSTREAM: clickstreamOutput.bucket.bucketName,
+
+        HOTEL_BOOKING_JOB_NAME_CUSTOMER: hotelBookingOutput.customerJobName,
+        AIR_BOOKING_JOB_NAME_CUSTOMER: airBookingOutput.customerJobName,
+        GUEST_PROFILE_JOB_NAME_CUSTOMER: guestProfileOutput.customerJobName,
+        PAX_PROFILE_JOB_NAME_CUSTOMER: paxProfileOutput.customerJobName,
+        CLICKSTREAM_JOB_NAME_CUSTOMER: clickstreamOutput.customerJobName,
+        HOTEL_STAY_JOB_NAME_CUSTOMER: hotelStayOutput.customerJobName,
+
+        HOTEL_BOOKING_DLQ: hotelBookingOutput.errorQueue.queueUrl,
+        AIR_BOOKING_DLQ: airBookingOutput.errorQueue.queueUrl,
+        GUEST_PROFILE_DLQ: guestProfileOutput.errorQueue.queueUrl,
+        PAX_PROFILE_DLQ: paxProfileOutput.errorQueue.queueUrl,
+        CLICKSTREAM_DLQ: clickstreamOutput.errorQueue.queueUrl,
+        HOTEL_STAY_DLQ: hotelStayOutput.errorQueue.queueUrl,
       }
     });
 
@@ -437,6 +445,8 @@ export class UCPInfraStack extends Stack {
         "glue:GetPartitions",
         "glue:BatchCreatePartition",
         "glue:CreatePartition",
+        "profile:ListDomains",
+        "glue:StartJobRun",
       ]
     }));
     //granting permission to read and write on the athena result bucket thus allowing lambda function
@@ -931,13 +941,12 @@ export class UCPInfraStack extends Stack {
     bucketRaw.grantReadWrite(dataLakeAdminRole)
     testBucketRaw.grantReadWrite(dataLakeAdminRole)
 
-    //3-Creating Glue Tables
-    let table = this.table(this, businessObjectName, envName, glueDb, glueSchemas, bucketRaw)
-    let testTable = this.table(this, businessObjectName, "Test" + envName, glueDb, glueSchemas, testBucketRaw)
-
     //3-Creating SQS error queue
     const errQueue = new Queue(this, businessObjectName + "-errors-" + envName)
     errQueue.grantSendMessages(dataLakeAdminRole)
+
+    let table = this.table(this, businessObjectName, envName, glueDb, glueSchemas, bucketRaw)
+    let testTable = this.table(this, businessObjectName, "Test" + envName, glueDb, glueSchemas, testBucketRaw)
 
     //4- Creating Jobs
     let toUcpScript = businessObjectName.replace('-', '_') + "ToUcp"
@@ -954,8 +963,6 @@ export class UCPInfraStack extends Stack {
       ["ERROR_QUEUE_URL", errQueue.queueUrl],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
-    //6- Job Triggers
-    this.scheduledJobTrigger("ucp" + businessObjectName, envName, job, "cron(0 * * * ? *)")
     //7-Cfn Output
     new CfnOutput(this, 'customerBucket' + businessObjectName, {
       value: bucketRaw.bucketName
@@ -999,7 +1006,7 @@ export class UCPInfraStack extends Stack {
         "--GLUE_DB": glueDb.databaseName,
       },
       executionProperty: {
-        maxConcurrentRuns: 2
+        maxConcurrentRuns: 1000
       },
       maxRetries: 0,
       name: prefix + "Job" + envName,

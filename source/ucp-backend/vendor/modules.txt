@@ -102,4 +102,9 @@ tah/core/iam
 tah/core/kms
 tah/core/s3
 tah/core/sqs
+# tah/ucp-common v0.0.0-unpublished => ./src/ucp-common
+## explicit; go 1.18
+tah/ucp-common/src/constant/admin
+tah/ucp-common/src/model/admin
+tah/ucp-common/src/services/admin
 # tah/ucp/src/business-logic/ v0.0.0-unpublished => ./src/business-logic/

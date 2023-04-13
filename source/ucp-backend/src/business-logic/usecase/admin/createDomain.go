@@ -2,22 +2,19 @@ package admin
 
 import (
 	"errors"
+	"sync"
 	"tah/core/core"
 	"tah/core/customerprofiles"
+	common "tah/ucp-common/src/constant/admin"
+	commonModel "tah/ucp-common/src/model/admin"
+	commonServices "tah/ucp-common/src/services/admin"
 	accpmappings "tah/ucp/src/business-logic/model/accp-mappings"
+	assetsSchema "tah/ucp/src/business-logic/model/assetsSchema"
 	model "tah/ucp/src/business-logic/model/common"
 	"tah/ucp/src/business-logic/usecase/registry"
 
 	"github.com/aws/aws-lambda-go/events"
 )
-
-// Key Names for Business Objects
-const HOTEL_BOOKING string = "hotel_booking"
-const HOTEL_STAY_REVENUE string = "hotel_stay_revenue"
-const CLICKSTREAM string = "clickstream"
-const AIR_BOOKING string = "air_booking"
-const GUEST_PROFILE string = "guest_profile"
-const PASSENGER_PROFILE string = "passenger_profile"
 
 type CreateDomain struct {
 	name string
@@ -63,6 +60,7 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 	if kmsArn == "" || env == "" || accpSourceBucket == "" {
 		return model.ResponseWrapper{}, errors.New("Missing Registry Environment (KMS_KEY_PROFILE_DOMAIN,LAMBDA_ENV,CONNECT_PROFILE_SOURCE_BUCKET)")
 	}
+
 	err := u.reg.Accp.CreateDomain(req.Domain.Name, true, kmsArn, map[string]string{DOMAIN_TAG_ENV_NAME: env})
 	if err != nil {
 		return model.ResponseWrapper{}, err
@@ -80,6 +78,16 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 		ACCP_SUB_FOLDER_PAX_PROFILE:        accpmappings.BuildPassengerProfileMapping,
 		ACCP_SUB_FOLDER_HOTEL_STAY_MAPPING: accpmappings.BuildHotelStayMapping,
 	}
+
+	bizObjectBuckets := map[string]string{
+		common.BIZ_OBJECT_HOTEL_BOOKING: u.reg.Env["S3_HOTEL_BOOKING"],
+		common.BIZ_OBJECT_AIR_BOOKING:   u.reg.Env["S3_AIR_BOOKING"],
+		common.BIZ_OBJECT_GUEST_PROFILE: u.reg.Env["S3_GUEST_PROFILE"],
+		common.BIZ_OBJECT_PAX_PROFILE:   u.reg.Env["S3_PAX_PROFILE"],
+		common.BIZ_OBJECT_CLICKSTREAM:   u.reg.Env["S3_STAY_REVENUE"],
+		common.BIZ_OBJECT_STAY_REVENUE:  u.reg.Env["S3_CLICKSTREAM"],
+	}
+
 	for keyBusiness := range businessMap {
 		err = u.reg.Accp.CreateMapping(keyBusiness,
 			"Primary Mapping for the "+keyBusiness+" object", businessMap[keyBusiness]())
@@ -98,6 +106,32 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 			return model.ResponseWrapper{}, err
 		}
 	}
+
+	var wg sync.WaitGroup
+	wg.Add(len(common.BUSINESS_OBJECTS))
+	output := make(chan error, 100)
+	for _, bizObject := range common.BUSINESS_OBJECTS {
+		go func(bizObject commonModel.BusinessObject) {
+			schema, err := assetsSchema.LoadSchema(bizObject)
+			if err != nil {
+				u.tx.Log("[CreateUcpDomain] Error loading schema: %v", err)
+				output <- err
+			}
+			tableName := commonServices.BuildTableName(env, bizObject, req.Domain.Name)
+
+			err2 := u.reg.Glue.CreateTable(tableName, bizObjectBuckets[bizObject.Name], map[string]string{"year": "int", "month": "int", "day": "int"}, schema)
+			if err2 != nil {
+				u.tx.Log("[CreateUcpDomain] Error creating table: %v", err2)
+				output <- err2
+			}
+			defer wg.Done()
+		}(bizObject)
+	}
+	wg.Wait()
+	if len(output) > 0 {
+		return model.ResponseWrapper{}, errors.New("Error occured during table creation")
+	}
+
 	return model.ResponseWrapper{}, err
 }
 

@@ -16,4 +16,8 @@ aws s3api get-object --bucket $artifactBucket --key $envName/$tahCoreVersion/tah
 unzip tah-core.zip -d src/tah-core/
 rm -rf tah-core.zip
 
+echo "Copying ucp-common"
+cp -r ../ucp-common src/.
+
+
 sh lbuild.sh $envName $artifactBucket

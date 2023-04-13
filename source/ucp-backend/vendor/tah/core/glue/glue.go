@@ -1,6 +1,7 @@
 package glue
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -18,10 +19,10 @@ var JOB_RUN_STATUS_NOT_RUNNING = "not_running"
 var JOB_RUN_STATUS_UNKNOWN = "unknown"
 var WAIT_DELAY = 5
 
-//Glue allows 100 partitions in batch create
+// Glue allows 100 partitions in batch create
 var GLUE_PARTITION_BATCH_SIZE = 100
 
-//Glue allows 25 partitions in batch delete
+// Glue allows 25 partitions in batch delete
 var GLUE_PARTITION_DELETE_BATCH_SIZE = 25
 
 type Config struct {
@@ -48,7 +49,8 @@ type Partition struct {
 }
 
 type Table struct {
-	Name string
+	Name       string
+	ColumnList []string
 }
 
 type Job struct {
@@ -58,6 +60,16 @@ type Job struct {
 	MaxCapacity      float64
 	NumberOfWorkers  int64
 	WorkerType       string
+}
+
+type Schema struct {
+	Columns []struct {
+		Name string `json:"name"`
+		Type struct {
+			IsPrimitive bool   `json:"isPrimitive"`
+			InputString string `json:"inputString"`
+		} `json:"type"`
+	} `json:"columns"`
 }
 
 func Init(region, dbName string) Config {
@@ -213,7 +225,7 @@ func (c Config) WaitForCrawlerRun(name string, timeoutSeconds int) (string, erro
 	return crawler.LastCrawlStatus, err
 }
 
-func (c Config) CreateTable(name string, bucketName string, partitionKeys map[string]string) error {
+func (c Config) CreateTable(name string, bucketName string, partitionKeys map[string]string, schema Schema) error {
 	pKeys := []*glue.Column{}
 	for key, keyType := range partitionKeys {
 		pKeys = append(pKeys, &glue.Column{
@@ -221,17 +233,42 @@ func (c Config) CreateTable(name string, bucketName string, partitionKeys map[st
 			Type: aws.String(keyType),
 		})
 	}
+
+	glueColumnList := []*glue.Column{}
+
+	columnList := schema.Columns
+	for _, column := range columnList {
+		columnName := column.Name
+		columnType := column.Type.InputString
+		glueColumn := glue.Column{}
+
+		glueColumn.Name = &columnName
+		glueColumn.Type = &columnType
+		glueColumnList = append(glueColumnList, &glueColumn)
+	}
+
 	_, err := c.Client.CreateTable(&glue.CreateTableInput{
 		DatabaseName: aws.String(c.DbName),
 		TableInput: &glue.TableInput{
 			Name: aws.String(name),
 			StorageDescriptor: &glue.StorageDescriptor{
-				Location: aws.String("s3://bucketName"),
+				Location: aws.String("s3://" + bucketName),
+				Columns:  glueColumnList,
 			},
 			PartitionKeys: pKeys,
 		},
 	})
 	return err
+}
+
+func ParseSchema(schemaData string) (Schema, error) {
+	var typeScriptSchema Schema
+
+	err1 := json.Unmarshal([]byte(schemaData), &typeScriptSchema)
+	if err1 != nil {
+		return Schema{}, err1
+	}
+	return typeScriptSchema, nil
 }
 
 func (c Config) AddPartitionsToTable(tableName string, partitions []Partition) []error {
@@ -320,13 +357,40 @@ func (c Config) GetTable(name string) (Table, error) {
 		DatabaseName: aws.String(c.DbName),
 		Name:         &name,
 	})
+	columns := output.Table.StorageDescriptor.Columns
+	columnStringList := make([]string, 0)
+	for _, column := range columns {
+		columnStringList = append(columnStringList, *column.Name)
+	}
+
 	if err != nil {
 		return Table{}, err
 	}
 	table := Table{
-		Name: *output.Table.Name,
+		Name:       *output.Table.Name,
+		ColumnList: columnStringList,
 	}
 	return table, nil
+}
+
+func (c Config) ListTables() ([]Table, error) {
+	output, err := c.Client.GetTables(&glue.GetTablesInput{
+		DatabaseName: aws.String(c.DbName),
+	})
+	if err != nil {
+		return []Table{}, err
+	}
+
+	tableList := make([]Table, 0)
+	for _, tableItem := range output.TableList {
+		tableName := tableItem.Name
+		table := Table{
+			Name: *tableName,
+		}
+		tableList = append(tableList, table)
+	}
+
+	return tableList, nil
 }
 
 func (c Config) DeleteTable(name string) error {
