@@ -445,6 +445,8 @@ export class UCPInfraStack extends Stack {
         "glue:GetPartitions",
         "glue:BatchCreatePartition",
         "glue:CreatePartition",
+        "profile:ListDomains",
+        "glue:StartJobRun",
       ]
     }));
     //granting permission to read and write on the athena result bucket thus allowing lambda function
@@ -961,8 +963,6 @@ export class UCPInfraStack extends Stack {
       ["ERROR_QUEUE_URL", errQueue.queueUrl],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
-    //6- Job Triggers
-    this.scheduledJobTrigger("ucp" + businessObjectName, envName, job, "cron(0 * * * ? *)")
     //7-Cfn Output
     new CfnOutput(this, 'customerBucket' + businessObjectName, {
       value: bucketRaw.bucketName
