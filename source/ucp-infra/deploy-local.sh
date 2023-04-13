@@ -1,10 +1,13 @@
 envName=$(jq -r .localEnvName ../env.json)
 artifactBucket=$(jq -r .artifactBucket ../env.json)
-
+email=$(jq -r .email ../env.json)
 
 echo "Getting tah dependencies version"
 tahCdkCommonVersion=$(jq -r '."tah-cdk-common"' ../../tah.json)
 tahCommonVersion=$(jq -r '."tah-common"' ../../tah.json)
+
+# Set partition start date to process 2 years of historical data (matches data generator)
+partitionStartDate=$(date -v-2y +"%Y/%m/%d") 
 
 echo "Downloading shared cdk code"
 echo "Getting tah-cdk-common version $tahCdkCommonVersion"
@@ -28,4 +31,4 @@ fi
 unzip tah-common-glue-schemas.zip -d ./tah-common-glue-schemas
 rm tah-common-glue-schemas.zip
 
-sh deploy.sh $envName $artifactBucket
+sh deploy.sh $envName $artifactBucket $email $partitionStartDate

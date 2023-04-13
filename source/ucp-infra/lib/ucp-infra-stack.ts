@@ -51,6 +51,7 @@ export class UCPInfraStack extends Stack {
 
     const envName = this.node.tryGetContext("envName");
     const artifactBucket = this.node.tryGetContext("artifactBucket");
+    let partitionStartDate = this.node.tryGetContext("partitionStartDate");
     const region = (props && props.env) ? props.env.region : ""
     const account = (props && props.env) ? props.env.account : ""
     if (!envName) {
@@ -61,6 +62,15 @@ export class UCPInfraStack extends Stack {
     }
     if (!account) {
       throw new Error('No account ID provided for stack');
+    }
+    // Set default to 10 years if not provided, then attempt to partition and process 10 years
+    // of data. This will cause initial Glue ETL jobs to take significantly longer than what might
+    // be necessary, but subsequent runs will not be impacted.
+    if (!partitionStartDate) {
+      let d = new Date();
+      d.setFullYear(d.getFullYear() - 10);
+      // convert date to the expected yyyy/mm/dd format without any external libraries
+      partitionStartDate = d.toISOString().split("T")[0].replace(new RegExp("-", "g"), "/")
     }
 
     //////////////////////
@@ -399,6 +409,7 @@ export class UCPInfraStack extends Stack {
         LAMBDA_REGION: region || "",
         ATHENA_DB: glueDb.databaseName,
         ATHENA_WORKGROUP: athenaWorkgroupName,
+        PARTITION_START_DATE: partitionStartDate,
 
         DYNAMO_TABLE: configTable.tableName,
         DYNAMO_PK: dynamo_pk,

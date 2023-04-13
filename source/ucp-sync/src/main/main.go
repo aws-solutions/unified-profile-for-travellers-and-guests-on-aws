@@ -17,7 +17,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-//Resources
+// Resources
 var LAMBDA_ENV = os.Getenv("LAMBDA_ENV")
 var LAMBDA_ACCOUNT_ID = os.Getenv("LAMBDA_ACCOUNT_ID")
 var LAMBDA_REGION = os.Getenv("AWS_REGION")
@@ -26,7 +26,7 @@ var ATHENA_WORKGROUP = os.Getenv("ATHENA_WORKGROUP")
 var ATHENA_TABLE = os.Getenv("ATHENA_TABLE")
 var ATHENA_DB = os.Getenv("ATHENA_DB")
 
-//Athena Table Names
+// Athena Table Names
 var HOTEL_BOOKING_JOB_NAME = os.Getenv("HOTEL_BOOKING_JOB_NAME_CUSTOMER")
 var AIR_BOOKING_JOB_NAME = os.Getenv("AIR_BOOKING_JOB_NAME_CUSTOMER")
 var GUEST_PROFILE_JOB_NAME = os.Getenv("GUEST_PROFILE_JOB_NAME_CUSTOMER")
@@ -45,7 +45,7 @@ var DYNAMO_TABLE = os.Getenv("DYNAMO_TABLE")
 var DYNAMO_PK = os.Getenv("DYNAMO_PK")
 var DYNAMO_SK = os.Getenv("DYNAMO_SK")
 
-var ORIGIN_DATE = "2010/01/01"
+var ORIGIN_DATE = os.Getenv("PARTITION_START_DATE")
 
 var configDb = db.Init(DYNAMO_TABLE, DYNAMO_PK, DYNAMO_SK)
 
