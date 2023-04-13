@@ -26,10 +26,9 @@ var GLUE_PARTITION_BATCH_SIZE = 100
 var GLUE_PARTITION_DELETE_BATCH_SIZE = 25
 
 type Config struct {
-	Client    *glue.Glue
-	Region    string
-	DbName    string
-	SchemaMap map[string]Schema
+	Client *glue.Glue
+	Region string
+	DbName string
 }
 
 type S3Target struct {
