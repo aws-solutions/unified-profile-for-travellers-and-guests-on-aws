@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"strings"
 	"tah/core/core"
 	common "tah/ucp-common/src/constant/admin"
 	services "tah/ucp-common/src/services/admin"
@@ -47,13 +48,14 @@ func (u *DeleteDomain) ValidateRequest(rq model.RequestWrapper) error {
 
 func (u *DeleteDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, error) {
 	env := u.reg.Env["LAMBDA_ENV"]
+	domainName := strings.Clone(req.Domain.Name)
 	err0 := u.reg.Accp.DeleteDomain()
 	if err0 != nil {
 		return model.ResponseWrapper{}, err0
 	}
 
 	for _, bizObject := range common.BUSINESS_OBJECTS {
-		tableName := services.BuildTableName(env, bizObject, req.Domain.Name)
+		tableName := services.BuildTableName(env, bizObject, domainName)
 		err := u.reg.Glue.DeleteTable(tableName)
 		if err != nil {
 			return model.ResponseWrapper{}, err

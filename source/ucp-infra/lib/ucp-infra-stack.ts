@@ -1006,7 +1006,7 @@ export class UCPInfraStack extends Stack {
         "--GLUE_DB": glueDb.databaseName,
       },
       executionProperty: {
-        maxConcurrentRuns: 2
+        maxConcurrentRuns: 1000
       },
       maxRetries: 0,
       name: prefix + "Job" + envName,
