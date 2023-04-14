@@ -67,8 +67,9 @@ export class UCPInfraStack extends Stack {
     // of data. This will cause initial Glue ETL jobs to take significantly longer than what might
     // be necessary, but subsequent runs will not be impacted.
     if (!partitionStartDate) {
+      const defaultStartDateYears = 10
       let d = new Date();
-      d.setFullYear(d.getFullYear() - 10);
+      d.setFullYear(d.getFullYear() - defaultStartDateYears);
       // convert date to the expected yyyy/mm/dd format without any external libraries
       partitionStartDate = d.toISOString().split("T")[0].replace(new RegExp("-", "g"), "/")
     }
