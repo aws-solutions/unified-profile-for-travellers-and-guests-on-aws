@@ -1,8 +1,9 @@
-
 # Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: MIT-0
 env=$1
 bucket=$2
+email=$3
+partitionStartDate=$4
 
 echo "**********************************************"
 echo "* AWS Unified Customer Profile: Infrastructure in environement '$env' and artifact bucket '$bucket'"
@@ -11,7 +12,7 @@ if [ -z "$env" ] || [ -z "$bucket" ]
 then
     echo "Environment Must not be Empty"
     echo "Usage:"
-    echo "sh deploy.sh <env> <bucket> <contactEmail>"
+    echo "sh deploy.sh <env> <bucket> <email> <partitionStartDate>"
 else
     echo "Checking pre-requiresits'$env' "
     OUTRegion=$(aws configure get region)
@@ -32,7 +33,7 @@ else
     echo "1.2-Analyzing changes for environment '$env' "
     cdk --app bin/ucp-infra.js diff -c envName=$env -c artifactBucket=$bucket
     echo "1.3-Deploying infrastructure for environement '$env' "
-    cdk --app bin/ucp-infra.js deploy UCPInfraStack$env -c envName=$env -c artifactBucket=$bucket --require-approval never
+    cdk --app bin/ucp-infra.js deploy UCPInfraStack$env -c envName=$env -c artifactBucket=$bucket -c partitionStartDate=$partitionStartDate --require-approval never
     rc=$?
     if [ $rc -ne 0 ]; then
       echo "CDK Deploy Failed! Existing Build with status $rc" >&2

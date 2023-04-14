@@ -38,7 +38,6 @@ export class UCPCodePipelinesStack extends Stack {
       allowedPattern: ".+",
       description: "Your github user name (see pre-deployment steps)"
     });
-
     const githubtoken = new CfnParameter(this, "githubtoken", {
       type: "String",
       allowedPattern: ".+",
@@ -58,6 +57,12 @@ export class UCPCodePipelinesStack extends Stack {
       type: "String",
       default: "main",
       description: "The git branch to build from"
+    });
+    const partitionStartDate = new CfnParameter(this, "partitionStartDate", {
+      type: "String",
+      description: "Date to start ingesting customer records from",
+      allowedPattern: "^(?!0000)[0-9]{4}\/(0?[1-9]|1[0-2])\/(0?[1-9]|[1-2][0-9]|3[0-1])$",
+      constraintDescription: "Date with yyyy/mm/dd format",
     });
 
     const accessLogging = new tah_s3.AccessLogBucket(this, "ucp-pipeline-access-logging")
@@ -102,7 +107,7 @@ export class UCPCodePipelinesStack extends Stack {
           build: {
             commands: [
               'echo "Build and Deploy Infrastructure"',
-              'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName + " " + contactEmail.valueAsString
+              'pwd && sh deploy.sh ' + envName + " " + artifactBucket.bucketName + " " + contactEmail.valueAsString + " " + partitionStartDate.valueAsString
             ],
           },
         },

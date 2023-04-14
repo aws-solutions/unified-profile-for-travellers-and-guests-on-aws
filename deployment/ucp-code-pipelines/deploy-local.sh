@@ -5,6 +5,8 @@ githubUsername=$(jq -r .githubUsername ../env.json)
 solutionEnvName=$(jq -r .solutionEnvName ../env.json)
 artifactBucket=$(jq -r .artifactBucket ../env.json)
 buildFromUpstream=$(jq -r .buildFromUpstream ../env.json)
+branch=$(jq -r .branch ../env.json)
+partitionStartDate=$(jq -r .partitionStartDate ../env.json)
 
 echo "Getting tah dependencies version"
 tahCdkCommonVersion=$(jq -r '."tah-cdk-common"' ../../tah.json)
@@ -23,4 +25,4 @@ rm tah-cdk-common.zip
 rm tah-cdk-common/glue.ts
 
 echo "Deploying infrastrure"
-sh deploy.sh $envName $email $token $solutionEnvName $githubUsername $buildFromUpstream
+sh deploy.sh $envName $email $token $solutionEnvName $githubUsername $buildFromUpstream $branch $partitionStartDate

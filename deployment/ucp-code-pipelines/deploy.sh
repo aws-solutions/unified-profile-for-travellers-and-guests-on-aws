@@ -5,6 +5,7 @@ solutionEnvName=$4
 githubUsername=$5
 buildFromUpstream=$6
 branch=$7
+partitionStartDate=$8
 echo "env=$1"
 echo "email=$2"
 echo "token=$3"
@@ -12,6 +13,7 @@ echo "solutionEnvName=$4"
 echo "githubUsername=$5"
 echo "buildFromUpstream=$6"
 echo "branch=$7"
+echo "partitionStartDate=$8"
 
 #update this variable to specify the name of your loval env
 echo "**********************************************"
@@ -43,7 +45,7 @@ else
     echo "1.2-Analyzing changes for environment '$env' "
     cdk diff -c envName=$env
     echo "1.3-Deploying infrastructure for environement '$env' "
-    cdk deploy  -c envName=$env --format=json --require-approval never --parameters contactEmail=$email --parameters gitHubUserName=$githubUsername --parameters githubtoken=$token --parameters buildFromUpstream=$buildFromUpstream --parameters branch=$branch
+    cdk deploy  -c envName=$env --format=json --require-approval never --parameters contactEmail=$email --parameters gitHubUserName=$githubUsername --parameters githubtoken=$token --parameters buildFromUpstream=$buildFromUpstream --parameters branch=$branch --parameters partitionStartDate=$partitionStartDate
     rc=$?
     if [ $rc -ne 0 ]; then
       echo "CDK Deploy Failed! Existing Build with status $rc" >&2
