@@ -42,3 +42,5 @@ source/ucp-common/vendor/github.com/aws/aws-sdk-go/service/customerprofiles/api.
 #backend common vendor
 source/ucp-backend/src/ucp-common/vendor/github.com/aws/aws-sdk-go/service/customerprofiles/api.go
 source/ucp-backend/src/ucp-common/vendor/github.com/aws/aws-sdk-go/service/customerprofiles/api.go
+#ucp error
+source/ucp-error/vendor/github.com/aws/aws-sdk-go/service/customerprofiles/api.go 
