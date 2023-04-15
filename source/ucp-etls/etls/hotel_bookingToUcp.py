@@ -14,7 +14,7 @@ from tah_lib.etl_utils import explodeAndWrite
 
 glueContext = GlueContext(SparkContext.getOrCreate())
 args = getResolvedOptions(
-    sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET', 'ERROR_QUEUE_URL'])
+    sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET', 'ERROR_QUEUE_URL', 'ACCP_DOMAIN'])
 
 businessObjects = glueContext.create_dynamic_frame.from_catalog(
     database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"], additional_options={"recurse": True})
@@ -42,10 +42,10 @@ accpReccords.printSchema()
 accpReccordsDF = accpReccords.toDF()
 # exploding data into individual Dynamic Frames
 explodeAndWrite(glueContext, accpReccordsDF, "hotel_booking_recs",
-                args["DEST_BUCKET"], "hotel_booking")
+                args["DEST_BUCKET"], "hotel_booking", args["ACCP_DOMAIN"])
 explodeAndWrite(glueContext, accpReccordsDF, "common_email_recs",
-                args["DEST_BUCKET"], "email_history")
+                args["DEST_BUCKET"], "email_history", args["ACCP_DOMAIN"])
 explodeAndWrite(glueContext, accpReccordsDF, "common_phone_recs",
-                args["DEST_BUCKET"], "phone_history")
+                args["DEST_BUCKET"], "phone_history", args["ACCP_DOMAIN"])
 explodeAndWrite(glueContext, accpReccordsDF, "guest_loyalty_recs",
-                args["DEST_BUCKET"], "hotel_loyalty")
+                args["DEST_BUCKET"], "hotel_loyalty", args["ACCP_DOMAIN"])

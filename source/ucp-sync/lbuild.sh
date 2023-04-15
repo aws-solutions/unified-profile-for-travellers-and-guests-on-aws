@@ -28,6 +28,7 @@ if [ $env == $LOCAL_ENV_NAME ]
     echo "3.1-Vendoring dependencies (local env only)"
     go mod vendor
     rm -rf src/tah-core
+    rm -rf src/ucp-common
 fi
 echo "4-Building Executable in Vendor Mode"
 export GOOS=linux

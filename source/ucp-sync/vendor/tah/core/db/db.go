@@ -666,7 +666,7 @@ func (dbc DBConfig) FindStartingWithByGsi(pk string, value string, data interfac
 }
 
 func (dbc DBConfig) FindStartingWithAndFilterWithIndex(pk string, value string, data interface{}, queryOptions QueryOptions) error {
-	dbc.Tx.Log("[FindStartingWithAndFilterWithIndex] Pk: %v, Sk start with: %s", pk, value)
+	dbc.Tx.Log("[FindStartingWithAndFilterWithIndex] Pk: %v, Sk start with: %s and queryOptions %+v", pk, value, queryOptions)
 	filter := queryOptions.Filter
 	index := queryOptions.Index
 	reverseOrder := queryOptions.ReverseOrder
@@ -760,6 +760,7 @@ func (dbc DBConfig) FindGreaterThan(pk string, value int64, data interface{}, qu
 }
 
 func (dbc DBConfig) FindGreaterThanAndFilterWithIndex(pk string, value int64, data interface{}, queryOptions QueryOptions) error {
+	dbc.Tx.Log("[FindGreaterThanAndFilterWithIndex] Pk: %v, Sk greater than: %d with QueryOptions: %+v", pk, value, queryOptions)
 	filter := queryOptions.Filter
 	index := queryOptions.Index
 	paginOptions := queryOptions.PaginOptions
@@ -799,11 +800,6 @@ func (dbc DBConfig) FindGreaterThanAndFilterWithIndex(pk string, value int64, da
 		queryInput.IndexName = aws.String(index.Name)
 	}
 
-	//Optional pagination
-	if paginOptions.PageSize > 0 {
-		queryInput.Limit = aws.Int64(paginOptions.PageSize)
-	}
-
 	if reverseOrder {
 		queryInput.ScanIndexForward = aws.Bool(false)
 	}
@@ -836,6 +832,13 @@ func (dbc DBConfig) FindGreaterThanAndFilterWithIndex(pk string, value int64, da
 }
 
 func (dbc DBConfig) RunQuery(queryInput *dynamodb.QueryInput, paginOptions DynamoPaginationOptions) ([]map[string]*dynamodb.AttributeValue, error) {
+	dbc.Tx.Log("[RunQuery] Request: %+v", queryInput)
+
+	//Optional pagination
+	if paginOptions.PageSize > 0 {
+		queryInput.Limit = aws.Int64(paginOptions.PageSize)
+	}
+
 	allItems := []map[string]*dynamodb.AttributeValue{}
 	var page int64 = 0
 	var result, err = dbc.DbService.QueryWithContext(dbc.LambdaContext, queryInput)

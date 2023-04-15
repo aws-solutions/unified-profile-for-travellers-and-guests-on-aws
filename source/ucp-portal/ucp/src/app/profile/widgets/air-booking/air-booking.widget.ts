@@ -1,10 +1,7 @@
 import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
-import * as moment from 'moment';
 import { UcpService } from '../../../service/ucpService';
-import { FormGroup, FormControl, Validators } from '@angular/forms';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
-import { DataElementComponent } from '../../common/data-element.component';
 import { Traveller, AirBooking } from '../../../model/traveller.model'
 import { PaginationOptions } from '../../../model/pagination.model'
 

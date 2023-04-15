@@ -194,7 +194,7 @@ func (c *CustomerProfileConfig) CreateDomainWithQueue(name string, idResolutionO
 		},
 		DefaultExpirationDays: aws.Int64(300),
 		DefaultEncryptionKey:  &kmsArn,
-		Tags:                  core.ToMapPtString(tags),
+		Tags:                  aws.StringMap(tags),
 	}
 
 	if queueUrl != "" {
@@ -230,7 +230,7 @@ func (c *CustomerProfileConfig) CreateDomain(name string, idResolutionOn bool, k
 
 func (c *CustomerProfileConfig) DeleteDomain() error {
 	if c.DomainName == "" {
-		return errors.New("customer rrofile client not configured with domain name. use deletedomainbyname or assign domain name")
+		return errors.New("customer profile client not configured with domain name. use deletedomainbyname or assign domain name")
 	}
 	err := c.DeleteDomainByName(c.DomainName)
 	if err == nil {
@@ -240,6 +240,15 @@ func (c *CustomerProfileConfig) DeleteDomain() error {
 }
 
 func (c CustomerProfileConfig) DeleteDomainByName(name string) error {
+	log.Printf("[core][customerProfiles] Deleteing new customer profile domain")
+	input := &customerProfileSdk.DeleteDomainInput{
+		DomainName: aws.String(name),
+	}
+	_, err := c.Client.DeleteDomain(input)
+	return err
+}
+
+func (c CustomerProfileConfig) DeleteDomainAndQueueByName(name string) error {
 	log.Printf("[core][customerProfiles] Deleteing new customer profile domain")
 	log.Printf("[core][customerProfiles] 1-deleting SQS Queue")
 	var sqsClient sqs.Config
@@ -495,7 +504,7 @@ func notIn(id string, matches []Match) bool {
 //
 // These integrations send all fields to Amazon Connect Customer Profile,
 // then Customer Profile handles mapping the data to a given Object Type.
-func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucketName string, fieldMappings []FieldMapping, startTime time.Time) error {
+func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucketName, bucketPrefix string, fieldMappings []FieldMapping, startTime time.Time) error {
 	domain, err := c.GetDomain()
 	if err != nil {
 		log.Printf("[PutIntegration] Error getting domain: %v", err)
@@ -516,10 +525,12 @@ func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucket
 		ConnectorType: aws.String(customerProfileSdk.SourceConnectorTypeS3),
 		SourceConnectorProperties: &customerProfileSdk.SourceConnectorProperties{
 			S3: &customerProfileSdk.S3SourceProperties{
-				BucketName:   &bucketName,
-				BucketPrefix: &objectName,
+				BucketName: aws.String(bucketName),
 			},
 		},
+	}
+	if bucketPrefix != "" {
+		sourceFlowConfig.SourceConnectorProperties.S3.BucketPrefix = aws.String(bucketPrefix)
 	}
 	flowNameScheduled := flowNamePrefix + "_Scheduled"
 	flowDefinition := customerProfileSdk.FlowDefinition{

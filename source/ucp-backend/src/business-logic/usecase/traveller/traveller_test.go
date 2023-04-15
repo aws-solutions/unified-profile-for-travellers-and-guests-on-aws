@@ -4,8 +4,10 @@ import (
 	"log"
 	"tah/core/core"
 	"tah/core/customerprofiles"
+	glue "tah/core/glue"
 	"tah/core/kms"
 	"tah/core/s3"
+	"tah/core/sqs"
 	model "tah/ucp/src/business-logic/model/common"
 	testutils "tah/ucp/src/business-logic/testutils"
 	admin "tah/ucp/src/business-logic/usecase/admin"
@@ -23,6 +25,11 @@ var guest = `{"traveller_id":"` + guestProfileId + `","first_name":"Thomas","las
 func TestTraveller(t *testing.T) {
 	// Set up resources
 	s3Client := s3.InitRegion(UCP_REGION)
+	glueClient := glue.Init(UCP_REGION, "traveller_test")
+	err0 := glueClient.CreateDatabase(glueClient.DbName)
+	if err0 != nil {
+		t.Errorf("Error creating database: %v", err0)
+	}
 	bucketName, err := s3Client.CreateRandomBucket("travellertest")
 	if err != nil {
 		t.Errorf("[TestTraveller] Error creating test bucket: %v", err)
@@ -43,12 +50,23 @@ func TestTraveller(t *testing.T) {
 	profileClient := customerprofiles.Init(UCP_REGION)
 	domainName := "traveller360-test-domain" + time.Now().Format("2006-01-02-15-04-05")
 
+	sqsClient := sqs.Init(UCP_REGION)
+	qUrl, err5 := sqsClient.CreateRandom("ucp-unit-test-queue")
+	if err5 != nil {
+		t.Errorf("Could not create queue to unit test UCP %v", err5)
+	}
+	err5 = sqsClient.SetPolicy("Service", "profile.amazonaws.com", []string{"SQS:*"})
+	if err5 != nil {
+		t.Errorf("Could not Set policy on the queue %v", err5)
+	}
 	// Set up Customer Profile domain
 	tx := core.NewTransaction("ucp_test", "")
-	reg := registry.NewRegistry(UCP_REGION, nil, nil, nil, &profileClient, nil)
+
+	reg := registry.NewRegistry(UCP_REGION, registry.ServiceHandlers{Glue: &glueClient, Accp: &profileClient})
 	reg.AddEnv("KMS_KEY_PROFILE_DOMAIN", keyArn)
 	reg.AddEnv("LAMBDA_ENV", "dev_test")
 	reg.AddEnv("CONNECT_PROFILE_SOURCE_BUCKET", s3Client.Bucket)
+	reg.AddEnv("ACCP_DOMAIN_DLQ", qUrl)
 	createUc := admin.NewCreateDomain()
 	createUc.SetRegistry(&reg)
 	createUc.SetTx(&tx)
@@ -116,6 +134,11 @@ func TestTraveller(t *testing.T) {
 	}
 
 	// Clean up resources
+	log.Printf("Deleting Databases")
+	err = glueClient.DeleteDatabase(glueClient.DbName)
+	if err != nil {
+		t.Errorf("Error deleting database %v", err)
+	}
 	s3Client.EmptyAndDelete()
 	kmsClient.DeleteKey(keyArn)
 	profileClient.DeleteDomain()

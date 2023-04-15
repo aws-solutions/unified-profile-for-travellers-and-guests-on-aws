@@ -2,13 +2,16 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { UcpService } from '../service/ucpService';
 import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { NotificationService } from '../service/notificationService';
 import { SessionService } from '../service/sessionService';
-import { faCog, faBackward, faForward, faHome, faRefresh, faPlane, faUser, faExternalLink, faUsd, faHotel, faMousePointer, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faBackward, faForward, faHome, faRefresh, faPlane, faUser, faExternalLink, faUsd, faHotel, faMousePointer, faTrash, faPlay } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
 import { PaginationOptions } from '../model/pagination.model'
 import { Subscription } from 'rxjs';
 import { DomainService } from '../service/domainService';
 import { UCPProfileDeletionConfirmationComponent } from '../home/ucp.component';
+import { Integration } from '../model/domain.model';
+
 @Component({
   selector: 'app-setting',
   templateUrl: './setting.component.html',
@@ -23,6 +26,7 @@ export class SettingComponent implements OnInit {
   faRefresh = faRefresh;
   faExternalLink = faExternalLink;
   faTrash = faTrash;
+  faPlay = faPlay;
   domain: any = {};
   validationPagination: PaginationOptions = {
     page: 0,
@@ -34,7 +38,7 @@ export class SettingComponent implements OnInit {
   }
   ingestionPagination: PaginationOptions = {
     page: 0,
-    pageSize: 15
+    pageSize: 10
   }
   ingestionErrors = [];
   totalErrors: number = 0;
@@ -44,6 +48,7 @@ export class SettingComponent implements OnInit {
   jobs = []
   selectedDomain: any;
   validationErrors = []
+  integrations: Map<string, Integration> = new Map();
   objectBucketNameMappning = {
     CONNECT_PROFILE_SOURCE_BUCKET: { text: "Traveller Profile Records", icon: faUser },
     S3_AIR_BOOKING: { text: "Air Booking", icon: faPlane },
@@ -69,7 +74,7 @@ export class SettingComponent implements OnInit {
       deploymentStatus: "Not Deployed"
     }]
 
-  constructor(public dialog: MatDialog, private session: SessionService, private ucpService: UcpService, private router: Router, private domainService: DomainService) {
+  constructor(public dialog: MatDialog, private session: SessionService, private ucpService: UcpService, private router: Router, private notif: NotificationService, private domainService: DomainService) {
     this.loadSettingsData()
 
   }
@@ -77,18 +82,7 @@ export class SettingComponent implements OnInit {
   loadSettingsData() {
     this.selectedDomain = this.session.getProfileDomain()
     if (this.selectedDomain) {
-      this.ucpService.getConfig(this.selectedDomain).subscribe((res: any) => {
-        console.log(res)
-        this.domain = res.config.domains[0];
-        this.dataSourceLocations = []
-        for (let obj of Object.keys(res.awsResources.S3Buckets)) {
-          this.dataSourceLocations.push({
-            "objectName": this.objectBucketNameMappning[obj].text,
-            "bucketName": res.awsResources.S3Buckets[obj],
-            "icon": this.objectBucketNameMappning[obj].icon
-          })
-        }
-      })
+      this.fetchDomain()
       this.fetchErrors()
       this.fetchJobsStatus()
     } else {
@@ -100,27 +94,82 @@ export class SettingComponent implements OnInit {
     //this.fetchValidationErrors()
   }
 
-  deleteDomain(domain: string) {
+  onPageChange(page) {
+    this.ingestionPagination.page = page
+    this.fetchErrors()
+  }
+
+  clearErrors() {
     const dialogRef = this.dialog.open(UCPProfileDeletionConfirmationComponent, {
       width: '50%',
       data: {
-        name: domain
+        text: "Are you sure you want to clear all errors?"
       }
     });
 
     dialogRef.afterClosed().subscribe((confirmed: any) => {
       console.log('The dialog was closed with confirmation: ', confirmed);
       if (confirmed) {
-        this.ucpService.deleteDomain(domain).subscribe((res: any) => {
+        console.log("deleting all Error")
+        this.ucpService.deleteError("*").subscribe(res => {
+          this.fetchErrors()
+        })
+      }
+
+    });
+  }
+
+  deleteDomain(domain: string) {
+    const dialogRef = this.dialog.open(UCPProfileDeletionConfirmationComponent, {
+      width: '50%',
+      data: {
+        "text": "Are you sure you want to delete domain " + domain
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((confirmed: any) => {
+      console.log('The dialog was closed with confirmation: ', confirmed);
+      if (confirmed) {
+        this.domainService.deleteDomain().then((res: any) => {
           console.log(res)
-          this.session.unsetDomain()
-          this.domainService.loadDomains()
-          this.domainService.updateSelectedData(this.session.getProfileDomain())
           this.loadSettingsData()
         })
       }
 
     });
+  }
+
+  fetchDomain() {
+    this.ucpService.getConfig(this.selectedDomain).subscribe((res: any) => {
+      console.log(res)
+      this.domain = res.config.domains[0];
+      this.dataSourceLocations = []
+      for (let obj of Object.keys(res.awsResources.S3Buckets)) {
+        this.dataSourceLocations.push({
+          "objectName": this.objectBucketNameMappning[obj].text,
+          "bucketName": res.awsResources.S3Buckets[obj],
+          "icon": this.objectBucketNameMappning[obj].icon
+        })
+      }
+
+      for (let integration of this.domain.integrations) {
+        let integ = this.integrations.get(integration.target)
+        if (!integ) {
+          integ = new Integration()
+        }
+        if (integration.trigger === "OnDemand") {
+          integ.onDemandFlow = integration.flowName
+        } else {
+          integ.scheduleFlow = integration.flowName
+          integ.lastRun = integration.lastRun
+          integ.lastRunStatus = integration.lastRunStatus
+          integ.status = integration.status
+          integ.schedule = integration.trigger
+          integ.accpObject = integration.target.split("/")[1]
+        }
+        this.integrations.set(integration.target, integ)
+      }
+    })
   }
 
   fetchJobsStatus() {
@@ -233,6 +282,21 @@ export class SettingComponent implements OnInit {
     console.log("deleting Error", err)
     this.ucpService.deleteError(err.error_id).subscribe(res => {
       this.fetchErrors()
+    })
+  }
+
+  startFlow(flowName) {
+    console.log("Starting flow", flowName)
+    this.ucpService.startFlow(flowName).subscribe(res => {
+      this.fetchDomain()
+    })
+
+  }
+
+  startJobs() {
+    console.log("Starting Jobs")
+    this.ucpService.startJobs().subscribe(res => {
+      this.notif.showConfirmation("Business Object transformation jobs start have been succcessfully requested. The jobs status will change momentarily.")
     })
   }
 

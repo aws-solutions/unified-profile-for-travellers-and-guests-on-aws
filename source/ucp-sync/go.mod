@@ -8,9 +8,12 @@ replace tah/ucp-sync/src/business-logic/ v0.0.0-unpublished => ./src/business-lo
 // Use lbuild-local.sh to copy or as an example for commands to use
 replace tah/core v0.0.0-unpublished => ./src/tah-core
 
+replace tah/ucp-common v0.0.0-unpublished => ./src/ucp-common
+
 require (
 	github.com/aws/aws-lambda-go v1.37.0
 	tah/core v0.0.0-unpublished
+	tah/ucp-common v0.0.0-unpublished
 )
 
 require (

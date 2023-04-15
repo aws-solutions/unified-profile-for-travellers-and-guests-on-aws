@@ -2,6 +2,8 @@
 
 env=$1
 bucket=$2
+domain=$3
+
 tahCommonVersion=$(jq -r '."tah-common"' ../../tah.json)
 
 echo "WARNING - this will delete existing business object buckets"
@@ -19,9 +21,10 @@ echo "***************************************"
 echo "* Generating test data for env '$env' *"
 echo "***************************************"
 
-if [ -z "$env" ] || [ -z "$bucket" ]; then
-    echo "Error: environment and bucket must be specified."
-    echo "Usage: sh generate.sh <env> <bucket>"
+if [ -z "$env" ] || [ -z "$bucket" ] || [ -z "$domain" ]; then
+    echo "Error: environment, bucket and domain must be specified."
+    echo "Usage: sh generate.sh <env> <bucket> <domain>"
+    exit 1
 fi
 
 # start=`date +%s`
@@ -55,20 +58,20 @@ sh ./update_test_data.sh
 
 # TODO: experiment with concurrent deletion https://stackoverflow.com/questions/24843570/concurrency-in-shell-scripts
 echo "3 - Clearing existing bucket data"
-aws s3 rm s3://$BUCKET_AIR_BOOKING --recursive --quiet
-aws s3 rm s3://$BUCKET_HOTEL_BOOKINGS --recursive --quiet
-aws s3 rm s3://$BUCKET_PAX_PROFILES --recursive --quiet
-aws s3 rm s3://$BUCKET_GUEST_PROFILES --recursive --quiet
-aws s3 rm s3://$BUCKET_STAY_REVENUE --recursive --quiet
-aws s3 rm s3://$BUCKET_CLICKSTREAM --recursive --quiet
+aws s3 rm s3://$BUCKET_AIR_BOOKING/$domain  --recursive --quiet
+aws s3 rm s3://$BUCKET_HOTEL_BOOKINGS/$domain  --recursive --quiet
+aws s3 rm s3://$BUCKET_PAX_PROFILES/$domain  --recursive --quiet
+aws s3 rm s3://$BUCKET_GUEST_PROFILES/$domain  --recursive --quiet
+aws s3 rm s3://$BUCKET_STAY_REVENUE/$domain  --recursive --quiet
+aws s3 rm s3://$BUCKET_CLICKSTREAM/$domain  --recursive --quiet
 
 echo "4 - Uploading new data"
-aws s3 cp examples/air_booking s3://$BUCKET_AIR_BOOKING --recursive --quiet
-aws s3 cp examples/hotel_booking s3://$BUCKET_HOTEL_BOOKINGS --recursive --quiet
-aws s3 cp examples/pax_profile s3://$BUCKET_PAX_PROFILES --recursive --quiet
-aws s3 cp examples/guest_profile s3://$BUCKET_GUEST_PROFILES --recursive --quiet
-aws s3 cp examples/hotel_stay s3://$BUCKET_STAY_REVENUE --recursive --quiet
-aws s3 cp examples/clickstream s3://$BUCKET_CLICKSTREAM --recursive --quiet
+aws s3 cp examples/air_booking s3://$BUCKET_AIR_BOOKING/$domain --recursive --quiet
+aws s3 cp examples/hotel_booking s3://$BUCKET_HOTEL_BOOKINGS/$domain  --recursive --quiet
+aws s3 cp examples/pax_profile s3://$BUCKET_PAX_PROFILES/$domain  --recursive --quiet
+aws s3 cp examples/guest_profile s3://$BUCKET_GUEST_PROFILES/$domain  --recursive --quiet
+aws s3 cp examples/hotel_stay s3://$BUCKET_STAY_REVENUE/$domain  --recursive --quiet
+aws s3 cp examples/clickstream s3://$BUCKET_CLICKSTREAM/$domain  --recursive --quiet
 
 echo "5 - Cleaning up resources"
 rm ucp-config.json

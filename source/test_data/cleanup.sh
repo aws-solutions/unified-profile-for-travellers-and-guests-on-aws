@@ -2,6 +2,7 @@
 
 env=$1
 bucket=$2
+domain=$3
 
 echo "WARNING - this will delete existing business object buckets"
 echo "and replace it with newly generated test data."
@@ -18,9 +19,10 @@ echo "***************************************"
 echo "* Generating test data for env '$env' *"
 echo "***************************************"
 
-if [ -z "$env" ] || [ -z "$bucket" ]; then
-    echo "Error: environment and bucket must be specified."
-    echo "Usage: sh generate.sh <env> <bucket>"
+if [ -z "$env" ] || [ -z "$bucket" ] || [ -z "$domain" ]; then
+    echo "Error: environment, bucket and domain must be specified."
+    echo "Usage: sh cleanup.sh <env> <bucket> <domain>"
+    exit 1
 fi
 
 # start=`date +%s`
@@ -36,12 +38,12 @@ export BUCKET_CLICKSTREAM=$(jq -r .customerBucketclickstream ./ucp-config.json)
 
 # TODO: experiment with concurrent deletion https://stackoverflow.com/questions/24843570/concurrency-in-shell-scripts
 echo "3 - Clearing existing bucket data"
-aws s3 rm s3://$BUCKET_AIR_BOOKING --recursive --quiet
-aws s3 rm s3://$BUCKET_HOTEL_BOOKINGS --recursive --quiet
-aws s3 rm s3://$BUCKET_PAX_PROFILES --recursive --quiet
-aws s3 rm s3://$BUCKET_GUEST_PROFILES --recursive --quiet
-aws s3 rm s3://$BUCKET_STAY_REVENUE --recursive --quiet
-aws s3 rm s3://$BUCKET_CLICKSTREAM --recursive --quiet
+aws s3 rm s3://$BUCKET_AIR_BOOKING/$domain --recursive --quiet
+aws s3 rm s3://$BUCKET_HOTEL_BOOKINGS/$domain --recursive --quiet
+aws s3 rm s3://$BUCKET_PAX_PROFILES/$domain --recursive --quiet
+aws s3 rm s3://$BUCKET_GUEST_PROFILES/$domain --recursive --quiet
+aws s3 rm s3://$BUCKET_STAY_REVENUE/$domain --recursive --quiet
+aws s3 rm s3://$BUCKET_CLICKSTREAM/$domain --recursive --quiet
 
 echo "Successfully clean-up test data!"
 

@@ -6,7 +6,6 @@ export class BusinessObjectPipelineOutput {
     connectorJobName: string
     customerJobName: string
     bucket: s3.Bucket
-    tableName: string
     errorQueue: sqs.Queue
 }
 

@@ -44,9 +44,12 @@ github.com/aws/aws-sdk-go/private/protocol/query/queryutil
 github.com/aws/aws-sdk-go/private/protocol/rest
 github.com/aws/aws-sdk-go/private/protocol/restjson
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
+github.com/aws/aws-sdk-go/service/appflow
+github.com/aws/aws-sdk-go/service/customerprofiles
 github.com/aws/aws-sdk-go/service/dynamodb
 github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute
 github.com/aws/aws-sdk-go/service/dynamodb/expression
+github.com/aws/aws-sdk-go/service/sqs
 github.com/aws/aws-sdk-go/service/sso
 github.com/aws/aws-sdk-go/service/sso/ssoiface
 github.com/aws/aws-sdk-go/service/sts
@@ -62,6 +65,9 @@ github.com/jmespath/go-jmespath
 github.com/mmcloughlin/geohash
 # tah/core v0.0.0-unpublished => ./src/tah-core
 ## explicit; go 1.18
+tah/core/appflow
 tah/core/core
+tah/core/customerprofiles
 tah/core/db
+tah/core/sqs
 # tah/ucp-sync/src/business-logic/ v0.0.0-unpublished => ./src/business-logic/

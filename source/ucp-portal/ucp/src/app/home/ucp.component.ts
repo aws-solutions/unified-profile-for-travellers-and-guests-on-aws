@@ -90,10 +90,10 @@ export class UCPComponent implements OnInit, OnDestroy {
   styleUrls: ['./ucp.component.css']
 })
 export class UCPProfileDeletionConfirmationComponent {
-  name: string;
+  text: string;
   constructor(public dialogRef: MatDialogRef<UCPProfileDeletionConfirmationComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any) {
-    this.name = data.name
+    this.text = data.text
   }
 
   public validate() {

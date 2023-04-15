@@ -112,7 +112,12 @@ export class UCPInfraStack extends Stack {
     const connectorCrawlerQueue = new Queue(this, "ucp-connector-crawler-queue-" + envName)
     const connectorCrawlerDlq = new Queue(this, "ucp-connector-crawler-dlq-" + envName)
     const accpDomainErrorQueue = new Queue(this, "ucp-acc-domain-errors-" + envName)
-
+    //granting access to the profile service
+    accpDomainErrorQueue.addToResourcePolicy(new iam.PolicyStatement({
+      resources: [accpDomainErrorQueue.queueArn],
+      actions: ["SQS:SendMessage"],
+      principals: [new iam.ServicePrincipal("profile.amazonaws.com")]
+    }))
     new CfnOutput(this, 'accpDomainErrorQueue', { value: accpDomainErrorQueue.queueUrl });
 
     /**************
@@ -243,6 +248,7 @@ export class UCPInfraStack extends Stack {
       partitionKey: { name: dynamo_pk, type: dynamodb.AttributeType.STRING },
       sortKey: { name: dynamo_sk, type: dynamodb.AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY,
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
     const dynamo_error_pk = "error_type"
     const dynamo_error_sk = "error_id"
@@ -251,6 +257,7 @@ export class UCPInfraStack extends Stack {
       partitionKey: { name: dynamo_error_pk, type: dynamodb.AttributeType.STRING },
       sortKey: { name: dynamo_error_sk, type: dynamodb.AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY,
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
     });
 
     //////////////////////////
@@ -262,6 +269,9 @@ export class UCPInfraStack extends Stack {
 
     const lambdaArtifactRepositoryBucket = s3.Bucket.fromBucketName(this, 'BucketByName', artifactBucket);
     const ucpBackEndLambdaPrefix = 'ucpBackEnd'
+    const ucpSyncLambdaPrefix = 'ucpSync'
+
+
     const ucpBackEndLambda = new lambda.Function(this, 'ucpBackEnd' + envName, {
       code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpBackEndLambdaPrefix, 'main.zip'].join("/")),
       functionName: ucpBackEndLambdaPrefix + envName,
@@ -301,6 +311,9 @@ export class UCPInfraStack extends Stack {
         S3_CLICKSTREAM: clickstreamOutput.bucket.bucketName,
         CONNECT_PROFILE_SOURCE_BUCKET: connectProfileImportBucket.bucketName,
         KMS_KEY_PROFILE_DOMAIN: kmsKeyProfileDomain.keyArn,
+        SYNC_LAMBDA_NAME: ucpSyncLambdaPrefix + envName,
+        ACCP_DOMAIN_DLQ: accpDomainErrorQueue.queueUrl,
+
       }
     });
 
@@ -315,6 +328,7 @@ export class UCPInfraStack extends Stack {
 
     errorTable.grantReadWriteData(ucpBackEndLambda)
 
+
     ucpBackEndLambda.addToRolePolicy(new iam.PolicyStatement({
       resources: ["*"],
       actions: [
@@ -328,6 +342,8 @@ export class UCPInfraStack extends Stack {
         'glue:GetTrigger',
         'glue:UpdateTrigger',
         'glue:DeleteTrigger',
+        'glue:CreateTable',
+        'glue:DeleteTable',
         'glue:GetTags',
         'glue:TagResource',
         'glue:GetJob',
@@ -383,7 +399,7 @@ export class UCPInfraStack extends Stack {
     //Partition sync lambda
     ///////////////////////
 
-    const ucpSyncLambdaPrefix = 'ucpSync'
+
     const ucpSyncLambda = new lambda.Function(this, 'ucpSync' + envName, {
       code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpSyncLambdaPrefix, 'main.zip'].join("/")),
       functionName: ucpSyncLambdaPrefix + envName,
@@ -402,20 +418,29 @@ export class UCPInfraStack extends Stack {
         DYNAMO_PK: dynamo_pk,
         DYNAMO_SK: dynamo_sk,
 
-
-        HOTEL_BOOKING_TABLE_NAME_CUSTOMER: hotelBookingOutput.tableName,
-        AIR_BOOKING_TABLE_NAME_CUSTOMER: airBookingOutput.tableName,
-        GUEST_PROFILE_TABLE_NAME_CUSTOMER: guestProfileOutput.tableName,
-        PAX_PROFILE_TABLE_NAME_CUSTOMER: paxProfileOutput.tableName,
-        CLICKSTREAM_TABLE_NAME_CUSTOMER: clickstreamOutput.tableName,
-        HOTEL_STAY_TABLE_NAME_CUSTOMER: hotelStayOutput.tableName,
-
         S3_HOTEL_BOOKING: hotelBookingOutput.bucket.bucketName,
         S3_AIR_BOOKING: airBookingOutput.bucket.bucketName,
         S3_GUEST_PROFILE: guestProfileOutput.bucket.bucketName,
         S3_PAX_PROFILE: paxProfileOutput.bucket.bucketName,
         S3_STAY_REVENUE: hotelStayOutput.bucket.bucketName,
         S3_CLICKSTREAM: clickstreamOutput.bucket.bucketName,
+        CONNECT_PROFILE_SOURCE_BUCKET: connectProfileImportBucket.bucketName,
+
+
+        HOTEL_BOOKING_JOB_NAME_CUSTOMER: hotelBookingOutput.customerJobName,
+        AIR_BOOKING_JOB_NAME_CUSTOMER: airBookingOutput.customerJobName,
+        GUEST_PROFILE_JOB_NAME_CUSTOMER: guestProfileOutput.customerJobName,
+        PAX_PROFILE_JOB_NAME_CUSTOMER: paxProfileOutput.customerJobName,
+        CLICKSTREAM_JOB_NAME_CUSTOMER: clickstreamOutput.customerJobName,
+        HOTEL_STAY_JOB_NAME_CUSTOMER: hotelStayOutput.customerJobName,
+
+        HOTEL_BOOKING_DLQ: hotelBookingOutput.errorQueue.queueUrl,
+        AIR_BOOKING_DLQ: airBookingOutput.errorQueue.queueUrl,
+        GUEST_PROFILE_DLQ: guestProfileOutput.errorQueue.queueUrl,
+        PAX_PROFILE_DLQ: paxProfileOutput.errorQueue.queueUrl,
+        CLICKSTREAM_DLQ: clickstreamOutput.errorQueue.queueUrl,
+        HOTEL_STAY_DLQ: hotelStayOutput.errorQueue.queueUrl,
+        ACCP_DOMAIN_DLQ: accpDomainErrorQueue.queueUrl,
       }
     });
 
@@ -437,8 +462,15 @@ export class UCPInfraStack extends Stack {
         "glue:GetPartitions",
         "glue:BatchCreatePartition",
         "glue:CreatePartition",
+        "profile:ListDomains",
+        "glue:StartJobRun",
       ]
     }));
+    //grant permission to the back end to trigger the ucp sync function
+    ucpBackEndLambda.addToRolePolicy(new iam.PolicyStatement({
+      resources: [ucpSyncLambda.functionArn],
+      actions: ['lambda:InvokeFunction']
+    }))
     //granting permission to read and write on the athena result bucket thus allowing lambda function
     //to successfully execute athena queries using the workgroup created in this stack
     athenaResultsBucket.grantReadWrite(ucpSyncLambda);
@@ -564,6 +596,12 @@ export class UCPInfraStack extends Stack {
         DYNAMO_SK: dynamo_error_sk,
       }
     });
+
+    //permission needed for the retry function
+    ucpErrorLambda.addToRolePolicy(new iam.PolicyStatement({
+      resources: ["*"],
+      actions: ['profile:PutProfileObject']
+    }));
 
     errorTable.grantReadWriteData(ucpErrorLambda)
     ucpErrorLambda.addEventSource(new lambda_event_sources.SqsEventSource(accpDomainErrorQueue));
@@ -777,7 +815,7 @@ export class UCPInfraStack extends Stack {
     apiV2.addRoutes({
       path: '/' + ucpEndpointName + "/" + ucpEndpointJobs,
       authorizer: authorizer,
-      methods: [HttpMethod.GET],
+      methods: [HttpMethod.GET, HttpMethod.POST],
       integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationJobs', ucpBackEndLambda, {
         payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
       })
@@ -953,18 +991,17 @@ export class UCPInfraStack extends Stack {
     bucketRaw.grantReadWrite(dataLakeAdminRole)
     testBucketRaw.grantReadWrite(dataLakeAdminRole)
 
-    //3-Creating Glue Tables
-    let table = this.table(this, businessObjectName, envName, glueDb, glueSchemas, bucketRaw)
-    let testTable = this.table(this, businessObjectName, "Test" + envName, glueDb, glueSchemas, testBucketRaw)
-
     //3-Creating SQS error queue
     const errQueue = new Queue(this, businessObjectName + "-errors-" + envName)
     errQueue.grantSendMessages(dataLakeAdminRole)
 
+    let testTable = this.table(this, businessObjectName, "Test" + envName, glueDb, glueSchemas, testBucketRaw)
+
     //4- Creating Jobs
     let toUcpScript = businessObjectName.replace('-', '_') + "ToUcp"
+    //the source table is set dynamically when triggering the job in the ucp-sync function
     let job = this.job(businessObjectName + "FromCustomer", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
-      ["SOURCE_TABLE", table.tableName],
+      ["SOURCE_TABLE", ""],
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
       ["ERROR_QUEUE_URL", errQueue.queueUrl],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
@@ -976,17 +1013,12 @@ export class UCPInfraStack extends Stack {
       ["ERROR_QUEUE_URL", errQueue.queueUrl],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
-    //6- Job Triggers
-    this.scheduledJobTrigger("ucp" + businessObjectName, envName, job, "cron(0 * * * ? *)")
     //7-Cfn Output
     new CfnOutput(this, 'customerBucket' + businessObjectName, {
       value: bucketRaw.bucketName
     });
     new CfnOutput(this, 'customerTestBucket' + businessObjectName, {
       value: testBucketRaw.bucketName
-    });
-    new CfnOutput(this, 'tableName' + businessObjectName, {
-      value: table.tableName
     });
     new CfnOutput(this, 'testTableName' + businessObjectName, {
       value: testTable.tableName
@@ -1002,7 +1034,6 @@ export class UCPInfraStack extends Stack {
       connectorJobName: industryConnectorJob.name ?? "",
       customerJobName: job.name ?? "",
       bucket: bucketRaw,
-      tableName: table.tableName,
       errorQueue: errQueue,
     }
   }
@@ -1021,7 +1052,7 @@ export class UCPInfraStack extends Stack {
         "--GLUE_DB": glueDb.databaseName,
       },
       executionProperty: {
-        maxConcurrentRuns: 2
+        maxConcurrentRuns: 1000
       },
       maxRetries: 0,
       name: prefix + "Job" + envName,

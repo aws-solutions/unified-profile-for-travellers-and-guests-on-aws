@@ -119,8 +119,17 @@
         <br />-->
 
         <div class="section">
+            <div class="delete-domain-button" *ngIf="ingestionErrors.length>0">
+                <div class="btn btn-danger" (click)="clearErrors()">
+                    <fa-icon [icon]="faTrash"></fa-icon>
+                    Clear Errors
+                </div>
+            </div>
             <div class="title-3">INGESTIONS ERRORS</div>
             <span class="helper-text">Errors reported during the data ingestion process</span><br />
+            <br />
+            <ucp-pagination [nRecords]="ingestionErrors.length" [pageSize]="ingestionPagination.pageSize"
+                (pageChange)="onPageChange($event)"></ucp-pagination>
             <div class="row table-header">
                 <div class="col-sm-2 title align-center block-title">
                     Timestamp
@@ -166,6 +175,12 @@
         </div>
 
         <div class="section">
+            <div class="delete-domain-button" *ngIf="selectedDomain">
+                <div class="btn btn-link" (click)="startJobs()">
+                    <fa-icon [icon]="faPlay"></fa-icon>
+                    Run All
+                </div>
+            </div>
             <div class="title-3">JOBS</div>
             <span class="helper-text">Glue Jobs for data transformation and Movements</span><br />
             <br />
@@ -222,7 +237,36 @@
                     Action
                 </div>
             </div>
-            <span *ngFor="let integration of domain.integrations">
+            <span *ngFor="let keyval of integrations | keyvalue">
+                <div class="row integration-list table-row">
+                    <div id="business-obj-name-{{keyval.value.accpObject}}" class="col-sm-1  align-center">
+                        {{keyval.value.accpObject}}
+                    </div>
+                    <div class="col-sm-2  align-center">
+                        <span class="integration-status"
+                            [ngStyle]="{'background-color': getColorStatus(keyval.value.status)}">{{keyval.value.status}}</span>
+                    </div>
+                    <div class="col-sm-3  align-center">
+                        {{keyval.value.schedule }}
+                    </div>
+                    <div class="col-sm-3  align-center">
+                        {{(keyval.value.lastRun != '0001-01-01T00:00:00Z') ? (keyval.value.lastRun | date:
+                        'medium') : "No
+                        Run
+                        Yet"}}
+                    </div>
+                    <div class="col-sm-2  align-center">
+                        <span class="integration-status"
+                            [ngStyle]="{'background-color': getLastRunColorStatus(keyval.value.lastRunStatus)}">
+                            {{keyval.value.lastRunStatus ? keyval.value.lastRunStatus : "No Last Run
+                            Deployed"}}</span>
+                    </div>
+                    <div class="col-sm-1  align-center">
+                        <button class="btn btn-link" (click)="startFlow(keyval.value.onDemandFlow)">Run</button>
+                    </div>
+                </div>
+            </span>
+            <!--<span *ngFor="let integration of domain.integrations">
                 <div class="row integration-list table-row" *ngIf="integration.trigger !== 'OnDemand'">
                     <div id="business-obj-name-{{integration.target.split('/')[1]}}" class="col-sm-1  align-center">
                         {{integration.target.split("/")[1]}}
@@ -247,10 +291,10 @@
                             Deployed"}}</span>
                     </div>
                     <div class="col-sm-1  align-center">
-                        <button class="btn btn-link">Run</button>
+                        <button class="btn btn-link" (click)="startFlow(integration.flowName)">Run</button>
                     </div>
                 </div>
-            </span>
+            </span>-->
 
         </div>
         <br />

@@ -3,12 +3,16 @@ package main
 import (
 	"context"
 	"os"
+	appflow "tah/core/appflow"
 	appregistry "tah/core/appregistry"
 	core "tah/core/core"
 	customerprofiles "tah/core/customerprofiles"
 	db "tah/core/db"
 	glue "tah/core/glue"
 	iam "tah/core/iam"
+
+	tahCorelambda "tah/core/lambda"
+
 	"tah/ucp/src/business-logic/usecase/admin"
 	registry "tah/ucp/src/business-logic/usecase/registry"
 	traveller "tah/ucp/src/business-logic/usecase/traveller"
@@ -17,7 +21,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-//Resources
+// Resources
 var LAMBDA_ENV = os.Getenv("LAMBDA_ENV")
 var LAMBDA_ACCOUNT_ID = os.Getenv("LAMBDA_ACCOUNT_ID")
 var LAMBDA_REGION = os.Getenv("AWS_REGION")
@@ -29,7 +33,7 @@ var CONNECTOR_CRAWLER_DLQ = os.Getenv("CONNECTOR_CRAWLER_DLQ")
 var GLUE_DB = os.Getenv("GLUE_DB")
 var DATALAKE_ADMIN_ROLE_ARN = os.Getenv("DATALAKE_ADMIN_ROLE_ARN")
 
-//S3 buckets
+// S3 buckets
 var CONNECT_PROFILE_SOURCE_BUCKET = os.Getenv("CONNECT_PROFILE_SOURCE_BUCKET")
 var S3_HOTEL_BOOKING = os.Getenv("S3_HOTEL_BOOKING")
 var S3_AIR_BOOKING = os.Getenv("S3_AIR_BOOKING")
@@ -38,7 +42,7 @@ var S3_PAX_PROFILE = os.Getenv("S3_PAX_PROFILE")
 var S3_STAY_REVENUE = os.Getenv("S3_STAY_REVENUE")
 var S3_CLICKSTREAM = os.Getenv("S3_CLICKSTREAM")
 
-//Job Names
+// Job Names
 var HOTEL_BOOKING_JOB_NAME = os.Getenv("HOTEL_BOOKING_JOB_NAME")
 var AIR_BOOKING_JOB_NAME = os.Getenv("AIR_BOOKING_JOB_NAME")
 var GUEST_PROFILE_JOB_NAME = os.Getenv("GUEST_PROFILE_JOB_NAME")
@@ -53,6 +57,9 @@ var PAX_PROFILE_JOB_NAME_CUSTOMER = os.Getenv("PAX_PROFILE_JOB_NAME_CUSTOMER")
 var CLICKSTREAM_JOB_NAME_CUSTOMER = os.Getenv("CLICKSTREAM_JOB_NAME_CUSTOMER")
 var HOTEL_STAY_JOB_NAME_CUSTOMER = os.Getenv("HOTEL_STAY_JOB_NAME_CUSTOMER")
 
+var ACCP_DOMAIN_DLQ = os.Getenv("ACCP_DOMAIN_DLQ")
+var SYNC_LAMBDA_NAME = os.Getenv("SYNC_LAMBDA_NAME")
+
 var KMS_KEY_PROFILE_DOMAIN = os.Getenv("KMS_KEY_PROFILE_DOMAIN")
 var UCP_CONNECT_DOMAIN = ""
 
@@ -60,7 +67,7 @@ var ERROR_TABLE_NAME = os.Getenv("ERROR_TABLE_NAME")
 var ERROR_TABLE_PK = os.Getenv("ERROR_TABLE_PK")
 var ERROR_TABLE_SK = os.Getenv("ERROR_TABLE_SK")
 
-//Use cases
+// Use cases
 var FN_RETREIVE_UCP_PROFILE = "retreive_ucp_profile"
 var FN_DELETE_UCP_PROFILE = "delete_ucp_profile"
 var FN_SEARCH_UCP_PROFILES = "search_ucp_profiles"
@@ -80,6 +87,8 @@ var appregistryClient = appregistry.Init(LAMBDA_REGION)
 var iamClient = iam.Init()
 var glueClient = glue.Init(LAMBDA_REGION, GLUE_DB)
 var errorDB = db.Init(ERROR_TABLE_NAME, ERROR_TABLE_PK, ERROR_TABLE_SK)
+var appFlowSvc = appflow.Init()
+var lambdaSvc = tahCorelambda.Init(SYNC_LAMBDA_NAME)
 
 func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	tx := core.NewTransaction("ucp", req.Headers[core.TRANSACTION_ID_HEADER])
@@ -87,7 +96,15 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	tx.Log("Received Request %+v with context %+v", req, ctx)
 	var profiles = customerprofiles.InitWithDomain(req.Headers[CUSTOMER_PROFILE_DOMAIN_HEADER], LAMBDA_REGION)
 
-	var reg = registry.NewRegistry(LAMBDA_REGION, &appregistryClient, &iamClient, &glueClient, &profiles, &errorDB)
+	var reg = registry.NewRegistry(LAMBDA_REGION, registry.ServiceHandlers{
+		AppRegistry: &appregistryClient,
+		Iam:         &iamClient,
+		Glue:        &glueClient,
+		Accp:        &profiles,
+		ErrorDB:     &errorDB,
+		AppFlow:     &appFlowSvc,
+		SyncLambda:  &lambdaSvc,
+	})
 	reg.SetRegion(LAMBDA_REGION)
 	reg.SetTx(&tx)
 	//Setting environment variables to the registry (this allows to pass CloudFormation created resources)
@@ -119,6 +136,8 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	reg.AddEnv("CLICKSTREAM_JOB_NAME_CUSTOMER", CLICKSTREAM_JOB_NAME_CUSTOMER)
 	reg.AddEnv("HOTEL_STAY_JOB_NAME_CUSTOMER", HOTEL_STAY_JOB_NAME_CUSTOMER)
 
+	reg.AddEnv("ACCP_DOMAIN_DLQ", ACCP_DOMAIN_DLQ)
+
 	reg.Register("GET", "/ucp/profile/{id}", traveller.NewRetreiveProfile())
 	reg.Register("DELETE", "/ucp/profile/{id}", traveller.NewDeleteProfile())
 	reg.Register("GET", "/ucp/profile", traveller.NewSearchProfile())
@@ -134,6 +153,8 @@ func HandleRequest(ctx context.Context, req events.APIGatewayProxyRequest) (even
 	reg.Register("DELETE", "/ucp/error/{id}", admin.NewDeleteError())
 	reg.Register("GET", "/ucp/data", admin.NewGetDataValidationStatus())
 	reg.Register("GET", "/ucp/jobs", admin.NewGetJobsStatus())
+	reg.Register("POST", "/ucp/jobs", admin.NewStartJobs())
+	reg.Register("POST", "/ucp/flows", admin.NewStartFlows())
 
 	return reg.Run(req)
 }

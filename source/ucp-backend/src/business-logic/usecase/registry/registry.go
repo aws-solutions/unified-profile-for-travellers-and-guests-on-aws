@@ -8,12 +8,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"tah/core/appflow"
 	"tah/core/appregistry"
 	core "tah/core/core"
 	"tah/core/customerprofiles"
 	"tah/core/db"
 	"tah/core/glue"
 	"tah/core/iam"
+	"tah/core/lambda"
 
 	"time"
 
@@ -33,6 +35,8 @@ type Registry struct {
 	Glue        *glue.Config
 	Accp        *customerprofiles.CustomerProfileConfig
 	ErrorDB     *db.DBConfig
+	AppFlow     *appflow.Config
+	SyncLambda  *lambda.Config
 }
 
 type Usecase interface {
@@ -47,18 +51,30 @@ type Usecase interface {
 	Run(req model.RequestWrapper) (model.ResponseWrapper, error)                      //Excecute the use case business logic
 }
 
-func NewRegistry(region string, appRegCfg *appregistry.Config, iamCfg *iam.Config, glueCfg *glue.Config, accp *customerprofiles.CustomerProfileConfig, errorDB *db.DBConfig) Registry {
+type ServiceHandlers struct {
+	AppRegistry *appregistry.Config
+	Iam         *iam.Config
+	Glue        *glue.Config
+	Accp        *customerprofiles.CustomerProfileConfig
+	ErrorDB     *db.DBConfig
+	AppFlow     *appflow.Config
+	SyncLambda  *lambda.Config
+}
+
+func NewRegistry(region string, handlers ServiceHandlers) Registry {
 	//we initialize a transaction for the pre-handler locgic (before the lambda function actually processes it's first request)
 	tx := core.NewTransaction("ind_connector", "")
 	return Registry{
 		Tx:          &tx,
 		Reg:         map[string]Usecase{},
 		Region:      region,
-		AppRegistry: appRegCfg,
-		Iam:         iamCfg,
-		Glue:        glueCfg,
-		Accp:        accp,
-		ErrorDB:     errorDB,
+		AppRegistry: handlers.AppRegistry,
+		Iam:         handlers.Iam,
+		Glue:        handlers.Glue,
+		Accp:        handlers.Accp,
+		ErrorDB:     handlers.ErrorDB,
+		AppFlow:     handlers.AppFlow,
+		SyncLambda:  handlers.SyncLambda,
 		Env:         map[string]string{},
 	}
 }

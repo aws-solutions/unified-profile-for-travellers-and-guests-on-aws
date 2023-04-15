@@ -60,6 +60,13 @@ export class UcpService {
     public getJobs() {
         return this.service.query({}, <RestOptions>{ subEndpoint: "jobs" });
     }
+    public startFlow(flowName: string) {
+        return this.service.post({}, { domain: { integrations: [{ flowName: flowName }] } }, <RestOptions>{ subEndpoint: "flows" });
+    }
+    public startJobs() {
+        return this.service.post({}, {}, <RestOptions>{ subEndpoint: "jobs" });
+    }
+
     public deleteError(id) {
         return this.service.delete(id, {}, <RestOptions>{ subEndpoint: "error" });
     }

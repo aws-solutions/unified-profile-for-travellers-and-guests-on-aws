@@ -66,7 +66,7 @@ func BuildTestRegistry(region string) registry.Registry {
 	var glueClient = glue.Init(region, "test_glue_db")
 	var dbConfig = db.Init("TEST_TABLE", "TEST_PK", "TEST_SK")
 	profiles := customerprofiles.InitWithDomain("test-domain", region)
-	return registry.NewRegistry(region, &appregistryClient, &iamClient, &glueClient, &profiles, &dbConfig)
+	return registry.NewRegistry(region, registry.ServiceHandlers{AppRegistry: &appregistryClient, Iam: &iamClient, Glue: &glueClient, Accp: &profiles, ErrorDB: &dbConfig})
 }
 
 func GetTestRegion() string {
