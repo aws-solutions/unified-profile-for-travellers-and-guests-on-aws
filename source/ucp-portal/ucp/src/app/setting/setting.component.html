@@ -140,13 +140,10 @@
                 <div class="col-sm-1 title align-center block-title">
                     Business Object
                 </div>
-                <div class="col-sm-2 title align-center block-title">
+                <div class="col-sm-5 title align-center block-title">
                     Message
                 </div>
-                <div class="col-sm-4 title align-center block-title">
-                    Record
-                </div>
-                <div class="col-sm-1 title align-center block-title">
+                <div class="col-sm-2 title align-center block-title">
                     Action
                 </div>
             </div>
@@ -160,14 +157,14 @@
                 <div class="col-sm-2 title align-center">
                     {{err.businessObjectType || err.accpRecordType}}
                 </div>
-                <div class="col-sm-2 title align-center">
+                <div class="col-sm-5 title align-center">
                     {{err.message}}
                 </div>
-                <div class="col-sm-4 title align-center record-display" (click)="showReccord(err.reccord)">
-                    {{err.reccord}}
-                </div>
-                <div class="col-sm-1 title align-center">
-                    <button class="btn  delete-error-button" (click)="deleteError(err)"><fa-icon
+
+                <div class="col-sm-2 title align-center">
+                    <button (click)="showReccord(err.reccord)" class="btn btn-link action-button"><fa-icon
+                            [icon]="faEye"></fa-icon></button>
+                    <button class="btn  delete-error-button action-button" (click)="deleteError(err)"><fa-icon
                             [icon]="faTrash"></fa-icon></button>
                 </div>
             </div>
@@ -224,14 +221,14 @@
                 <div class="col-sm-2 title align-center block-title">
                     Status
                 </div>
-                <div class="col-sm-3 title align-center block-title">
+                <div class="col-sm-4 title align-center block-title">
                     Execution Rule
                 </div>
-                <div class="col-sm-3 title align-center block-title">
-                    Last Run
+                <div class="col-sm-2 title align-center block-title">
+                    Last Scheduled Run
                 </div>
                 <div class="col-sm-2 title align-center block-title">
-                    Last Run Status
+                    Last On Demand Run
                 </div>
                 <div class="col-sm-1 title align-center block-title">
                     Action
@@ -246,20 +243,25 @@
                         <span class="integration-status"
                             [ngStyle]="{'background-color': getColorStatus(keyval.value.status)}">{{keyval.value.status}}</span>
                     </div>
-                    <div class="col-sm-3  align-center">
+                    <div class="col-sm-4  align-center">
                         {{keyval.value.schedule }}
-                    </div>
-                    <div class="col-sm-3  align-center">
-                        {{(keyval.value.lastRun != '0001-01-01T00:00:00Z') ? (keyval.value.lastRun | date:
-                        'medium') : "No
-                        Run
-                        Yet"}}
                     </div>
                     <div class="col-sm-2  align-center">
                         <span class="integration-status"
                             [ngStyle]="{'background-color': getLastRunColorStatus(keyval.value.lastRunStatus)}">
-                            {{keyval.value.lastRunStatus ? keyval.value.lastRunStatus : "No Last Run
-                            Deployed"}}</span>
+                            {{keyval.value.lastRunStatus ? keyval.value.lastRunStatus : "Not Run"}}</span><br />
+                        <span class="flow-run-timestamp">
+                            {{(keyval.value.lastRun != '0001-01-01T00:00:00Z') ? (keyval.value.lastRun | date:
+                            'YYYY-MM-dd hh:mm') : ""}}</span>
+                    </div>
+                    <div class="col-sm-2  align-center">
+                        <span class="integration-status"
+                            [ngStyle]="{'background-color': getLastRunColorStatus(keyval.value.onDemandLastRunStatus)}">
+                            {{keyval.value.onDemandLastRunStatus ? keyval.value.onDemandLastRunStatus : "Not
+                            Run"}}</span><br />
+                        <span class="flow-run-timestamp">
+                            {{(keyval.value.onDemandLastRun != '0001-01-01T00:00:00Z') ? (keyval.value.onDemandLastRun |
+                            date: 'YYYY-MM-dd hh:mm') : ""}}</span>
                     </div>
                     <div class="col-sm-1  align-center">
                         <button class="btn btn-link" (click)="startFlow(keyval.value.onDemandFlow)">Run</button>

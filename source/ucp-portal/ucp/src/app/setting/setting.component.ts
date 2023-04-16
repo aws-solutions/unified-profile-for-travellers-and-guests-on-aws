@@ -4,7 +4,7 @@ import { FormGroup, FormArray, FormControl, Validators } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { NotificationService } from '../service/notificationService';
 import { SessionService } from '../service/sessionService';
-import { faCog, faBackward, faForward, faHome, faRefresh, faPlane, faUser, faExternalLink, faUsd, faHotel, faMousePointer, faTrash, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faBackward, faForward, faHome, faRefresh, faPlane, faUser, faExternalLink, faUsd, faHotel, faMousePointer, faTrash, faPlay, faEye } from '@fortawesome/free-solid-svg-icons';
 import { Router } from '@angular/router';
 import { PaginationOptions } from '../model/pagination.model'
 import { Subscription } from 'rxjs';
@@ -27,6 +27,7 @@ export class SettingComponent implements OnInit {
   faExternalLink = faExternalLink;
   faTrash = faTrash;
   faPlay = faPlay;
+  faEye = faEye;
   domain: any = {};
   validationPagination: PaginationOptions = {
     page: 0,
@@ -159,6 +160,8 @@ export class SettingComponent implements OnInit {
         }
         if (integration.trigger === "OnDemand") {
           integ.onDemandFlow = integration.flowName
+          integ.onDemandLastRun = integration.lastRun
+          integ.onDemandLastRunStatus = integration.lastRunStatus
         } else {
           integ.scheduleFlow = integration.flowName
           integ.lastRun = integration.lastRun

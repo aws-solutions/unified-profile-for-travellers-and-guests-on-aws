@@ -5,6 +5,9 @@ export class Integration {
     public trigger: string;
     public status: string;
     public lastRunStatus: string;
+
+    public onDemandLastRun: string;
+    public onDemandLastRunStatus: string;
     public scheduleFlow: string;
     public schedule: string;
     public accpObject: string;
