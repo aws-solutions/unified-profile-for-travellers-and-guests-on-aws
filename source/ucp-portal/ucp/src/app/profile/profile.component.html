@@ -35,7 +35,7 @@
                                 class="data-title">ADDRESS</span>
                             <div class="data-element">
                                 <ucp-address *ngIf="traveller.homeAddress"
-                                    address="traveller.homeAddress"></ucp-address>
+                                    [address]="traveller.homeAddress"></ucp-address>
                             </div>
                         </div>
 
@@ -60,35 +60,43 @@
     <div class="row">
         <div class="col-sm-9">
             <div class="box-shadow">
-                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                <div *ngIf="traveller.airBookingRecords && traveller.airBookingRecords.length > 0"
+                    class="widget-container">
                     <air-booking-widget [traveller]="traveller" [config]="widgetConfig"
                         (pageChange)="onWidgetChange($event)" [objectType]="'air_booking'"></air-booking-widget>
                 </div>
-                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                <div *ngIf="traveller.hotelBookingRecords && traveller.hotelBookingRecords.length > 0"
+                    class="widget-container">
                     <hotel-booking-widget [traveller]="traveller" [config]="widgetConfig"
                         (pageChange)="onWidgetChange($event)" [objectType]="'hotel_booking'"></hotel-booking-widget>
                 </div>
-                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                <div *ngIf="traveller.airLoyaltyRecords && traveller.airLoyaltyRecords.length > 0"
+                    class="widget-container">
                     <air-loyalty-widget [traveller]="traveller" [config]="widgetConfig"
                         (pageChange)="onWidgetChange($event)" [objectType]="'air_loyalty'"></air-loyalty-widget>
                 </div>
-                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                <div *ngIf="traveller.hotelLoyaltyRecords && traveller.hotelLoyaltyRecords.length > 0"
+                    class="widget-container">
                     <hotel-loyalty-widget [traveller]="traveller" [config]="widgetConfig"
                         (pageChange)="onWidgetChange($event)" [objectType]="'hotel_loyalty'"></hotel-loyalty-widget>
                 </div>
-                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                <div *ngIf="traveller.emailHistoryRecords && traveller.emailHistoryRecords.length > 0"
+                    class="widget-container">
                     <email-history-widget [traveller]="traveller" [config]="widgetConfig"
                         (pageChange)="onWidgetChange($event)" [objectType]="'email_history'"></email-history-widget>
                 </div>
-                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                <div *ngIf="traveller.phoneHistoryRecords && traveller.phoneHistoryRecords.length > 0"
+                    class="widget-container">
                     <phone-history-widget [traveller]="traveller" [config]="widgetConfig"
                         (pageChange)="onWidgetChange($event)" [objectType]="'phone_history'"></phone-history-widget>
                 </div>
-                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                <div *ngIf="traveller.hotelStayRecords && traveller.hotelStayRecords.length > 0"
+                    class="widget-container">
                     <stay-revenue-widget [traveller]="traveller" [config]="widgetConfig"
                         (pageChange)="onWidgetChange($event)" [objectType]="'stay_revenue'"></stay-revenue-widget>
                 </div>
-                <div *ngIf="traveller.airBookingRecords.length > 0" class="widget-container">
+                <div *ngIf="traveller.clickstreamRecords && traveller.clickstreamRecords.length > 0"
+                    class="widget-container">
                     <clickstream-widget [traveller]="traveller" [config]="widgetConfig"
                         (pageChange)="onWidgetChange($event)" [objectType]="'clickstream'"></clickstream-widget>
                 </div>
@@ -104,7 +112,7 @@
                                 <div class="profile-match">
                                     <span class="match-content">{{match.firstName}}
                                         {{match.lastName}}
-                                        ({{match.confidence}})</span>
+                                        ({{match.confidence | number}})</span>
                                 </div>
                             </div>
                         </div>
