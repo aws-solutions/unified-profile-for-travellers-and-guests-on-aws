@@ -3,7 +3,7 @@ import json
 import boto3
 from tah_lib.air_bookingTransform import buildObjectRecord
 
-data_path = 'test_data/air_booking/'
+data_path = '../test_data/air_booking/'
 sqsClient = boto3.client('sqs')
 
 

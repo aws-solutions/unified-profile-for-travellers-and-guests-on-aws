@@ -1,169 +1,243 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type Traveller struct {
 	// Metadata
-	ModelVersion string
-	Errors       []string
+	ModelVersion string   `json:"modelVersion"`
+	Errors       []string `json:"errors"`
 
 	// Profile IDs
-	ConnectID   string
-	TravellerID string
-	PSSID       string
-	GDSID       string
-	PMSID       string
-	CRSID       string
+	ConnectID   string `json:"connectId"`
+	TravellerID string `json:"travellerId"`
+	PSSID       string `json:"pssId"`
+	GDSID       string `json:"gdsId"`
+	PMSID       string `json:"pmsId"`
+	CRSID       string `json:"crsId"`
 
 	// Profile Data
-	Honorific   string
-	FirstName   string
-	MiddleName  string
-	LastName    string
-	Gender      string
-	Pronoun     string // should be an array of pronouns?
-	BirthDate   time.Time
-	JobTitle    string
-	CompanyName string
+	Honorific   string    `json:"honorific"`
+	FirstName   string    `json:"firstName"`
+	MiddleName  string    `json:"middleName"`
+	LastName    string    `json:"lastName"`
+	Gender      string    `json:"gender"`
+	Pronoun     string    `json:"pronoun"`
+	BirthDate   time.Time `json:"birthDate"`
+	JobTitle    string    `json:"jobTitle"`
+	CompanyName string    `json:"companyName"`
 
 	// Contact Info
-	PhoneNumber          string
-	MobilePhoneNumber    string
-	HomePhoneNumber      string
-	BusinessPhoneNumber  string
-	PersonalEmailAddress string
-	BusinessEmailAddress string
-	NationalityCode      string
-	NationalityName      string
-	LanguageCode         string
-	LanguageName         string
+	PhoneNumber          string `json:"phoneNumber"`
+	MobilePhoneNumber    string `json:"mobilePhoneNumber"`
+	HomePhoneNumber      string `json:"homePhoneNumber"`
+	BusinessPhoneNumber  string `json:"businessPhoneNumber"`
+	PersonalEmailAddress string `json:"personalEmailAddress"`
+	BusinessEmailAddress string `json:"businessEmailAddress"`
+	NationalityCode      string `json:"nationalityCode"`
+	NationalityName      string `json:"nationalityName"`
+	LanguageCode         string `json:"languageCode"`
+	LanguageName         string `json:"languageName"`
 
 	// Addresses
-	HomeAddress     Address
-	BusinessAddress Address
-	MailingAddress  Address
-	BillingAddress  Address
+	HomeAddress     Address `json:"homeAddress"`
+	BusinessAddress Address `json:"businessAddress"`
+	MailingAddress  Address `json:"mailingAddress"`
+	BillingAddress  Address `json:"billingAddress"`
 
 	// Payment Info
 	// TODO: should payment data be for an order, profile, separate history object or combination?
 
 	// Object Type Records
-	AirBookingRecords   []AirBooking
-	AirLoyaltyRecords   []AirLoyalty
-	ClickstreamRecords  []Clickstream
-	EmailHistoryRecords []EmailHistory
-	HotelBookingRecords []HotelBooking
-	HotelLoyaltyRecords []HotelLoyalty
-	HotelStayRecords    []HotelStay
-	PhoneHistoryRecords []PhoneHistory
+	AirBookingRecords   []AirBooking   `json:"airBookingRecords"`
+	AirLoyaltyRecords   []AirLoyalty   `json:"airLoyaltyRecords"`
+	ClickstreamRecords  []Clickstream  `json:"clickstreamRecords"`
+	EmailHistoryRecords []EmailHistory `json:"emailHistoryRecords"`
+	HotelBookingRecords []HotelBooking `json:"hotelBookingRecords"`
+	HotelLoyaltyRecords []HotelLoyalty `json:"hotelLoyaltyRecords"`
+	HotelStayRecords    []HotelStay    `json:"hotelStayRecords"`
+	PhoneHistoryRecords []PhoneHistory `json:"phoneHistoryRecords"`
+
+	ParsingErrors []string `json:"parsingErrors"`
 }
 
 type AirBooking struct {
-	BookingID     string
-	SegmentID     string
-	From          string
-	To            string
-	FlightNumber  string
-	DepartureDate string
-	DepartureTime string
-	ArrivalDate   string
-	ArrivalTime   string
-	Channel       string
-	Status        string
-	Price         string
+	BookingID     string    `json:"bookingId"`
+	SegmentID     string    `json:"segmentId"`
+	From          string    `json:"from"`
+	To            string    `json:"to"`
+	FlightNumber  string    `json:"flightNumber"`
+	DepartureDate string    `json:"departureDate"`
+	DepartureTime string    `json:"departureTime"`
+	ArrivalDate   string    `json:"arrivalDate"`
+	ArrivalTime   string    `json:"arrivalTime"`
+	Channel       string    `json:"channel"`
+	Status        string    `json:"status"`
+	Price         string    `json:"price"`
+	LastUpdated   time.Time `json:"lastUpdated"`
+	LastUpdatedBy string    `json:"lastUpdatedBy"`
+}
+type AirBookingByLastUpdated []AirBooking
+
+func (a AirBookingByLastUpdated) Len() int      { return len(a) }
+func (a AirBookingByLastUpdated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a AirBookingByLastUpdated) Less(i, j int) bool {
+	return a[i].LastUpdated.After(a[j].LastUpdated)
 }
 
 type AirLoyalty struct {
-	LoyaltyID        string
-	ProgramName      string
-	Miles            string
-	MilesToNextLevel string
-	Level            string
-	Joined           time.Time
+	LoyaltyID        string    `json:"loyaltyId"`
+	ProgramName      string    `json:"programName"`
+	Miles            string    `json:"miles"`
+	MilesToNextLevel string    `json:"milesToNextLevel"`
+	Level            string    `json:"level"`
+	Joined           time.Time `json:"joined"`
+	LastUpdated      time.Time `json:"lastUpdated"`
+	LastUpdatedBy    string    `json:"lastUpdatedBy"`
+}
+
+type AirLoyaltyByLastUpdated []AirLoyalty
+
+func (a AirLoyaltyByLastUpdated) Len() int      { return len(a) }
+func (a AirLoyaltyByLastUpdated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a AirLoyaltyByLastUpdated) Less(i, j int) bool {
+	return a[i].LastUpdated.After(a[j].LastUpdated)
 }
 
 type Clickstream struct {
-	SessionID                       string
-	EventTimestamp                  time.Time
-	EventType                       string
-	EventVersion                    string
-	ArrivalTimestamp                time.Time
-	UserAgent                       string
-	Products                        string
-	FareClass                       string
-	FareType                        string
-	FlightSegmentsDepartureDateTime time.Time
-	FlightNumbers                   string
-	FlightMarket                    string
-	FlightType                      string
-	OriginDate                      string
-	OriginDateTime                  time.Time
-	ReturnDate                      string
-	ReturnDateTime                  time.Time
-	ReturnFlightRoute               string
-	NumPaxAdults                    int
-	NumPaxInf                       int
-	NumPaxChildren                  int
-	PaxType                         string
-	TotalPassengers                 int
+	SessionID                       string    `json:"sessionId"`
+	EventTimestamp                  time.Time `json:"eventTimestamp"`
+	EventType                       string    `json:"eventType"`
+	EventVersion                    string    `json:"eventVersion"`
+	ArrivalTimestamp                time.Time `json:"arrivalTimestamp"`
+	UserAgent                       string    `json:"userAgent"`
+	Products                        string    `json:"products"`
+	FareClass                       string    `json:"fareClass"`
+	FareType                        string    `json:"fareType"`
+	FlightSegmentsDepartureDateTime time.Time `json:"flightSegmentsDepartureDateTime"`
+	FlightNumbers                   string    `json:"flightNumbers"`
+	FlightMarket                    string    `json:"flightMarket"`
+	FlightType                      string    `json:"flightType"`
+	OriginDate                      string    `json:"originDate"`
+	OriginDateTime                  time.Time `json:"originDateTime"`
+	ReturnDate                      string    `json:"returnDate"`
+	ReturnDateTime                  time.Time `json:"returnDateTime"`
+	ReturnFlightRoute               string    `json:"returnFlightRoute"`
+	NumPaxAdults                    int       `json:"numPaxAdults"`
+	NumPaxInf                       int       `json:"numPaxInf"`
+	NumPaxChildren                  int       `json:"numPaxChildren"`
+	PaxType                         string    `json:"paxType"`
+	TotalPassengers                 int       `json:"totalPassengers"`
+	LastUpdated                     time.Time `json:"lastUpdated"`
+	LastUpdatedBy                   string    `json:"lastUpdatedBy"`
+}
+
+type ClickstreamByLastUpdated []Clickstream
+
+func (a ClickstreamByLastUpdated) Len() int      { return len(a) }
+func (a ClickstreamByLastUpdated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ClickstreamByLastUpdated) Less(i, j int) bool {
+	return a[i].LastUpdated.After(a[j].LastUpdated)
 }
 
 type EmailHistory struct {
-	Address       string
-	Type          string
-	LastUpdated   time.Time
-	LastUpdatedBy string
+	Address       string    `json:"address"`
+	Type          string    `json:"type"`
+	LastUpdated   time.Time `json:"lastUpdated"`
+	LastUpdatedBy string    `json:"lastUpdatedBy"`
+}
+type EmailHistoryByLastUpdated []EmailHistory
+
+func (a EmailHistoryByLastUpdated) Len() int      { return len(a) }
+func (a EmailHistoryByLastUpdated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a EmailHistoryByLastUpdated) Less(i, j int) bool {
+	return a[i].LastUpdated.After(a[j].LastUpdated)
 }
 
 type HotelBooking struct {
-	BookingID             string
-	HotelCode             string
-	NumNights             int
-	NumGuests             int
-	ProductID             string
-	CheckInDate           time.Time
-	RoomTypeCode          string
-	RoomTypeName          string
-	RoomTypeDescription   string
-	AttributeCodes        string
-	AttributeNames        string
-	AttributeDescriptions string
+	BookingID             string    `json:"bookingId"`
+	HotelCode             string    `json:"hotelCode"`
+	NumNights             int       `json:"numNights"`
+	NumGuests             int       `json:"numGuests"`
+	ProductID             string    `json:"productId"`
+	CheckInDate           time.Time `json:"checkInDate"`
+	RoomTypeCode          string    `json:"roomTypeCode"`
+	RoomTypeName          string    `json:"roomTypeName"`
+	RoomTypeDescription   string    `json:"roomTypeDescription"`
+	AttributeCodes        string    `json:"attributeCodes"`
+	AttributeNames        string    `json:"attributeNames"`
+	AttributeDescriptions string    `json:"attributeDescriptions"`
+	LastUpdated           time.Time `json:"lastUpdated"`
+	LastUpdatedBy         string    `json:"lastUpdatedBy"`
+}
+type HotelBookingByLastUpdated []HotelBooking
+
+func (a HotelBookingByLastUpdated) Len() int      { return len(a) }
+func (a HotelBookingByLastUpdated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a HotelBookingByLastUpdated) Less(i, j int) bool {
+	return a[i].LastUpdated.After(a[j].LastUpdated)
 }
 
 type HotelLoyalty struct {
-	LoyaltyID         string
-	ProgramName       string
-	Points            string
-	Units             string
-	PointsToNextLevel string
-	Level             string
-	Joined            time.Time
+	LoyaltyID         string    `json:"loyaltyId"`
+	ProgramName       string    `json:"programName"`
+	Points            string    `json:"points"`
+	Units             string    `json:"units"`
+	PointsToNextLevel string    `json:"pointsToNextLevel"`
+	Level             string    `json:"level"`
+	Joined            time.Time `json:"joined"`
+	LastUpdated       time.Time `json:"lastUpdated"`
+	LastUpdatedBy     string    `json:"lastUpdatedBy"`
+}
+type HotelLoyaltyByLastUpdated []HotelLoyalty
+
+func (a HotelLoyaltyByLastUpdated) Len() int      { return len(a) }
+func (a HotelLoyaltyByLastUpdated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a HotelLoyaltyByLastUpdated) Less(i, j int) bool {
+	return a[i].LastUpdated.After(a[j].LastUpdated)
 }
 
 type HotelStay struct {
-	ID             string
-	BookingID      string
-	CurrencyCode   string
-	CurrencyName   string
-	CurrencySymbol string
-	FirstName      string
-	LastName       string
-	Email          string
-	Phone          string
-	StartDate      time.Time
-	HotelCode      string
-	Type           string
-	Description    string
-	Amount         string
-	Date           time.Time
+	ID             string    `json:"id"`
+	BookingID      string    `json:"bookingId"`
+	CurrencyCode   string    `json:"currencyCode"`
+	CurrencyName   string    `json:"currencyName"`
+	CurrencySymbol string    `json:"currencySymbol"`
+	FirstName      string    `json:"firstName"`
+	LastName       string    `json:"lastName"`
+	Email          string    `json:"email"`
+	Phone          string    `json:"phone"`
+	StartDate      time.Time `json:"startDate"`
+	HotelCode      string    `json:"hotelCode"`
+	Type           string    `json:"type"`
+	Description    string    `json:"description"`
+	Amount         string    `json:"amount"`
+	Date           time.Time `json:"date"`
+	LastUpdated    time.Time `json:"lastUpdated"`
+	LastUpdatedBy  string    `json:"lastUpdatedBy"`
+}
+type HotelStayByLastUpdated []HotelStay
+
+func (a HotelStayByLastUpdated) Len() int      { return len(a) }
+func (a HotelStayByLastUpdated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a HotelStayByLastUpdated) Less(i, j int) bool {
+	return a[i].LastUpdated.After(a[j].LastUpdated)
 }
 
 type PhoneHistory struct {
-	Number        string
-	CountryCode   string
-	Type          string
-	LastUpdated   time.Time
-	LastUpdatedBy string
+	Number        string    `json:"number"`
+	CountryCode   string    `json:"countryCode"`
+	Type          string    `json:"type"`
+	LastUpdated   time.Time `json:"lastUpdated"`
+	LastUpdatedBy string    `json:"lastUpdatedBy"`
+}
+type PhoneHistoryByLastUpdated []PhoneHistory
+
+func (a PhoneHistoryByLastUpdated) Len() int      { return len(a) }
+func (a PhoneHistoryByLastUpdated) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a PhoneHistoryByLastUpdated) Less(i, j int) bool {
+	return a[i].LastUpdated.After(a[j].LastUpdated)
 }
 
 type TraceableString struct {

@@ -125,30 +125,27 @@ table {
 
 .integration-status {
     border-radius: 10px;
-    margin: 2px;
     text-align: center;
     color: white;
     padding: 5px;
-    margin-top: 12px;
+    display: inline-block;
+}
+
+.flow-run-timestamp {
+    display: inline-block;
+    margin-top: 3px;
+    color: #ccc;
+    font-size: x-small;
 }
 
 .integration-last-run-status-success {
-    border-radius: 10px;
-    margin: 2px;
-    text-align: center;
     background-color: green;
     color: white;
-    padding: 5px;
 }
 
 .integration-last-run-status-failure {
-    border-radius: 10px;
-    margin: 2px;
-    text-align: center;
     background-color: firebrick;
     color: white;
-    padding: 5px;
-    margin-top: 12px;
 }
 
 .profile-category {}
@@ -248,6 +245,10 @@ table {
 
 .delete-error-button {
     color: firebrick;
+}
+
+.action-button {
+    display: inline;
 }
 
 .parent {

@@ -7,6 +7,7 @@ import (
 	glue "tah/core/glue"
 	"tah/core/kms"
 	"tah/core/s3"
+	"tah/core/sqs"
 	model "tah/ucp/src/business-logic/model/common"
 	testutils "tah/ucp/src/business-logic/testutils"
 	admin "tah/ucp/src/business-logic/usecase/admin"
@@ -49,12 +50,23 @@ func TestTraveller(t *testing.T) {
 	profileClient := customerprofiles.Init(UCP_REGION)
 	domainName := "traveller360-test-domain" + time.Now().Format("2006-01-02-15-04-05")
 
+	sqsClient := sqs.Init(UCP_REGION)
+	qUrl, err5 := sqsClient.CreateRandom("ucp-unit-test-queue")
+	if err5 != nil {
+		t.Errorf("Could not create queue to unit test UCP %v", err5)
+	}
+	err5 = sqsClient.SetPolicy("Service", "profile.amazonaws.com", []string{"SQS:*"})
+	if err5 != nil {
+		t.Errorf("Could not Set policy on the queue %v", err5)
+	}
 	// Set up Customer Profile domain
 	tx := core.NewTransaction("ucp_test", "")
-	reg := registry.NewRegistry(UCP_REGION, nil, nil, &glueClient, &profileClient, nil)
+
+	reg := registry.NewRegistry(UCP_REGION, registry.ServiceHandlers{Glue: &glueClient, Accp: &profileClient})
 	reg.AddEnv("KMS_KEY_PROFILE_DOMAIN", keyArn)
 	reg.AddEnv("LAMBDA_ENV", "dev_test")
 	reg.AddEnv("CONNECT_PROFILE_SOURCE_BUCKET", s3Client.Bucket)
+	reg.AddEnv("ACCP_DOMAIN_DLQ", qUrl)
 	createUc := admin.NewCreateDomain()
 	createUc.SetRegistry(&reg)
 	createUc.SetTx(&tx)
@@ -111,7 +123,7 @@ func TestTraveller(t *testing.T) {
 	}
 	// Get profile if one was returned, otherwise skip and show error. Prevents out of range panic on Profiles[0].
 	if len(res.Profiles) > 0 {
-		profile, err := profileClient.GetProfile(res.Profiles[0].ConnectID, COMBINED_PROFILE_OBJECT_TYPES)
+		profile, err := profileClient.GetProfile(res.Profiles[0].ConnectID, COMBINED_PROFILE_OBJECT_TYPES, []customerprofiles.PaginationOptions{})
 		if err != nil {
 			t.Errorf("[TestTraveller] Error getting orders for user: %v", err)
 		}

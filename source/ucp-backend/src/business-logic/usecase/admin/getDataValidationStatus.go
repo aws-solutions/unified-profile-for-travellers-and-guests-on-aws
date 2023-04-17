@@ -46,8 +46,11 @@ func (u *GetDataValidationStatus) CreateRequest(req events.APIGatewayProxyReques
 
 func (u *GetDataValidationStatus) ValidateRequest(rq model.RequestWrapper) error {
 	u.tx.Log("Validating request")
-	if rq.Pagination.PageSize == 0 {
-		return errors.New("Pagse size must be greater than 0")
+	if len(rq.Pagination) == 0 {
+		return errors.New("Page size must be greater than 0")
+	}
+	if rq.Pagination[0].PageSize == 0 {
+		return errors.New("Page size must be greater than 0")
 	}
 	return nil
 }
@@ -87,7 +90,7 @@ func (u *GetDataValidationStatus) Run(req model.RequestWrapper) (model.ResponseW
 	mu := sync.Mutex{}
 	for _, path := range folders {
 		go func(filePath string) {
-			valErrs, err := uc.ValidateAccpRecords(req.Pagination, accpSourceBucket, filePath, businessMap[filePath]())
+			valErrs, err := uc.ValidateAccpRecords(req.Pagination[0], accpSourceBucket, filePath, businessMap[filePath]())
 			for _, valErr := range valErrs {
 				if !strings.Contains(valErr.Object, "_$folder$") && !strings.Contains(valErr.File, "_$folder$") {
 					mu.Lock()

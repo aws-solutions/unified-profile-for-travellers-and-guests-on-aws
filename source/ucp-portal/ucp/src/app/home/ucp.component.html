@@ -72,33 +72,33 @@
                 <!-- Position Column -->
                 <ng-container matColumnDef="id">
                     <th mat-header-cell *matHeaderCellDef> ID. </th>
-                    <td mat-cell *matCellDef="let element"> {{element.ConnectID}} </td>
+                    <td mat-cell *matCellDef="let element"> {{element.connectId}} </td>
                 </ng-container>
 
                 <!-- Name Column -->
                 <ng-container matColumnDef="firstName">
                     <th mat-header-cell *matHeaderCellDef> First Name </th>
-                    <td mat-cell *matCellDef="let element"> {{element.FirstName}} <i style="color:#ccc"
-                            *ngIf="!element.FirstName">missing</i>
+                    <td mat-cell *matCellDef="let element"> {{element.firstName}} <i style="color:#ccc"
+                            *ngIf="!element.firstName">missing</i>
                     </td>
                 </ng-container>
 
                 <!-- Weight Column -->
                 <ng-container matColumnDef="lastName">
                     <th mat-header-cell *matHeaderCellDef> Last Name </th>
-                    <td mat-cell *matCellDef="let element"> {{element.LastName}} </td>
+                    <td mat-cell *matCellDef="let element"> {{element.lastName}} </td>
                 </ng-container>
 
                 <ng-container matColumnDef="email">
                     <th mat-header-cell *matHeaderCellDef> Email </th>
-                    <td mat-cell *matCellDef="let element"> {{element.PersonalEmailAddress}} ||
-                        {{element.BusinessEmailAddress}} </td>
+                    <td mat-cell *matCellDef="let element"> {{element.personalEmailAddress ||
+                        element.businessEmailAddress}} </td>
                 </ng-container>
 
                 <ng-container matColumnDef="actions">
                     <th mat-header-cell *matHeaderCellDef> Actions </th>
                     <td mat-cell *matCellDef="let element"> <button class="btn btn-primary float-right" type="button"
-                            (click)="viewProfile(element.ConnectID)">Details</button>
+                            (click)="viewProfile(element.connectId)">Details</button>
                     </td>
                 </ng-container>
 

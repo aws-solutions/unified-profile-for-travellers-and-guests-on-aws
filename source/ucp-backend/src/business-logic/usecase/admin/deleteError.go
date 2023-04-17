@@ -49,6 +49,11 @@ func (u *DeleteError) ValidateRequest(rq model.RequestWrapper) error {
 }
 
 func (u *DeleteError) Run(req model.RequestWrapper) (model.ResponseWrapper, error) {
+	if req.UcpErrorToDelete.ID == "*" {
+		u.tx.Log("Deleting all errors")
+		err := u.reg.ErrorDB.DeleteAll()
+		return model.ResponseWrapper{}, err
+	}
 	_, err := u.reg.ErrorDB.Delete(req.UcpErrorToDelete)
 	if err != nil {
 		return model.ResponseWrapper{}, err

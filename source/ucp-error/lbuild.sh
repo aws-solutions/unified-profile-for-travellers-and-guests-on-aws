@@ -54,6 +54,6 @@ echo "7-Deploying to Lambda"
 sh push.sh $env $bucket
 if [ $env == $LOCAL_ENV_NAME ]; then
   echo "8-e2e testing (local Only, e2e are run in a separate pipeline step for staging and prod)"
-  cd e2e && sh test.sh $env && cd ..
+  cd e2e && sh test.sh $env $bucket && cd ..
 fi
 fi

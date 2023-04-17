@@ -2,6 +2,7 @@ package admin
 
 import (
 	"errors"
+	"math/rand"
 	"sync"
 	"tah/core/core"
 	"tah/core/customerprofiles"
@@ -12,6 +13,7 @@ import (
 	assetsSchema "tah/ucp/src/business-logic/model/assetsSchema"
 	model "tah/ucp/src/business-logic/model/common"
 	"tah/ucp/src/business-logic/usecase/registry"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 )
@@ -53,30 +55,35 @@ func (u *CreateDomain) ValidateRequest(rq model.RequestWrapper) error {
 }
 
 func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, error) {
+	// Set the seed for the random number generator
+	rand.Seed(time.Now().UnixNano())
 	kmsArn := u.reg.Env["KMS_KEY_PROFILE_DOMAIN"]
+	dlq := u.reg.Env["ACCP_DOMAIN_DLQ"]
+
 	env := u.reg.Env["LAMBDA_ENV"]
 	accpSourceBucket := u.reg.Env["CONNECT_PROFILE_SOURCE_BUCKET"]
 
-	if kmsArn == "" || env == "" || accpSourceBucket == "" {
-		return model.ResponseWrapper{}, errors.New("Missing Registry Environment (KMS_KEY_PROFILE_DOMAIN,LAMBDA_ENV,CONNECT_PROFILE_SOURCE_BUCKET)")
+	if kmsArn == "" || env == "" || accpSourceBucket == "" || dlq == "" {
+		return model.ResponseWrapper{}, errors.New("Missing Registry Environment (KMS_KEY_PROFILE_DOMAIN,LAMBDA_ENV,CONNECT_PROFILE_SOURCE_BUCKET,ACCP_DOMAIN_DLQ)")
 	}
 
-	err := u.reg.Accp.CreateDomain(req.Domain.Name, true, kmsArn, map[string]string{DOMAIN_TAG_ENV_NAME: env})
+	u.tx.Log("Creating domain")
+	err := u.reg.Accp.CreateDomainWithQueue(req.Domain.Name, true, kmsArn, map[string]string{DOMAIN_TAG_ENV_NAME: env, "aws_solution": "SO0244"}, dlq)
 	if err != nil {
 		return model.ResponseWrapper{}, err
 	}
 
-	businessMap := map[string]func() customerprofiles.FieldMappings{
-		ACCP_SUB_FOLDER_AIR_BOOKING:        accpmappings.BuildAirBookingMapping,
-		ACCP_SUB_FOLDER_EMAIL_HISTORY:      accpmappings.BuildEmailHistoryMapping,
-		ACCP_SUB_FOLDER_PHONE_HISTORY:      accpmappings.BuildPhoneHistoryMapping,
-		ACCP_SUB_FOLDER_AIR_LOYALTY:        accpmappings.BuildAirLoyaltyMapping,
-		ACCP_SUB_FOLDER_CLICKSTREAM:        accpmappings.BuildClickstreamMapping,
-		ACCP_SUB_FOLDER_GUEST_PROFILE:      accpmappings.BuildGuestProfileMapping,
-		ACCP_SUB_FOLDER_HOTEL_LOYALTY:      accpmappings.BuildHotelLoyaltyMapping,
-		ACCP_SUB_FOLDER_HOTEL_BOOKING:      accpmappings.BuildHotelBookingMapping,
-		ACCP_SUB_FOLDER_PAX_PROFILE:        accpmappings.BuildPassengerProfileMapping,
-		ACCP_SUB_FOLDER_HOTEL_STAY_MAPPING: accpmappings.BuildHotelStayMapping,
+	accpMappings := map[string]func() customerprofiles.FieldMappings{
+		common.ACCP_RECORD_AIR_BOOKING:        accpmappings.BuildAirBookingMapping,
+		common.ACCP_RECORD_EMAIL_HISTORY:      accpmappings.BuildEmailHistoryMapping,
+		common.ACCP_RECORD_PHONE_HISTORY:      accpmappings.BuildPhoneHistoryMapping,
+		common.ACCP_RECORD_AIR_LOYALTY:        accpmappings.BuildAirLoyaltyMapping,
+		common.ACCP_RECORD_CLICKSTREAM:        accpmappings.BuildClickstreamMapping,
+		common.ACCP_RECORD_GUEST_PROFILE:      accpmappings.BuildGuestProfileMapping,
+		common.ACCP_RECORD_HOTEL_LOYALTY:      accpmappings.BuildHotelLoyaltyMapping,
+		common.ACCP_RECORD_HOTEL_BOOKING:      accpmappings.BuildHotelBookingMapping,
+		common.ACCP_RECORD_PAX_PROFILE:        accpmappings.BuildPassengerProfileMapping,
+		common.ACCP_RECORD_HOTEL_STAY_MAPPING: accpmappings.BuildHotelStayMapping,
 	}
 
 	bizObjectBuckets := map[string]string{
@@ -88,51 +95,77 @@ func (u *CreateDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, err
 		common.BIZ_OBJECT_STAY_REVENUE:  u.reg.Env["S3_CLICKSTREAM"],
 	}
 
-	for keyBusiness := range businessMap {
-		err = u.reg.Accp.CreateMapping(keyBusiness,
-			"Primary Mapping for the "+keyBusiness+" object", businessMap[keyBusiness]())
-		if err != nil {
-			u.tx.Log("[CreateUcpDomain] Error creating Mapping: %s. deleting domain", err)
-			err2 := u.reg.Accp.DeleteDomain()
-			if err2 != nil {
-				u.tx.Log("[CreateUcpDomain][warning] Error cleaning up domain after failed mapping creation %v", err2)
-			}
-			return model.ResponseWrapper{}, err
-		}
-		integrationName := keyBusiness + "_" + req.Domain.Name
-		err = u.reg.Accp.PutIntegration(integrationName, keyBusiness, accpSourceBucket, businessMap[keyBusiness]())
-		if err != nil {
-			u.tx.Log("Error creating integration %s", err)
-			return model.ResponseWrapper{}, err
-		}
-	}
-
+	i := 0
+	var lastErr error
 	var wg sync.WaitGroup
+	wg.Add(len(common.ACCP_RECORDS))
 	wg.Add(len(common.BUSINESS_OBJECTS))
-	output := make(chan error, 100)
-	for _, bizObject := range common.BUSINESS_OBJECTS {
-		go func(bizObject commonModel.BusinessObject) {
+	for _, businessObject := range common.ACCP_RECORDS {
+		go func(index int, accpRec commonModel.AccpRecord) {
+			accpRecName := accpRec.Name
+			u.tx.Log("[CreateUcpDomain] Creating mapping for %s", accpRecName)
+			err = u.reg.Accp.CreateMapping(accpRecName,
+				"Primary Mapping for the "+accpRecName+" object", accpMappings[accpRecName]())
+			if err != nil {
+				u.tx.Log("[CreateUcpDomain] Error creating Mapping: %s. deleting domain", err)
+				lastErr = err
+				err2 := u.reg.Accp.DeleteDomain()
+				if err2 != nil {
+					u.tx.Log("[CreateUcpDomain][warning] Error cleaning up domain after failed mapping creation %v", err2)
+				}
+				wg.Done()
+				return
+			}
+
+			u.tx.Log("[CreateUcpDomain] Creating integration for %s", accpRecName)
+			integrationName := accpRecName + "_" + req.Domain.Name
+			//we create each flow with a 3 minutes delay compared to he previous to avoid concurtency issues at the ACCP level
+			startTime := time.Now().Add(time.Duration(index*3) * time.Minute)
+			//we introduce 100 ms delay to avoid
+			wait := (1000 * time.Millisecond) * time.Duration(index)
+			time.Sleep(wait)
+			//each integration creates an AppFlow flow that targets a S3 bucket under the folder <dominaName>/<objectName>
+			prefix := req.Domain.Name + "/" + accpRecName
+			err = u.reg.Accp.PutIntegration(integrationName, accpRecName, accpSourceBucket, prefix, accpMappings[accpRecName](), startTime)
+			if err != nil {
+				u.tx.Log("Error creating integration %s, retrying after wait", err)
+				time.Sleep((1000 * time.Millisecond))
+				//we update the flow name to avoid conflict during retry
+				integrationName = accpRecName + "_" + req.Domain.Name + "_1"
+				startTime = time.Now().Add(time.Duration(index) * time.Minute)
+				err = u.reg.Accp.PutIntegration(integrationName, accpRecName, accpSourceBucket, prefix, accpMappings[accpRecName](), startTime)
+				if err != nil {
+					u.tx.Log("Error after retry %s", err)
+					lastErr = err
+				}
+			}
+			wg.Done()
+		}(i, businessObject)
+		i++
+	}
+	j := 0
+	for _, businessObject := range common.BUSINESS_OBJECTS {
+		go func(index int, bizObject commonModel.BusinessObject) {
+			u.tx.Log("[CreateUcpDomain] Creating table for %s", bizObject.Name)
 			schema, err := assetsSchema.LoadSchema(bizObject)
 			if err != nil {
 				u.tx.Log("[CreateUcpDomain] Error loading schema: %v", err)
-				output <- err
+				lastErr = err
 			}
 			tableName := commonServices.BuildTableName(env, bizObject, req.Domain.Name)
 
 			err2 := u.reg.Glue.CreateTable(tableName, bizObjectBuckets[bizObject.Name], map[string]string{"year": "int", "month": "int", "day": "int"}, schema)
 			if err2 != nil {
 				u.tx.Log("[CreateUcpDomain] Error creating table: %v", err2)
-				output <- err2
+				lastErr = err2
 			}
-			defer wg.Done()
-		}(bizObject)
+
+			wg.Done()
+		}(j, businessObject)
+		j++
 	}
 	wg.Wait()
-	if len(output) > 0 {
-		return model.ResponseWrapper{}, errors.New("Error occured during table creation")
-	}
-
-	return model.ResponseWrapper{}, err
+	return model.ResponseWrapper{}, lastErr
 }
 
 func (u *CreateDomain) CreateResponse(res model.ResponseWrapper) (events.APIGatewayProxyResponse, error) {

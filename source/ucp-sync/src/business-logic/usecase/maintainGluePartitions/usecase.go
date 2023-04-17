@@ -27,7 +27,7 @@ type TableConfig struct {
 	JobName    string
 }
 
-func Run(tx core.Transaction, glueCfg glue.Config, configDb db.DBConfig, bucketNames map[string]string, accpCfg customerprofiles.CustomerProfileConfig, env string, originDate string, jobs map[string]string) ([]error, []error) {
+func Run(tx core.Transaction, glueCfg glue.Config, configDb db.DBConfig, bucketNames map[string]string, accpCfg customerprofiles.CustomerProfileConfig, env string, originDate string, jobs map[string]string, accpBucket string) ([]error, []error) {
 	now := time.Now()
 	partitionErrors := []error{}
 	glueJobsErrors := []error{}
@@ -72,7 +72,7 @@ func Run(tx core.Transaction, glueCfg glue.Config, configDb db.DBConfig, bucketN
 			updateStatus(tx, configDb, tName, updatedTimeStamp, statusErr, originDate)
 			tx.Log("[%v] 4-Start Glue Job %v", tName, jobName)
 			err = glueCfg.RunJob(jobName, map[string]string{
-				"--DEST_BUCKET":  bucket,
+				"--DEST_BUCKET":  accpBucket,
 				"--SOURCE_TABLE": tName,
 				"--ACCP_DOMAIN":  domain,
 			})

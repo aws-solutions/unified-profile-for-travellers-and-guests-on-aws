@@ -59,7 +59,8 @@ func TestGenericUseCase(t *testing.T) {
 	var glueClient = glue.Init(REGION, "test_glue_db")
 	var dbConfig = db.Init("TEST_TABLE", "TEST_PK", "TEST_SK")
 	profiles := customerprofiles.InitWithDomain("test-domain", REGION)
-	ucRegistry := NewRegistry(REGION, &appregistryClient, &iamClient, &glueClient, &profiles, &dbConfig)
+
+	ucRegistry := NewRegistry(REGION, ServiceHandlers{AppRegistry: &appregistryClient, Iam: &iamClient, Glue: &glueClient, Accp: &profiles, ErrorDB: &dbConfig})
 	ucRegistry.Register("POST", "test/path/{id}", &GenericUseCase{})
 
 	ucRegistry.AddEnv("TEST_ENV_VAR", "TEST_ENV_VAR_VALUE")

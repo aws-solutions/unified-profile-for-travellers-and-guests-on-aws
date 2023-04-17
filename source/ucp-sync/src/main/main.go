@@ -40,6 +40,7 @@ var S3_GUEST_PROFILE = os.Getenv("S3_GUEST_PROFILE")
 var S3_PAX_PROFILE = os.Getenv("S3_PAX_PROFILE")
 var S3_CLICKSTREAM = os.Getenv("S3_CLICKSTREAM")
 var S3_STAY_REVENUE = os.Getenv("S3_STAY_REVENUE")
+var CONNECT_PROFILE_SOURCE_BUCKET = os.Getenv("CONNECT_PROFILE_SOURCE_BUCKET")
 
 var DYNAMO_TABLE = os.Getenv("DYNAMO_TABLE")
 var DYNAMO_PK = os.Getenv("DYNAMO_PK")
@@ -78,7 +79,7 @@ func HandleRequest(ctx context.Context, req events.CloudWatchEvent) (model.Respo
 
 	go func() {
 		tx.Log("Starting use case %+v", "maintainGluePartitions")
-		maintainGluePartitions.Run(tx, glueCfg, configDb, buckets, accpCfg, LAMBDA_ENV, ORIGIN_DATE, jobs)
+		maintainGluePartitions.Run(tx, glueCfg, configDb, buckets, accpCfg, LAMBDA_ENV, ORIGIN_DATE, jobs, CONNECT_PROFILE_SOURCE_BUCKET)
 		wg.Done()
 	}()
 	wg.Wait()

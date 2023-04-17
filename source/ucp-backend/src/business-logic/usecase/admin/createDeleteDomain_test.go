@@ -10,6 +10,8 @@ import (
 	"tah/core/iam"
 	"tah/core/kms"
 	"tah/core/s3"
+	"tah/core/sqs"
+
 	common "tah/ucp-common/src/constant/admin"
 	model "tah/ucp/src/business-logic/model/common"
 	testutils "tah/ucp/src/business-logic/testutils"
@@ -25,7 +27,16 @@ func TestDomainCreationDeletion(t *testing.T) {
 	kmsc := kms.Init(UCP_REGION)
 	bucketName, err0 := s3c.CreateRandomBucket("ucp-unit-test")
 	if err0 != nil {
-		t.Errorf("Ccound not crerate bucket to unit test UCP %v", err0)
+		t.Errorf("Could not create bucket to unit test UCP %v", err0)
+	}
+	sqsClient := sqs.Init(UCP_REGION)
+	qUrl, err5 := sqsClient.CreateRandom("ucp-unit-test-queue")
+	if err5 != nil {
+		t.Errorf("Could not create queue to unit test UCP %v", err5)
+	}
+	err5 = sqsClient.SetPolicy("Service", "profile.amazonaws.com", []string{"SQS:*"})
+	if err5 != nil {
+		t.Errorf("Could not Set policy on the queue %v", err5)
 	}
 	resource := []string{"arn:aws:s3:::" + bucketName, "arn:aws:s3:::" + bucketName + "/*"}
 	actions := []string{"s3:PutObject", "s3:ListBucket", "s3:GetObject", "s3:GetBucketLocation", "s3:GetBucketPolicy"}
@@ -57,10 +68,11 @@ func TestDomainCreationDeletion(t *testing.T) {
 	profiles := customerprofiles.InitWithDomain(testDomain, UCP_REGION)
 	dbConfig := db.Init("TEST_TABLE", "TEST_PK", "TEST_SK")
 
-	reg := registry.NewRegistry(UCP_REGION, &appregistryClient, &iamClient, &glueClient, &profiles, &dbConfig)
+	reg := registry.NewRegistry(UCP_REGION, registry.ServiceHandlers{AppRegistry: &appregistryClient, Iam: &iamClient, Glue: &glueClient, Accp: &profiles, ErrorDB: &dbConfig})
 	reg.AddEnv("KMS_KEY_PROFILE_DOMAIN", keyArn)
 	reg.AddEnv("LAMBDA_ENV", "dev_test")
 	reg.AddEnv("CONNECT_PROFILE_SOURCE_BUCKET", bucketName)
+	reg.AddEnv("ACCP_DOMAIN_DLQ", qUrl)
 
 	createUc := NewCreateDomain()
 	createUc.SetRegistry(&reg)
@@ -83,6 +95,7 @@ func TestDomainCreationDeletion(t *testing.T) {
 		t.Errorf("Wrong number of tables in list, %v tables in database, creation", len(tables))
 	}
 	log.Printf("Testing domain deletions")
+	//deleting teh doomain will delete the SQS as well
 	_, err = deleteUc.Run(req)
 	if err != nil {
 		t.Errorf("Error deleting UCP domain: %v", err)

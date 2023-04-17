@@ -250,10 +250,19 @@ func (c Config) CreateTable(name string, bucketName string, partitionKeys map[st
 	_, err := c.Client.CreateTable(&glue.CreateTableInput{
 		DatabaseName: aws.String(c.DbName),
 		TableInput: &glue.TableInput{
-			Name: aws.String(name),
+			Name:        aws.String(name),
+			Description: aws.String("Table created by Go SDK"),
 			StorageDescriptor: &glue.StorageDescriptor{
-				Location: aws.String("s3://" + bucketName),
-				Columns:  glueColumnList,
+				Location:     aws.String("s3://" + bucketName),
+				Columns:      glueColumnList,
+				InputFormat:  aws.String("org.apache.hadoop.mapred.TextInputFormat"),
+				OutputFormat: aws.String("org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"),
+				SerdeInfo: &glue.SerDeInfo{
+					SerializationLibrary: aws.String("org.openx.data.jsonserde.JsonSerDe"),
+				},
+			},
+			Parameters: map[string]*string{
+				"classification": aws.String("json"),
 			},
 			PartitionKeys: pKeys,
 		},

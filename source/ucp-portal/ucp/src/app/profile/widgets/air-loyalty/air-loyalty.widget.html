@@ -1,0 +1,56 @@
+<div class="data-title"><fa-icon class="data-title-icon"
+        [icon]="(config.objectTypeIcons || {})[objectType].icon"></fa-icon>
+    LOYALTY PROFILES</div>
+<ucp-pagination [nRecords]="records.length" *ngIf="records.length >= pageSize && page===0" [pageSize]="pageSize"
+    (pageChange)="onPageChange($event)"></ucp-pagination>
+<div class="table-container">
+    <div class="row table-header">
+        <div class="col-sm-2 title align-center block-title">
+            Program
+        </div>
+        <div class="col-sm-2 title align-center block-title">
+            Joined
+        </div>
+        <div class="col-sm-2 title align-center block-title">
+            Loyalty Id
+        </div>
+        <div class="col-sm-1 title align-center block-title">
+            Miles
+        </div>
+        <div class="col-sm-1 title align-center block-title">
+            Level
+        </div>
+        <div class="col-sm-2 title align-center block-title">
+            Miles to Next Level
+        </div>
+        <div class="col-sm-2 title align-center block-title">
+            Last Updated
+        </div>
+    </div>
+    <div class="row table-row" *ngFor="let rec of records">
+        <div class="col-sm-2 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'programName'" [data]="rec.programName"></ucp-data>
+        </div>
+        <div class="col-sm-2 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'joined'"
+                [data]="rec.joined | date: 'YYYY-MM-dd'"></ucp-data>
+        </div>
+        <div class="col-sm-2 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'loyaltyId'" [data]="rec.loyaltyId"></ucp-data>
+        </div>
+        <div class="col-sm-1 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'miles'" [data]="rec.miles"></ucp-data>
+        </div>
+        <div class="col-sm-1 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'level'" [data]="rec.level"></ucp-data>
+        </div>
+        <div class="col-sm-2 title align-center record-display">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'milesToNextLevel'"
+                [data]="rec.milesToNextLevel"></ucp-data>
+        </div>
+        <div class="col-sm-2 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'lastUpdated'"
+                [data]="rec.lastUpdated | date: 'YYYY-MM-dd hh:mm'"></ucp-data>
+        </div>
+    </div>
+</div>

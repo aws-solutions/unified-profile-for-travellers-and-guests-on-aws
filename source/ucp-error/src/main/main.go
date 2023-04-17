@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	core "tah/core/core"
+	customerprofiles "tah/core/customerprofiles"
 	db "tah/core/db"
 	model "tah/ucp-sync/src/business-logic/model"
 	"time"
@@ -40,16 +41,36 @@ func HandleRequestWithServices(ctx context.Context, req events.SQSEvent, configD
 	var lastErr error
 	for _, rec := range req.Records {
 		ucpErr, err := parseSQSRecord(rec)
+		retriedSuccess := false
 		if err != nil {
 			ucpErr = createUnknownErrorError(rec, err)
 		}
-		err = saveRecord(configDb, ucpErr)
-		if err != nil {
-			lastErr = err
-			tx.Log("An error occured while saving the error in DynamoDB")
+		if ucpErr.Category == model.ACCP_INGESTION_ERROR {
+			tx.Log("Retrying ACCP Error")
+			err = retryAccpError(tx, ucpErr)
+			if err != nil {
+				tx.Log("Retry Failed")
+				ucpErr.Message = ucpErr.Message + " (Retried)"
+			} else {
+				retriedSuccess = true
+			}
+		}
+		if !retriedSuccess {
+			tx.Log("Saving error in DynamoDB")
+			err = saveRecord(configDb, ucpErr)
+			if err != nil {
+				lastErr = err
+				tx.Log("An error occured while saving the error in DynamoDB")
+			}
 		}
 	}
 	return model.ResponseWrapper{}, lastErr
+}
+
+func retryAccpError(tx core.Transaction, ucpErr model.UcpIngestionError) error {
+	customCfg := customerprofiles.InitWithDomain(ucpErr.Domain, LAMBDA_REGION)
+	tx.Log("Putting profile object to ACCP in domain %s", ucpErr.Domain)
+	return customCfg.PutProfileObject(ucpErr.Record, ucpErr.AccpRecordType)
 }
 
 func main() {

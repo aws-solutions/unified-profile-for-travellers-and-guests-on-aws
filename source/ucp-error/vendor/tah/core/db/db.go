@@ -458,6 +458,43 @@ func (dbc DBConfig) Delete(prop interface{}) (interface{}, error) {
 	return prop, err
 }
 
+//TODO: Batch the FindAll
+func (dbc DBConfig) DeleteAll() error {
+	lastEvalKey := map[string]*dynamodb.AttributeValue{}
+	i := 0
+	for len(lastEvalKey) > 0 || i == 0 {
+		i++
+		input := &dynamodb.ScanInput{
+			TableName:            aws.String(dbc.TableName),
+			ProjectionExpression: aws.String(dbc.PrimaryKey + "," + dbc.SortKey),
+		}
+		out, err := dbc.DbService.Scan(input)
+		if err != nil {
+			dbc.Tx.Log("[DeleteAll] error colling dynamo %v", err)
+			return err
+		}
+		lastEvalKey = out.LastEvaluatedKey
+		data := []map[string]interface{}{}
+		err = dynamodbattribute.UnmarshalListOfMaps(out.Items, &data)
+		if err != nil {
+			dbc.Tx.Log("[DeleteAll] Failed to unmarshall records %+v with error: %v", data, err)
+		}
+		toDelete := []map[string]interface{}{}
+		for _, el := range data {
+			toDelete = append(toDelete, map[string]interface{}{
+				dbc.PrimaryKey: el[dbc.PrimaryKey],
+				dbc.SortKey:    el[dbc.SortKey],
+			})
+		}
+		err = dbc.DeleteMany(toDelete)
+		if err != nil {
+			dbc.Tx.Log("Error deleting all items %v", err.Error())
+			return err
+		}
+	}
+	return nil
+}
+
 //Writtes many items to a single table
 func (dbc DBConfig) SaveMany(data interface{}) error {
 	//Dynamo db currently limits batches to 25 items
@@ -666,9 +703,11 @@ func (dbc DBConfig) FindStartingWithByGsi(pk string, value string, data interfac
 }
 
 func (dbc DBConfig) FindStartingWithAndFilterWithIndex(pk string, value string, data interface{}, queryOptions QueryOptions) error {
-	dbc.Tx.Log("[FindStartingWithAndFilterWithIndex] Pk: %v, Sk start with: %s", pk, value)
+	dbc.Tx.Log("[FindStartingWithAndFilterWithIndex] Pk: %v, Sk start with: %s and queryOptions %+v", pk, value, queryOptions)
 	filter := queryOptions.Filter
 	index := queryOptions.Index
+	reverseOrder := queryOptions.ReverseOrder
+	paginOptions := queryOptions.PaginOptions
 
 	pkName := dbc.PrimaryKey
 	skName := dbc.SortKey
@@ -704,6 +743,10 @@ func (dbc DBConfig) FindStartingWithAndFilterWithIndex(pk string, value string, 
 		queryInput.IndexName = aws.String(index.Name)
 	}
 
+	if reverseOrder {
+		queryInput.ScanIndexForward = aws.Bool(false)
+	}
+
 	//Building Filter expression
 	if filter.HasFilter() {
 		expr, err := dbc.BuildQueryFilter(filter)
@@ -716,7 +759,7 @@ func (dbc DBConfig) FindStartingWithAndFilterWithIndex(pk string, value string, 
 		queryInput.FilterExpression = expr.Filter()
 	}
 	//Run query with support for pagination
-	allItems, err := dbc.RunQuery(queryInput, DynamoPaginationOptions{})
+	allItems, err := dbc.RunQuery(queryInput, paginOptions)
 	if err != nil {
 		dbc.Tx.Log("[FindStartingWithAndFilterWithIndex] Run query failed: %v", err)
 		return err
@@ -754,6 +797,7 @@ func (dbc DBConfig) FindGreaterThan(pk string, value int64, data interface{}, qu
 }
 
 func (dbc DBConfig) FindGreaterThanAndFilterWithIndex(pk string, value int64, data interface{}, queryOptions QueryOptions) error {
+	dbc.Tx.Log("[FindGreaterThanAndFilterWithIndex] Pk: %v, Sk greater than: %d with QueryOptions: %+v", pk, value, queryOptions)
 	filter := queryOptions.Filter
 	index := queryOptions.Index
 	paginOptions := queryOptions.PaginOptions
@@ -793,11 +837,6 @@ func (dbc DBConfig) FindGreaterThanAndFilterWithIndex(pk string, value int64, da
 		queryInput.IndexName = aws.String(index.Name)
 	}
 
-	//Optional pagination
-	if paginOptions.PageSize > 0 {
-		queryInput.Limit = aws.Int64(paginOptions.PageSize)
-	}
-
 	if reverseOrder {
 		queryInput.ScanIndexForward = aws.Bool(false)
 	}
@@ -830,6 +869,13 @@ func (dbc DBConfig) FindGreaterThanAndFilterWithIndex(pk string, value int64, da
 }
 
 func (dbc DBConfig) RunQuery(queryInput *dynamodb.QueryInput, paginOptions DynamoPaginationOptions) ([]map[string]*dynamodb.AttributeValue, error) {
+	dbc.Tx.Log("[RunQuery] Request: %+v", queryInput)
+
+	//Optional pagination
+	if paginOptions.PageSize > 0 {
+		queryInput.Limit = aws.Int64(paginOptions.PageSize)
+	}
+
 	allItems := []map[string]*dynamodb.AttributeValue{}
 	var page int64 = 0
 	var result, err = dbc.DbService.QueryWithContext(dbc.LambdaContext, queryInput)

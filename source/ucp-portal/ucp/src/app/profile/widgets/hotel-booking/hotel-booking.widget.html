@@ -1,0 +1,54 @@
+<div class="data-title"><fa-icon class="data-title-icon"
+        [icon]="(config.objectTypeIcons || {})[objectType].icon"></fa-icon>
+    HOTEL BOOKINGS</div>
+<ucp-pagination [nRecords]="records.length" [pageSize]="pageSize" (pageChange)="onPageChange($event)"></ucp-pagination>
+<div class="table-container">
+    <div class="row table-header">
+        <div class="col-sm-3 title align-center block-title">
+            BookingId
+        </div>
+        <div class="col-sm-1 title align-center block-title">
+            Property
+        </div>
+        <div class="col-sm-2 title align-center block-title">
+            Check In
+        </div>
+        <div class="col-sm-1 title align-center block-title">
+            # Nights
+        </div>
+        <div class="col-sm-1 title align-center block-title">
+            # Guests
+        </div>
+        <div class="col-sm-2 title align-center block-title">
+            Status
+        </div>
+        <div class="col-sm-2 title align-center block-title">
+            Last Updated
+        </div>
+    </div>
+    <div class="row table-row" *ngFor="let rec of records">
+        <div class="col-sm-3 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'bookingId'" [data]="rec.bookingId"></ucp-data>
+        </div>
+        <div class="col-sm-1 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'hotelCode'" [data]="rec.hotelCode"></ucp-data>
+        </div>
+        <div class="col-sm-2 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'checkInDate'"
+                [data]="rec.checkInDate | date: 'YYYY-MM-dd'"></ucp-data>
+        </div>
+        <div class="col-sm-1 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'numNights'" [data]="rec.numNights"></ucp-data>
+        </div>
+        <div class="col-sm-1 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'numGuests'" [data]="rec.numGuests"></ucp-data>
+        </div>
+        <div class="col-sm-2 title align-center record-display">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'status'" [data]="rec.status"></ucp-data>
+        </div>
+        <div class="col-sm-2 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'lastUpdated'"
+                [data]="rec.lastUpdated | date: 'YYYY-MM-dd hh:mm'"></ucp-data>
+        </div>
+    </div>
+</div>

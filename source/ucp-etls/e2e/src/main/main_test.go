@@ -47,6 +47,7 @@ type BusinessObjectTestConfig struct {
 	SourceBucket  string
 	CrawlerName   string
 	TargetPrefix  string
+	Multiline     bool
 }
 
 func TestMain(t *testing.T) {
@@ -67,7 +68,7 @@ func TestMain(t *testing.T) {
 		BusinessObjectTestConfig{
 			ObjectName:   "air_booking",
 			GlueJob:      GLUE_JOB_NAME_AIR_BOOKING,
-			TestFilePath: "../../../test_data/air_booking/",
+			TestFilePath: "../../../../test_data/air_booking/",
 			TestFiles: []string{
 				"data1.json",
 				"data2.json",
@@ -80,7 +81,7 @@ func TestMain(t *testing.T) {
 		BusinessObjectTestConfig{
 			ObjectName:   "clickstream",
 			GlueJob:      GLUE_JOB_NAME_CLICKSTREAM,
-			TestFilePath: "../../../test_data/clickstream/",
+			TestFilePath: "../../../../test_data/clickstream/",
 			TestFiles: []string{
 				"data1.json",
 				"data2.json",
@@ -89,11 +90,12 @@ func TestMain(t *testing.T) {
 			SourceBucket:  TEST_BUCKET_CLICKSTREAM,
 			CrawlerName:   "glue_e2e_tests_clickstream",
 			TargetPrefix:  "clickstream",
+			Multiline:     true,
 		},
 		BusinessObjectTestConfig{
 			ObjectName:   "guest_profile",
 			GlueJob:      GLUE_JOB_NAME_GUEST_PROFILES,
-			TestFilePath: "../../../test_data/guest_profile/",
+			TestFilePath: "../../../../test_data/guest_profile/",
 			TestFiles: []string{
 				"data1.json",
 				"data2.json",
@@ -106,7 +108,7 @@ func TestMain(t *testing.T) {
 		BusinessObjectTestConfig{
 			ObjectName:   "hotel_booking",
 			GlueJob:      GLUE_JOB_NAME_HOTEL_BOOKINGS,
-			TestFilePath: "../../../test_data/hotel_booking/",
+			TestFilePath: "../../../../test_data/hotel_booking/",
 			TestFiles: []string{
 				"data1.json",
 				"data2.json",
@@ -119,7 +121,7 @@ func TestMain(t *testing.T) {
 		BusinessObjectTestConfig{
 			ObjectName:   "hotel_stay",
 			GlueJob:      GLUE_JOB_NAME_STAY_REVENUE,
-			TestFilePath: "../../../test_data/hotel_stay/",
+			TestFilePath: "../../../../test_data/hotel_stay/",
 			TestFiles: []string{
 				"data1.json",
 				"data2.json",
@@ -132,7 +134,7 @@ func TestMain(t *testing.T) {
 		BusinessObjectTestConfig{
 			ObjectName:   "pax_profile",
 			GlueJob:      GLUE_JOB_NAME_PAX_PROFILES,
-			TestFilePath: "../../../test_data/pax_profile/",
+			TestFilePath: "../../../../test_data/pax_profile/",
 			TestFiles: []string{
 				"data1.json",
 				"data2.json",
@@ -157,7 +159,11 @@ func TestMain(t *testing.T) {
 
 			log.Printf("[%v] 2-Uploading data to s3://%s/%s", c.ObjectName, c.SourceBucket, strings.Join([]string{year, month, day}, "/")+"/09/")
 			for _, file := range c.TestFiles {
-				unprettyfy(c.TestFilePath + file)
+				//Fo single linek json object we unprerttyfy them since gluue cann't process pererttified Json.
+				//For multiline jsonl files we keep them as is. For noo only c
+				if !c.Multiline {
+					unprettyfy(c.TestFilePath + file)
+				}
 				err := sourceBucketHandler.UploadFile("2023/12/01/09/"+file, c.TestFilePath+file)
 				if err != nil {
 					testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] Cound not upload files: %v", c.ObjectName, err))

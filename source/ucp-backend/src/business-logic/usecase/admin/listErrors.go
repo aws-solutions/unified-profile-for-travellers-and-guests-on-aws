@@ -46,11 +46,15 @@ func (u *ListErrors) ValidateRequest(rq model.RequestWrapper) error {
 
 func (u *ListErrors) Run(req model.RequestWrapper) (model.ResponseWrapper, error) {
 	errs := []model.UcpIngestionError{}
+	po := model.PaginationOptions{}
+	if len(req.Pagination) > 0 {
+		po = req.Pagination[0]
+	}
 	queryOptions := db.QueryOptions{
 		ReverseOrder: true,
 		PaginOptions: db.DynamoPaginationOptions{
-			Page:     int64(req.Pagination.Page),
-			PageSize: int64(req.Pagination.PageSize),
+			Page:     int64(po.Page),
+			PageSize: int64(po.PageSize),
 		}}
 	err := u.reg.ErrorDB.FindStartingWithAndFilterWithIndex(ERROR_PK, ERROR_SK_PREFIX, &errs, queryOptions)
 	if err != nil {

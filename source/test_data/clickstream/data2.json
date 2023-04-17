@@ -1,132 +1,14 @@
-{
-    "modelVersion": "1.0",
-    "event_type": "SearchExperience",
-    "event_timestamp": "2021-03-29T22:22:19.451829566Z",
-    "arrival_timestamp": 0,
-    "event_version": "",
-    "application": {},
-    "client": {},
-    "device": {
-        "useragent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"
-    },
-    "session": {
-        "id": "b21683f9-6345-40da-a4ea-9aac75f4149e"
-    },
-    "attributes": [
-        {
-            "type": "string",
-            "name": "quantities",
-            "stringValue": "",
-            "stringValues": null,
-            "numValue": 0.0,
-            "numValues": [
-                4.0,
-                2.0,
-                3.0,
-                3.0,
-                2.0,
-                3.0,
-                4.0,
-                1.0,
-                1.0,
-                5.0
-            ]
-        },
-        {
-            "type": "strings",
-            "name": "products",
-            "stringValue": "",
-            "stringValues": [
-                "DBL-BAR",
-                "BKFST",
-                "KING_SUPER_SAVER",
-                "SUITE-BAR",
-                "SUITE-BAR",
-                "BKFST",
-                "KING_SUPER_SAVER",
-                "CHMPGN",
-                "CHMPGN",
-                "KING_SUPER_SAVER"
-            ],
-            "numValue": 0.0,
-            "numValues": null
-        },
-        {
-            "type": "string",
-            "name": "destination",
-            "stringValue": "Bakersfield, Texas, Fiji",
-            "stringValues": null,
-            "numValue": 0.0,
-            "numValues": null
-        },
-        {
-            "type": "number",
-            "name": "num_nights",
-            "stringValue": "",
-            "stringValues": null,
-            "numValue": 6.0,
-            "numValues": null
-        },
-        {
-            "type": "string",
-            "name": "room_type",
-            "stringValue": "SUITE",
-            "stringValues": null,
-            "numValue": 0.0,
-            "numValues": null
-        },
-        {
-            "type": "string",
-            "name": "rate_plan",
-            "stringValue": "BAR",
-            "stringValues": null,
-            "numValue": 0.0,
-            "numValues": null
-        },
-        {
-            "type": "string",
-            "name": "checkin_date",
-            "stringValue": "2021-04-28",
-            "stringValues": null,
-            "numValue": 0.0,
-            "numValues": null
-        },
-        {
-            "type": "string",
-            "name": "checkout_date",
-            "stringValue": "2021-05-04",
-            "stringValues": null,
-            "numValue": 0.0,
-            "numValues": null
-        },
-        {
-            "type": "string",
-            "name": "hotel_code",
-            "stringValue": "SPO05",
-            "stringValues": null,
-            "numValue": 0.0,
-            "numValues": null
-        },
-        {
-            "type": "strings",
-            "name": "hotel_code_list",
-            "stringValue": "",
-            "stringValues": [
-                "TOK04",
-                "PAR18",
-                "SPO01",
-                "ROM09",
-                "TOK19",
-                "TOK05",
-                "LIM15",
-                "PAR01",
-                "LIM17",
-                "TOK14"
-            ],
-            "numValue": 0.0,
-            "numValues": null
-        }
-    ],
-    "endpoint": {},
-    "awsAccountId": ""
-}
+{"modelVersion":"1.0","event_type":"UpdateBooking","event_timestamp":"2022-03-24T20:07:36.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[1.0,1.0,2.0,5.0,2.0,1.0,3.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["SUITE-BAR","CHMPGN","BKFST","KING_SUPER_SAVER","DBL-BAR","SUITE-BAR","CHMPGN"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"DBL","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"BAR","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"ATL16","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["SPO06","PAR16","SPO06","TOK07","ATL07","PAR14","NYC11"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"ConfirmBooking","event_timestamp":"2022-03-24T20:07:49.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[5.0,5.0,3.0,2.0,2.0,2.0,4.0,5.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["DBL-BAR","KING_SUPER_SAVER","CHMPGN","CHMPGN","CHMPGN","DBL-BAR","SUITE-BAR","BKFST"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"DBL","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"BAR","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"LON13","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["ROM02","ROM17","SPO16","LON10","ATL06","ATL00","NYC19","PAR01"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"RetreiveBooking","event_timestamp":"2022-03-24T20:07:54.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[3.0,4.0,2.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["KING_SUPER_SAVER","DBL-BAR","KING_SUPER_SAVER"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"SUITE","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"NON_REFUNDABLE","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"ROM01","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["PAR10","SPO08","SGP14"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"CancelBooking","event_timestamp":"2022-03-24T20:08:03.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[2.0,5.0,5.0,3.0,4.0,1.0,3.0,5.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["DBL-BAR","CHMPGN","DBL-BAR","SUITE-BAR","SUITE-BAR","BKFST","DBL-BAR","DBL-BAR"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"SUITE","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"SUPER_SAVER","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"LIM16","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["TOK17","SGP18","TOK11","NYC00","TOK06","PAR12","NYC11","ROM05"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"SelectAddOn","event_timestamp":"2022-03-24T20:08:16.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[2.0,5.0,3.0,4.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["DBL-BAR","BKFST","CHMPGN","SUITE-BAR"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"DBL","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"BAR","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"PAR05","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["ROM01","ATL19","ATL13","ROM04"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"SelectAddOn","event_timestamp":"2022-03-24T20:08:32.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[2.0,5.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["SUITE-BAR","KING_SUPER_SAVER"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"KING","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"SUPER_SAVER","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"ROM00","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["TOK10","LIM01"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"SelectEndTime","event_timestamp":"2022-03-24T20:08:38.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[3.0,5.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["SUITE-BAR","CHMPGN"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"KING","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"NON_REFUNDABLE","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"PAR10","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["ROM03","TOK15"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"SelectStartTime","event_timestamp":"2022-03-24T20:08:46.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[4.0,1.0,4.0,3.0,3.0,2.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["SUITE-BAR","CHMPGN","DBL-BAR","KING_SUPER_SAVER","BKFST","DBL-BAR"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"DBL","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"SUPER_SAVER","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"ROM16","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["LIM12","LON00","NYC14","TOK13","LIM08","SGP05"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"RetreiveBooking","event_timestamp":"2022-03-24T20:08:58.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[2.0,3.0,3.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["KING_SUPER_SAVER","SUITE-BAR","DBL-BAR"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"SUITE","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"BAR","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"PAR08","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["NYC08","SGP04","SPO18"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"ViewProduct","event_timestamp":"2022-03-24T20:09:08.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[1.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["BKFST"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"DBL","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"BAR","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"NYC01","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["ATL13"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"SearchAddOn","event_timestamp":"2022-03-24T20:09:18.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[5.0,2.0,2.0,3.0,5.0,2.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["CHMPGN","DBL-BAR","KING_SUPER_SAVER","SUITE-BAR","BKFST","CHMPGN"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"KING","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"BAR","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"PAR07","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["SPO10","ROM15","SGP10","SPO05","SPO17","TOK08"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"SearchSingleAvailability","event_timestamp":"2022-03-24T20:09:25.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[1.0,3.0,4.0,3.0,4.0,4.0,1.0,1.0,3.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["DBL-BAR","BKFST","DBL-BAR","KING_SUPER_SAVER","CHMPGN","KING_SUPER_SAVER","KING_SUPER_SAVER","SUITE-BAR","DBL-BAR"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"SUITE","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"BAR","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"SGP02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["SPO04","ROM06","LIM19","ROM03","SPO14","LIM00","SPO15","SPO17","SGP19"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"SelectEndTime","event_timestamp":"2022-03-24T20:09:39.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[4.0,2.0,1.0,1.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["CHMPGN","KING_SUPER_SAVER","BKFST","BKFST"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"DBL","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"SUPER_SAVER","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"LON09","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["LIM03","ROM09","TOK13","TOK15"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}
+{"modelVersion":"1.0","event_type":"SelectEndTime","event_timestamp":"2022-03-24T20:09:44.309797543Z","arrival_timestamp":0,"event_version":"","application":{"id":""},"client":{"id":""},"device":{"useragent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"},"session":{"id":"18667a0b-3194-4229-ba42-9c8833caf699"},"attributes":[{"type":"string","name":"quantities","stringValue":"","stringValues":null,"numValue":0.0,"numValues":[5.0,2.0,2.0,3.0,2.0,3.0,5.0,4.0]},{"type":"strings","name":"products","stringValue":"","stringValues":["BKFST","CHMPGN","BKFST","CHMPGN","BKFST","SUITE-BAR","SUITE-BAR","SUITE-BAR"],"numValue":0.0,"numValues":null},{"type":"string","name":"destination","stringValue":"Jersey , West Virginia, Sao Tome and Principe","stringValues":null,"numValue":0.0,"numValues":null},{"type":"number","name":"num_nights","stringValue":"","stringValues":null,"numValue":10.0,"numValues":null},{"type":"string","name":"room_type","stringValue":"SUITE","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"rate_plan","stringValue":"SUPER_SAVER","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkin_date","stringValue":"2023-11-02","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"checkout_date","stringValue":"2023-11-12","stringValues":null,"numValue":0.0,"numValues":null},{"type":"string","name":"hotel_code","stringValue":"SGP14","stringValues":null,"numValue":0.0,"numValues":null},{"type":"strings","name":"hotel_code_list","stringValue":"","stringValues":["PAR16","ATL03","LIM17","TOK19","SPO13","TOK02","TOK16","NYC09"],"numValue":0.0,"numValues":null}],"endpoint":{"id":""},"awsAccountId":"","userId":""}

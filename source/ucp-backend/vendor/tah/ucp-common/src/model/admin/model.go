@@ -6,6 +6,10 @@ type BusinessObject struct {
 	Name string
 }
 
+type AccpRecord struct {
+	Name string
+}
+
 type Domain struct {
 	Name            string          `json:"customerProfileDomain"`
 	NObjects        int64           `json:"numberOfObjects"`

@@ -8,12 +8,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"tah/core/appflow"
 	"tah/core/appregistry"
 	core "tah/core/core"
 	"tah/core/customerprofiles"
 	"tah/core/db"
 	"tah/core/glue"
 	"tah/core/iam"
+	"tah/core/lambda"
 
 	"time"
 
@@ -33,6 +35,8 @@ type Registry struct {
 	Glue        *glue.Config
 	Accp        *customerprofiles.CustomerProfileConfig
 	ErrorDB     *db.DBConfig
+	AppFlow     *appflow.Config
+	SyncLambda  *lambda.Config
 }
 
 type Usecase interface {
@@ -47,18 +51,30 @@ type Usecase interface {
 	Run(req model.RequestWrapper) (model.ResponseWrapper, error)                      //Excecute the use case business logic
 }
 
-func NewRegistry(region string, appRegCfg *appregistry.Config, iamCfg *iam.Config, glueCfg *glue.Config, accp *customerprofiles.CustomerProfileConfig, errorDB *db.DBConfig) Registry {
+type ServiceHandlers struct {
+	AppRegistry *appregistry.Config
+	Iam         *iam.Config
+	Glue        *glue.Config
+	Accp        *customerprofiles.CustomerProfileConfig
+	ErrorDB     *db.DBConfig
+	AppFlow     *appflow.Config
+	SyncLambda  *lambda.Config
+}
+
+func NewRegistry(region string, handlers ServiceHandlers) Registry {
 	//we initialize a transaction for the pre-handler locgic (before the lambda function actually processes it's first request)
 	tx := core.NewTransaction("ind_connector", "")
 	return Registry{
 		Tx:          &tx,
 		Reg:         map[string]Usecase{},
 		Region:      region,
-		AppRegistry: appRegCfg,
-		Iam:         iamCfg,
-		Glue:        glueCfg,
-		Accp:        accp,
-		ErrorDB:     errorDB,
+		AppRegistry: handlers.AppRegistry,
+		Iam:         handlers.Iam,
+		Glue:        handlers.Glue,
+		Accp:        handlers.Accp,
+		ErrorDB:     handlers.ErrorDB,
+		AppFlow:     handlers.AppFlow,
+		SyncLambda:  handlers.SyncLambda,
 		Env:         map[string]string{},
 	}
 }
@@ -125,6 +141,7 @@ func (r Registry) Run(req events.APIGatewayProxyRequest) (events.APIGatewayProxy
 		}
 		r.Log("[Run][%s] Use case execusion successfully completed in %v", uc.Name(), ucDuration)
 		responseWrapper.TxID = r.Tx.TransactionID
+		responseWrapper = r.Enrich(responseWrapper)
 		apiGatewayResponse, err3 := uc.CreateResponse(responseWrapper)
 		if err3 != nil {
 			r.Log("[Run][%s] Could not create response: %v", uc.Name(), err3)
@@ -135,6 +152,26 @@ func (r Registry) Run(req events.APIGatewayProxyRequest) (events.APIGatewayProxy
 		return apiGatewayResponse, nil
 	}
 	return r.BuildErrorResponse(400, errors.New(fmt.Sprintf("No use case registered for path %s and Method %s", resource, method))), nil
+}
+
+func (r Registry) Enrich(res model.ResponseWrapper) model.ResponseWrapper {
+	s3BucketsToReturn := map[string]string{
+		"S3_HOTEL_BOOKING":              r.Env["S3_HOTEL_BOOKING"],
+		"S3_AIR_BOOKING":                r.Env["S3_AIR_BOOKING"],
+		"S3_GUEST_PROFILE":              r.Env["S3_GUEST_PROFILE"],
+		"S3_PAX_PROFILE":                r.Env["S3_PAX_PROFILE"],
+		"S3_STAY_REVENUE":               r.Env["S3_STAY_REVENUE"],
+		"S3_CLICKSTREAM":                r.Env["S3_CLICKSTREAM"],
+		"CONNECT_PROFILE_SOURCE_BUCKET": r.Env["CONNECT_PROFILE_SOURCE_BUCKET"],
+	}
+	if res.AwsResources.S3Buckets == nil {
+		res.AwsResources.S3Buckets = map[string]string{}
+	}
+	for k, v := range s3BucketsToReturn {
+
+		res.AwsResources.S3Buckets[k] = v
+	}
+	return res
 }
 
 func (r Registry) BuildErrorResponse(statusCode int, err error) events.APIGatewayProxyResponse {
@@ -178,10 +215,11 @@ func CreateRequest(uc Usecase, req events.APIGatewayProxyRequest) (model.Request
 	if req.Body != "" {
 		wrapper, err = DecodeBody(uc, req)
 	}
-	wrapper.Pagination = model.PaginationOptions{
-		Page:     utils.ParseInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE]),
-		PageSize: utils.ParseInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE_SIZE]),
-	}
+	wrapper.Pagination = []model.PaginationOptions{
+		model.PaginationOptions{
+			Page:     utils.ParseInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE]),
+			PageSize: utils.ParseInt(req.QueryStringParameters[model.PAGINATION_OPTION_PAGE_SIZE]),
+		}}
 	return wrapper, err
 }
 

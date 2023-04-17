@@ -1,2 +1,7 @@
-"address",
+"last_updated_by",
 "traveller_id",
+"last_updated",
+"type",
+"address",
+"object_type",
+"model_version",

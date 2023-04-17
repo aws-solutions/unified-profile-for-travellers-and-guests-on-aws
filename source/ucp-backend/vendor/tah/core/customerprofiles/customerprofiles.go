@@ -109,6 +109,13 @@ type ObjectMapping struct {
 	Fields []FieldMapping `json:"fields"`
 }
 
+// Creates the mapping for Customer Profiles.
+//
+// Target fields are currently only supported for profile/order/asset/case
+// types. We use custom objects, which just send/receive json strings without
+// any mappings. However, we still need to create a mapping for object keys.
+// This is done by creating the mapping and setting KeyOnly to true.
+// See TestCustomerProfiles for implementation example.
 type FieldMapping struct {
 	Type        string   `json:"type"`
 	Source      string   `json:"source"`
@@ -130,6 +137,12 @@ type Integration struct {
 	LastRunStatus  string
 	LastRunMessage string
 	Trigger        string
+}
+
+type PaginationOptions struct {
+	Page       int    `json:"page"`
+	PageSize   int    `json:"pageSize"`
+	ObjectType string `json:"objectType"`
 }
 
 func InitWithDomain(domainName string, region string) CustomerProfileConfig {
@@ -172,9 +185,34 @@ func (c CustomerProfileConfig) ListDomains() ([]Domain, error) {
 	return domains, nil
 }
 
+func (c *CustomerProfileConfig) CreateDomainWithQueue(name string, idResolutionOn bool, kmsArn string, tags map[string]string, queueUrl string) error {
+
+	input := &customerProfileSdk.CreateDomainInput{
+		DomainName: aws.String(name),
+		Matching: &customerProfileSdk.MatchingRequest{
+			Enabled: aws.Bool(idResolutionOn),
+		},
+		DefaultExpirationDays: aws.Int64(300),
+		DefaultEncryptionKey:  &kmsArn,
+		Tags:                  aws.StringMap(tags),
+	}
+
+	if queueUrl != "" {
+		qClient := sqs.InitWithQueueUrl(queueUrl, c.Region)
+		c.SQSClient = &qClient
+		input.DeadLetterQueueUrl = aws.String(queueUrl)
+	}
+
+	_, err := c.Client.CreateDomain(input)
+	if err == nil {
+		c.DomainName = name
+	}
+	return err
+}
+
 func (c *CustomerProfileConfig) CreateDomain(name string, idResolutionOn bool, kmsArn string, tags map[string]string) error {
-	sqsSvc := sqs.Init(c.Region)
 	log.Printf("[core][customerProfiles] Creating new customer profile domain")
+	sqsSvc := sqs.Init(c.Region)
 	log.Printf("[core][customerProfiles] 1-Creating SQS Queue")
 	queueUrl, err := sqsSvc.Create("connect-profile-dlq-" + name)
 	if err != nil {
@@ -187,27 +225,12 @@ func (c *CustomerProfileConfig) CreateDomain(name string, idResolutionOn bool, k
 		log.Printf("[core][customerProfiles] could not set policy on dead letter queue")
 		return err
 	}
-	c.SQSClient = &sqsSvc
-	input := &customerProfileSdk.CreateDomainInput{
-		DomainName: aws.String(name),
-		Matching: &customerProfileSdk.MatchingRequest{
-			Enabled: aws.Bool(idResolutionOn),
-		},
-		DeadLetterQueueUrl:    aws.String(queueUrl),
-		DefaultExpirationDays: aws.Int64(300),
-		DefaultEncryptionKey:  &kmsArn,
-		Tags:                  core.ToMapPtString(tags),
-	}
-	_, err = c.Client.CreateDomain(input)
-	if err == nil {
-		c.DomainName = name
-	}
-	return err
+	return c.CreateDomainWithQueue(name, idResolutionOn, kmsArn, tags, queueUrl)
 }
 
 func (c *CustomerProfileConfig) DeleteDomain() error {
 	if c.DomainName == "" {
-		return errors.New("customer rrofile client not configured with domain name. use deletedomainbyname or assign domain name")
+		return errors.New("customer profile client not configured with domain name. use deletedomainbyname or assign domain name")
 	}
 	err := c.DeleteDomainByName(c.DomainName)
 	if err == nil {
@@ -217,6 +240,15 @@ func (c *CustomerProfileConfig) DeleteDomain() error {
 }
 
 func (c CustomerProfileConfig) DeleteDomainByName(name string) error {
+	log.Printf("[core][customerProfiles] Deleteing new customer profile domain")
+	input := &customerProfileSdk.DeleteDomainInput{
+		DomainName: aws.String(name),
+	}
+	_, err := c.Client.DeleteDomain(input)
+	return err
+}
+
+func (c CustomerProfileConfig) DeleteDomainAndQueueByName(name string) error {
 	log.Printf("[core][customerProfiles] Deleteing new customer profile domain")
 	log.Printf("[core][customerProfiles] 1-deleting SQS Queue")
 	var sqsClient sqs.Config
@@ -228,24 +260,27 @@ func (c CustomerProfileConfig) DeleteDomainByName(name string) error {
 			log.Printf("[core][customerProfiles] Error getting domain for deletion")
 			return err
 		}
-		if out.DeadLetterQueueUrl == nil {
-			log.Printf("No Dead Letter Queue configured with Profile Domain. Nothing to delete")
-		} else {
+		if out.DeadLetterQueueUrl != nil {
 			sqsClient = sqs.InitWithQueueUrl(*out.DeadLetterQueueUrl, c.Region)
+			err := sqsClient.Delete()
+			if err != nil {
+				log.Printf("[core][customerProfiles] could not delete dead letter queue")
+				return err
+			}
+		} else {
+			log.Printf("No Dead Letter Queue configured with Profile Domain. Nothing to delete")
 		}
 	} else {
-		sqsClient = *c.SQSClient
-	}
-	err := sqsClient.Delete()
-	if err != nil {
-		log.Printf("[core][customerProfiles] could not delete dead letter queue")
-		return err
+		err := (*c.SQSClient).Delete()
+		if err != nil {
+			log.Printf("[core][customerProfiles] could not delete dead letter queue")
+			return err
+		}
 	}
 	input := &customerProfileSdk.DeleteDomainInput{
 		DomainName: aws.String(name),
 	}
-	_, err = c.Client.DeleteDomain(input)
-
+	_, err := c.Client.DeleteDomain(input)
 	return err
 }
 
@@ -469,9 +504,10 @@ func notIn(id string, matches []Match) bool {
 //
 // These integrations send all fields to Amazon Connect Customer Profile,
 // then Customer Profile handles mapping the data to a given Object Type.
-func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucketName string, fieldMappings []FieldMapping) error {
+func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucketName, bucketPrefix string, fieldMappings []FieldMapping, startTime time.Time) error {
 	domain, err := c.GetDomain()
 	if err != nil {
+		log.Printf("[PutIntegration] Error getting domain: %v", err)
 		return err
 	}
 
@@ -480,7 +516,7 @@ func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucket
 			Scheduled: &customerProfileSdk.ScheduledTriggerProperties{
 				ScheduleExpression: aws.String("rate(1hours)"),
 				DataPullMode:       aws.String(customerProfileSdk.DataPullModeIncremental),
-				ScheduleStartTime:  aws.Time(time.Now()),
+				ScheduleStartTime:  aws.Time(startTime),
 			},
 		},
 		TriggerType: aws.String(customerProfileSdk.TriggerTypeScheduled),
@@ -489,10 +525,12 @@ func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucket
 		ConnectorType: aws.String(customerProfileSdk.SourceConnectorTypeS3),
 		SourceConnectorProperties: &customerProfileSdk.SourceConnectorProperties{
 			S3: &customerProfileSdk.S3SourceProperties{
-				BucketName:   &bucketName,
-				BucketPrefix: &objectName,
+				BucketName: aws.String(bucketName),
 			},
 		},
+	}
+	if bucketPrefix != "" {
+		sourceFlowConfig.SourceConnectorProperties.S3.BucketPrefix = aws.String(bucketPrefix)
 	}
 	flowNameScheduled := flowNamePrefix + "_Scheduled"
 	flowDefinition := customerProfileSdk.FlowDefinition{
@@ -512,6 +550,7 @@ func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucket
 	// Create scheduled flow
 	_, err = c.Client.PutIntegration(&scheduledInput)
 	if err != nil {
+		log.Printf("[PutIntegration] Error Create scheduled flow: %v", err)
 		return err
 	}
 
@@ -528,12 +567,17 @@ func (c CustomerProfileConfig) PutIntegration(flowNamePrefix, objectName, bucket
 	}
 	_, err = c.Client.PutIntegration(&onDemandInput)
 	if err != nil {
+		log.Printf("[PutIntegration] Error Create identical on-demand flow: %v", err)
 		return err
 	}
 
 	// Start scheduled flow
 	err = startFlow(flowNameScheduled)
-	return err
+	if err != nil {
+		log.Printf("[PutIntegration] Error Start scheduled flow %v", err)
+		return err
+	}
+	return nil
 }
 
 // There are two types of tasks that must be created:
@@ -777,8 +821,15 @@ func (c CustomerProfileConfig) SearchProfiles(key string, values []string) ([]Pr
 
 // TODO: parallelize the calls
 // Search for a profile by ProfileID, and return data for specified object types.
-func (c CustomerProfileConfig) GetProfile(id string, objectTypeNames []string) (Profile, error) {
+func (c CustomerProfileConfig) GetProfile(id string, objectTypeNames []string, pagination []PaginationOptions) (Profile, error) {
 	log.Printf("[core][customerProfiles][GetProfile] 0-retreiving profile with ID : %+v", id)
+	//putting pagination options in a map to allow for qiuck access
+	poMap := map[string]PaginationOptions{}
+	for _, po := range pagination {
+		poMap[po.ObjectType] = po
+	}
+	log.Printf("[core][customerProfiles][GetProfile] 0-building pagination opion map: %v", poMap)
+
 	log.Printf("[core][customerProfiles][GetProfile] 1-Search profile")
 	res, err := c.SearchProfiles(PROFILE_ID_KEY, []string{id})
 	if err != nil {
@@ -800,7 +851,7 @@ func (c CustomerProfileConfig) GetProfile(id string, objectTypeNames []string) (
 	wg.Add(len(objectTypeNames))
 	for _, objectType := range objectTypeNames {
 		go func(objectType, id string) {
-			obj, err := c.GetProfileObject(objectType, id)
+			obj, err := c.GetProfileObject(objectType, id, poMap[objectType])
 			mu.Lock()
 			if err != nil {
 				errs = append(errs, err)
@@ -865,13 +916,19 @@ func (c CustomerProfileConfig) DeleteProfile(id string) error {
 	return err
 }
 
-func (c CustomerProfileConfig) GetProfileObject(objectTypeName string, profileID string) ([]ProfileObject, error) {
-	log.Printf("[core][customerProfiles] List objects of type %s, for profile %v", objectTypeName, profileID)
+func (c CustomerProfileConfig) GetProfileObject(objectTypeName string, profileID string, pagination PaginationOptions) ([]ProfileObject, error) {
+	log.Printf("[core][customerProfiles] List objects of type %s, for profile %v and pagination options: %+v", objectTypeName, profileID, pagination)
 	input := &customerProfileSdk.ListProfileObjectsInput{
 		DomainName:     aws.String(c.DomainName),
 		ObjectTypeName: aws.String(objectTypeName),
 		ProfileId:      aws.String(profileID),
+		MaxResults:     aws.Int64(100),
 	}
+	//If PageSize==0, we assume that no pagination is provided
+	if pagination.PageSize > 0 {
+		input.MaxResults = aws.Int64(int64(pagination.PageSize))
+	}
+	page := 0
 	out, err := c.Client.ListProfileObjects(input)
 	log.Printf("[core][customerProfiles] Objects Search response: %+v", out)
 	objects := []ProfileObject{}
@@ -881,7 +938,8 @@ func (c CustomerProfileConfig) GetProfileObject(objectTypeName string, profileID
 	for _, item := range out.Items {
 		objects = append(objects, toProfileObject(item))
 	}
-	for out.NextToken != nil {
+	for out.NextToken != nil && (pagination.PageSize == 0 || pagination.Page > page) {
+		page++
 		log.Printf("[core][customerProfiles] response is paginated. getting next batch from token: %+v", out.NextToken)
 		input.NextToken = out.NextToken
 		out, err = c.Client.ListProfileObjects(input)
@@ -902,6 +960,9 @@ func (c CustomerProfileConfig) GetProfileObject(objectTypeName string, profileID
 		}
 	}
 	log.Printf("[core][customerProfiles] Final Response : %+v", out)
+	if pagination.PageSize > 0 {
+		objects = objects[pagination.Page*pagination.PageSize:]
+	}
 	return objects, nil
 }
 

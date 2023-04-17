@@ -1,7 +1,7 @@
 package admin
 
 import (
-	"strings"
+	"errors"
 	"tah/core/core"
 	common "tah/ucp-common/src/constant/admin"
 	services "tah/ucp-common/src/services/admin"
@@ -38,29 +38,36 @@ func (u *DeleteDomain) Registry() *registry.Registry {
 }
 
 func (u *DeleteDomain) CreateRequest(req events.APIGatewayProxyRequest) (model.RequestWrapper, error) {
-	return registry.CreateRequest(u, req)
+	rq := model.RequestWrapper{
+		Domain: model.Domain{Name: req.PathParameters["id"]},
+	}
+	return rq, nil
 }
 
 func (u *DeleteDomain) ValidateRequest(rq model.RequestWrapper) error {
 	u.tx.Log("Validating request")
+	if rq.Domain.Name == "" {
+		return errors.New("Domain name cannot be empty")
+	}
 	return nil
 }
 
 func (u *DeleteDomain) Run(req model.RequestWrapper) (model.ResponseWrapper, error) {
 	env := u.reg.Env["LAMBDA_ENV"]
-	domainName := strings.Clone(req.Domain.Name)
-	err0 := u.reg.Accp.DeleteDomain()
-	if err0 != nil {
-		return model.ResponseWrapper{}, err0
-	}
-
+	u.tx.Log("Deleting tables for domain %s", req.Domain.Name)
 	for _, bizObject := range common.BUSINESS_OBJECTS {
-		tableName := services.BuildTableName(env, bizObject, domainName)
+		tableName := services.BuildTableName(env, bizObject, req.Domain.Name)
 		err := u.reg.Glue.DeleteTable(tableName)
 		if err != nil {
 			return model.ResponseWrapper{}, err
 		}
 	}
+	u.tx.Log("Deleting domain %s", req.Domain.Name)
+	err0 := u.reg.Accp.DeleteDomain()
+	if err0 != nil {
+		return model.ResponseWrapper{}, err0
+	}
+
 	return model.ResponseWrapper{}, nil
 }
 

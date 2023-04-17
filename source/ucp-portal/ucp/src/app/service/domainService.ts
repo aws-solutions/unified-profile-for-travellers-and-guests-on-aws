@@ -47,6 +47,27 @@ export class DomainService {
 
   }
 
+  deleteDomain() {
+    console.log("Deleting domain ", this.selectedDomain)
+    return new Promise<any>(resolve => {
+      if (this.selectedDomain === "") {
+        console.log("No domain selected")
+        resolve("")
+        return
+      }
+      this.ucpService.deleteDomain(this.selectedDomain).subscribe((res: any) => {
+        console.log(res)
+        this.session.unsetDomain()
+        this.loadDomains()
+        this.selectedDomain = ""
+        this.selectedDomainData = {}
+        this.updateSelectedData("")
+        resolve("")
+      })
+    })
+
+  }
+
   selectDomain(domain: string) {
     console.log("Selecting domain: ", domain)
     this.session.setProfileDomain(domain)

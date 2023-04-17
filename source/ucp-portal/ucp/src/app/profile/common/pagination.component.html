@@ -1,0 +1,14 @@
+<div class="row">
+    <div class="col-sm-12 align-center">
+        <button [disabled]="page <= 0" class="btn btn-link btn-sm pagination-button" (click)="pageDown()">
+            <fa-icon [icon]="faBackward"></fa-icon>
+            <span class="prevnext-text">Prev</span></button>
+        <span class="pagination-numbers">{{page*pageSize}}-{{(page+1)*pageSize}}</span>
+        <button [disabled]="nRecords < pageSize" class="btn btn-link btn-sm pagination-button" (click)="pageUp()"><span
+                class="prevnext-text">Next</span>
+            <fa-icon [icon]="faForward"></fa-icon>
+        </button>
+        <button class="btn btn-primary btn-sm pagination-button float-right" (click)="refresh()">
+            <fa-icon [icon]="faRefresh"></fa-icon></button>
+    </div>
+</div>

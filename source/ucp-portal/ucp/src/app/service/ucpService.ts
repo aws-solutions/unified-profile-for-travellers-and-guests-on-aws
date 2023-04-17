@@ -18,9 +18,23 @@ export class UcpService {
     public searchProfiles(searchRq: any) {
         return this.service.query(searchRq, <RestOptions>{ subEndpoint: "profile" });
     }
-    public retreiveProfile(id: string) {
-        return this.service.get(id, {}, <RestOptions>{ subEndpoint: "profile" });
+    public retreiveProfile(id: string, poMap?: Map<string, PaginationOptions>) {
+
+        return this.service.get(id, this.buildMultiPaginationQueryParams(poMap), <RestOptions>{ subEndpoint: "profile" });
     }
+
+    buildMultiPaginationQueryParams(poMap: Map<string, PaginationOptions>) {
+        let objects: string[] = []
+        let pages: number[] = []
+        let pageSizes: number[] = []
+        poMap.forEach((value: PaginationOptions, key: string) => {
+            objects.push(key)
+            pages.push(value.page)
+            pageSizes.push(value.pageSize)
+        });
+        return { objects: objects, pages: pages, pageSizes: pageSizes }
+    }
+
     public getConfig(domain: string) {
         return this.service.get(domain, null, <RestOptions>{ subEndpoint: "admin" });
     }
@@ -40,9 +54,19 @@ export class UcpService {
     public deleteDomain(name: string) {
         return this.service.delete(name, {}, <RestOptions>{ subEndpoint: "admin" });
     }
-    public listErrors() {
-        return this.service.query({}, <RestOptions>{ subEndpoint: "error" });
+    public listErrors(pagination: PaginationOptions) {
+        return this.service.query(pagination, <RestOptions>{ subEndpoint: "error" });
     }
+    public getJobs() {
+        return this.service.query({}, <RestOptions>{ subEndpoint: "jobs" });
+    }
+    public startFlow(flowName: string) {
+        return this.service.post({}, { domain: { integrations: [{ flowName: flowName }] } }, <RestOptions>{ subEndpoint: "flows" });
+    }
+    public startJobs() {
+        return this.service.post({}, {}, <RestOptions>{ subEndpoint: "jobs" });
+    }
+
     public deleteError(id) {
         return this.service.delete(id, {}, <RestOptions>{ subEndpoint: "error" });
     }
