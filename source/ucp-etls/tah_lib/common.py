@@ -228,3 +228,33 @@ def logErrorToSQS(e: Exception, rec: dict, errQueueUrl: str, bizObjType: str):
         print("[ERROR] An exception occured when trying to write error to queue", e2)
         traceback_info = traceback.format_exc()
         print(traceback_info)
+
+
+# Control the date range for data being processed based on the last job run.
+# The last job run's timestamp is used to build a push down predicate and
+# catalog partition predicate. These allow us to effeciently process new
+# data without reprocessing old data or having to scan extra partitions.
+# Read more: https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-partitions.html
+def getJobPredicates(dynamodbClient, dynamoTableName, bizObjectName, domainName):
+    pk = "glue_job_bookmark"
+    sk = bizObjectName + "_" + domainName
+    print("[getJobPredicates] getting job bookmark for " + sk)
+    response = dynamodbClient.get_item(
+        TableName=dynamoTableName,
+        Key={
+            'item_id': {'S': pk},
+            'item_type': {'S': sk},
+        },
+    )
+    try: 
+        bookmark = response.get('Item', {}).get('bookmark', {}).get('S')
+        print("[getJobPredicates] bookmark returned: " + bookmark)
+        item = response['Item']
+        bookmark = item.get('bookmark', {}).get('S')
+        year, month, day, _ = bookmark.split('/')
+        pdp = "year>='" + year + "' and month>='" + month + "' and day>='" + day + "'"
+        cpp = "year>='" + year + "' and month>='" + month + "'"
+        return {'pdp': pdp, 'cpp': cpp}
+    except:
+        print("[getJobPredicates] no bookmark found")
+        return {'pdp': None, 'cpp': None}

@@ -1,3 +1,4 @@
+import boto3
 import sys
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
@@ -5,19 +6,15 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.dynamicframe import DynamicFrame
-from pyspark.sql.functions import explode
-from pyspark.sql.functions import size
 
 from tah_lib.hotel_stayTransform import buildObjectRecord
-from tah_lib.etl_utils import explodeAndWrite
+from tah_lib.etl_utils import argList, ERROR_QUEUE_URL, createDynamicFrame, explodeAndWrite
 
 glueContext = GlueContext(SparkContext.getOrCreate())
-args = getResolvedOptions(
-    sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET', 'ERROR_QUEUE_URL', 'ACCP_DOMAIN'])
+args = getResolvedOptions(sys.argv, argList)
+dynamodbClient = boto3.client('dynamodb')
 
-businessObjects = glueContext.create_dynamic_frame.from_catalog(
-    database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"], additional_options={"recurse": True})
-
+businessObjects = createDynamicFrame(glueContext, dynamodbClient, args)
 count = businessObjects.count()
 print("count: ", count)
 businessObjects.printSchema()
@@ -32,10 +29,14 @@ businessObjectRepartitionedDF
 businessObjectRepartitioned = DynamicFrame.fromDF(
     businessObjectRepartitionedDF, glueContext, "data")
 
-accpReccords = Map.apply(
+# applying Python transformation function
+accpRecords = Map.apply(
     frame=businessObjectRepartitioned,
-    f=lambda rec: buildObjectRecord(rec, args['ERROR_QUEUE_URL']))
-accpReccordsDF = accpReccords.toDF()
+    f=lambda rec: buildObjectRecord(rec, args[ERROR_QUEUE_URL]))
 
-explodeAndWrite(glueContext, accpReccordsDF, "hotel_stay_revenue_items",
-                args["DEST_BUCKET"], "hotel_stay_revenue_items", args["ACCP_DOMAIN"])
+accpRecordsDF = accpRecords.toDF()
+accpRecordsDF.printSchema()
+
+# exploding data into individual Dynamic Frames
+explodeAndWrite(glueContext, accpRecordsDF, "hotel_stay_revenue_items", "hotel_stay_revenue_items",
+                args, dynamodbClient, count)

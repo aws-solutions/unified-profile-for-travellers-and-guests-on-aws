@@ -128,6 +128,7 @@ func TestTraveller(t *testing.T) {
 			t.Errorf("[TestTraveller] Error getting orders for user: %v", err)
 		}
 		traveller360 := profileToTraveller(profile)
+		// TODO: add tests for individual fields
 		log.Printf("[TestTraveller] Traveller 360: %v", traveller360)
 	} else {
 		t.Errorf("[TestTraveller] Error: unable to retrieve customer profile")

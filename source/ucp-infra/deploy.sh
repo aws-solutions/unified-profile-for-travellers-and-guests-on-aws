@@ -99,6 +99,7 @@ else
     dlgRealTimeGoTest=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='dlgRealTimeGoTest'].OutputValue" --output text)
     dldRealTimePythonTest=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='dldRealTimePythonTest'].OutputValue" --output text)
     accpDomainErrorQueue=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='accpDomainErrorQueue'].OutputValue" --output text)
+    dynamodbConfigTableName=$(aws cloudformation describe-stacks --stack-name UCPInfraStack$env --query "Stacks[0].Outputs[?OutputKey=='dynamodbConfigTableName'].OutputValue" --output text)
 
     echo "3.2 Creating admin User and getting refresh token"
     RANDOM=$$
@@ -210,6 +211,7 @@ else
          "\"kinesisStreamNameRealTimeTest\":\"$kinesisStreamNameRealTimeTest\","\
          "\"kinesisStreamOutputNameRealTimeTest\":\"$kinesisStreamOutputNameRealTimeTest\","\
          "\"accpDomainErrorQueue\":\"$accpDomainErrorQueue\","\
+         "\"dynamodbConfigTableName\":\"$dynamodbConfigTableName\","\
          "\"region\":\"$OUTRegion\""\
          "}">infra-config-$env.json
     cat infra-config-$env.json

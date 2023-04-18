@@ -164,6 +164,35 @@ export class UCPInfraStack extends Stack {
       }
     })
 
+
+    //////////////////////////////////////
+    // DYNAMO DB
+    /////////////////////////////////////
+    const dynamo_pk = "item_id"
+    const dynamo_sk = "item_type"
+    const configTable = new dynamodb.Table(this, "ucpConfigTable", {
+      tableName: "ucp-config-table-" + envName,
+      partitionKey: { name: dynamo_pk, type: dynamodb.AttributeType.STRING },
+      sortKey: { name: dynamo_sk, type: dynamodb.AttributeType.STRING },
+      removalPolicy: RemovalPolicy.DESTROY,
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    });
+    new CfnOutput(this, "dynamodbConfigTableName", { value: configTable.tableName });
+
+    const dynamo_error_pk = "error_type"
+    const dynamo_error_sk = "error_id"
+    const errorTable = new dynamodb.Table(this, "ucpErrorTable", {
+      tableName: "ucp-error-table-" + envName,
+      partitionKey: { name: dynamo_error_pk, type: dynamodb.AttributeType.STRING },
+      sortKey: { name: dynamo_error_sk, type: dynamodb.AttributeType.STRING },
+      removalPolicy: RemovalPolicy.DESTROY,
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+    });
+
+    // Data admin role needs read/write permission to keep track of Glue job runs,
+    // which lets us incrementally run jobs on new data (based on partition of last run)
+    configTable.grantReadWriteData(datalakeAdminRole)
+
     /***************************
    * Data Buckets for temporary processing
    *****************************/
@@ -173,12 +202,12 @@ export class UCPInfraStack extends Stack {
     //temp bucket for Amazon connect profile identity resolution matches
     const idResolution = new tah_s3.Bucket(this, "ucp-connect-id-resolution-temp", accessLogBucket)
 
-    let hotelBookingOutput = this.buildBusinessObjectPipeline("hotel-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    let airBookingOutput = this.buildBusinessObjectPipeline("air_booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    let guestProfileOutput = this.buildBusinessObjectPipeline("guest-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    let paxProfileOutput = this.buildBusinessObjectPipeline("pax-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    let clickstreamOutput = this.buildBusinessObjectPipeline("clickstream", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    let hotelStayOutput = this.buildBusinessObjectPipeline("hotel-stay", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
+    let hotelBookingOutput = this.buildBusinessObjectPipeline("hotel-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket, configTable.tableName)
+    let airBookingOutput = this.buildBusinessObjectPipeline("air_booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket, configTable.tableName)
+    let guestProfileOutput = this.buildBusinessObjectPipeline("guest-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket, configTable.tableName)
+    let paxProfileOutput = this.buildBusinessObjectPipeline("pax-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket, configTable.tableName)
+    let clickstreamOutput = this.buildBusinessObjectPipeline("clickstream", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket, configTable.tableName)
+    let hotelStayOutput = this.buildBusinessObjectPipeline("hotel-stay", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket, configTable.tableName)
 
     //Target Bucket for Amazon connect profile export
     let connectProfileExportBucket = new tah_s3.Bucket(this, "ucp-mazon-connect-profile-export", accessLogBucket);
@@ -249,27 +278,6 @@ export class UCPInfraStack extends Stack {
     new CfnOutput(this, "connectProfileExportBucket", { value: connectProfileExportBucket.bucketName })
     new CfnOutput(this, "kmsKeyProfileDomain", { value: kmsKeyProfileDomain.keyArn })
 
-    //////////////////////////////////////
-    // DYNAMO DB
-    /////////////////////////////////////
-    const dynamo_pk = "item_id"
-    const dynamo_sk = "item_type"
-    const configTable = new dynamodb.Table(this, "ucpConfigTable", {
-      tableName: "ucp-config-table-" + envName,
-      partitionKey: { name: dynamo_pk, type: dynamodb.AttributeType.STRING },
-      sortKey: { name: dynamo_sk, type: dynamodb.AttributeType.STRING },
-      removalPolicy: RemovalPolicy.DESTROY,
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-    });
-    const dynamo_error_pk = "error_type"
-    const dynamo_error_sk = "error_id"
-    const errorTable = new dynamodb.Table(this, "ucpErrorTable", {
-      tableName: "ucp-error-table-" + envName,
-      partitionKey: { name: dynamo_error_pk, type: dynamodb.AttributeType.STRING },
-      sortKey: { name: dynamo_error_sk, type: dynamodb.AttributeType.STRING },
-      removalPolicy: RemovalPolicy.DESTROY,
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-    });
 
     //////////////////////////
     //LAMBDA FUNCTIONS
@@ -986,7 +994,7 @@ export class UCPInfraStack extends Stack {
   * HELPER FUNCTIONS
   ******************/
 
-  buildBusinessObjectPipeline(businessObjectName: string, envName: string, dataLakeAdminRole: iam.Role, glueDb: Database, artifactBucketName: string, accessLogBucket: s3.Bucket, connectProfileImportBucket: s3.Bucket): BusinessObjectPipelineOutput {
+  buildBusinessObjectPipeline(businessObjectName: string, envName: string, dataLakeAdminRole: iam.Role, glueDb: Database, artifactBucketName: string, accessLogBucket: s3.Bucket, connectProfileImportBucket: s3.Bucket, configTableName: string): BusinessObjectPipelineOutput {
     const glueSchemas = new Map<string, GlueSchema>();
     glueSchemas.set("hotel-booking", glueSchemaHotelBooking)
     glueSchemas.set("air_booking", glueSchemaAirBooking)
@@ -1016,6 +1024,8 @@ export class UCPInfraStack extends Stack {
       ["SOURCE_TABLE", ""],
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
       ["ERROR_QUEUE_URL", errQueue.queueUrl],
+      ["DYNAMO_TABLE", configTableName],
+      ["BIZ_OBJECT_NAME", businessObjectName.replace("-", "_")],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
     let industryConnectorJob = this.job(businessObjectName + "FromConnector", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
@@ -1023,6 +1033,8 @@ export class UCPInfraStack extends Stack {
       ["DEST_BUCKET", connectProfileImportBucket.bucketName],
       ["BUSINESS_OBJECT", businessObjectName],
       ["ERROR_QUEUE_URL", errQueue.queueUrl],
+      ["DYNAMO_TABLE", configTableName],
+      ["BIZ_OBJECT_NAME", businessObjectName.replace("-", "_")],
       ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
     ]))
     //7-Cfn Output

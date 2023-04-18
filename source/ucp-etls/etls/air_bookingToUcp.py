@@ -1,5 +1,5 @@
+import boto3
 import sys
-import uuid
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
 from pyspark.context import SparkContext
@@ -7,45 +7,42 @@ from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.dynamicframe import DynamicFrame
 
-
-# Change import based on business object
 from tah_lib.air_bookingTransform import buildObjectRecord
-from tah_lib.etl_utils import explodeAndWrite
+from tah_lib.etl_utils import argList, ERROR_QUEUE_URL, createDynamicFrame, explodeAndWrite
 
 glueContext = GlueContext(SparkContext.getOrCreate())
-args = getResolvedOptions(
-    sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET', 'ERROR_QUEUE_URL', 'ACCP_DOMAIN'])
-businessObject = glueContext.create_dynamic_frame.from_catalog(
-    database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"], additional_options={"recurse": True})
+args = getResolvedOptions(sys.argv, argList)
+dynamodbClient = boto3.client('dynamodb')
 
-count = businessObject.count()
+businessObjects = createDynamicFrame(glueContext, dynamodbClient, args)
+count = businessObjects.count()
 print("count: ", count)
-businessObject.printSchema()
+businessObjects.printSchema()
 
 # repartitioning to obtain 500 records per file
-print("nPartitions: ", businessObject.toDF().rdd.getNumPartitions())
+print("nPartitions: ", businessObjects.toDF().rdd.getNumPartitions())
 newNPartitions = max(int(count/500), 1)
 print("repartitionning in : ", newNPartitions)
-businessObjectRepartitionedDF = businessObject.toDF().coalesce(newNPartitions)
+businessObjectRepartitionedDF = businessObjects.toDF().coalesce(newNPartitions)
 print("nPartitions after: ", businessObjectRepartitionedDF.rdd.getNumPartitions())
 businessObjectRepartitionedDF
 businessObjectRepartitioned = DynamicFrame.fromDF(
     businessObjectRepartitionedDF, glueContext, "data")
 
 # applying Python transformation function
-accpReccords = Map.apply(
+accpRecords = Map.apply(
     frame=businessObjectRepartitioned,
-    f=lambda rec: buildObjectRecord(rec, args['ERROR_QUEUE_URL']))
-accpReccords.printSchema()
-# accpReccords.toDF().show(10)
-# moving to dataframes
-accpReccordsDF = accpReccords.toDF()
+    f=lambda rec: buildObjectRecord(rec, args[ERROR_QUEUE_URL]))
+
+accpRecordsDF = accpRecords.toDF()
+accpRecordsDF.printSchema()
+
 # exploding data into individual Dynamic Frames
-explodeAndWrite(glueContext, accpReccordsDF, "air_booking_recs",
-                args["DEST_BUCKET"], "air_booking", args["ACCP_DOMAIN"])
-explodeAndWrite(glueContext, accpReccordsDF, "common_email_recs",
-                args["DEST_BUCKET"], "email_history", args["ACCP_DOMAIN"])
-explodeAndWrite(glueContext, accpReccordsDF, "common_phone_recs",
-                args["DEST_BUCKET"], "phone_history", args["ACCP_DOMAIN"])
-explodeAndWrite(glueContext, accpReccordsDF, "air_loyalty_recs",
-                args["DEST_BUCKET"], "air_loyalty", args["ACCP_DOMAIN"])
+explodeAndWrite(glueContext, accpRecordsDF, "air_booking_recs", "air_booking",
+                args, dynamodbClient, count)
+explodeAndWrite(glueContext, accpRecordsDF, "common_email_recs", "email_history",
+                args, dynamodbClient, count)
+explodeAndWrite(glueContext, accpRecordsDF, "common_phone_recs", "phone_history",
+                args, dynamodbClient, count)
+explodeAndWrite(glueContext, accpRecordsDF, "air_loyalty_recs", "air_loyalty",
+                args, dynamodbClient, count)

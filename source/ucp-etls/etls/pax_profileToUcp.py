@@ -1,4 +1,4 @@
-# pyright: reportMissingImports=false, reportUndefinedVariable=false
+import boto3
 import sys
 from awsglue.transforms import *
 from awsglue.utils import getResolvedOptions
@@ -6,20 +6,17 @@ from pyspark.context import SparkContext
 from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.dynamicframe import DynamicFrame
-from pyspark.sql.functions import explode
-from pyspark.sql.functions import size
 
 from tah_lib.pax_profileTransform import buildObjectRecord
-from tah_lib.etl_utils import explodeAndWrite
+from tah_lib.etl_utils import argList, ERROR_QUEUE_URL, createDynamicFrame, explodeAndWrite
 
 glueContext = GlueContext(SparkContext.getOrCreate())
-args = getResolvedOptions(
-    sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET', 'ERROR_QUEUE_URL', 'ACCP_DOMAIN'])
+args = getResolvedOptions(sys.argv, argList)
+dynamodbClient = boto3.client('dynamodb')
 
-businessObjects = glueContext.create_dynamic_frame.from_catalog(
-    database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"], additional_options={"recurse": True})
-
+businessObjects = createDynamicFrame(glueContext, dynamodbClient, args)
 count = businessObjects.count()
+print("count: ", count)
 businessObjects.printSchema()
 
 # repartitioning to obtain 500 records per file
@@ -32,18 +29,20 @@ businessObjectRepartitionedDF
 businessObjectRepartitioned = DynamicFrame.fromDF(
     businessObjectRepartitionedDF, glueContext, "data")
 
+# applying Python transformation function
 accpRecords = Map.apply(
     frame=businessObjectRepartitioned,
-    f=lambda rec: buildObjectRecord(rec, args['ERROR_QUEUE_URL']))
+    f=lambda rec: buildObjectRecord(rec, args[ERROR_QUEUE_URL]))
 
-accpReccordsDF = accpRecords.toDF()
-accpReccordsDF.printSchema()
+accpRecordsDF = accpRecords.toDF()
+accpRecordsDF.printSchema()
 
-explodeAndWrite(glueContext, accpReccordsDF, "air_profile_recs",
-                args["DEST_BUCKET"], "pax_profile", args["ACCP_DOMAIN"])
-explodeAndWrite(glueContext, accpReccordsDF, "common_email_recs",
-                args["DEST_BUCKET"], "email_history", args["ACCP_DOMAIN"])
-explodeAndWrite(glueContext, accpReccordsDF, "common_phone_recs",
-                args["DEST_BUCKET"], "phone_history", args["ACCP_DOMAIN"])
-explodeAndWrite(glueContext, accpReccordsDF, "air_loyalty_recs",
-                args["DEST_BUCKET"], "air_loyalty", args["ACCP_DOMAIN"])
+# exploding data into individual Dynamic Frames
+explodeAndWrite(glueContext, accpRecordsDF, "air_profile_recs", "pax_profile",
+                args, dynamodbClient, count)
+explodeAndWrite(glueContext, accpRecordsDF, "common_email_recs", "email_history",
+                args, dynamodbClient, count)
+explodeAndWrite(glueContext, accpRecordsDF, "common_phone_recs", "phone_history",
+                args, dynamodbClient, count)
+explodeAndWrite(glueContext, accpRecordsDF, "air_loyalty_recs", "air_loyalty",
+                args, dynamodbClient, count)

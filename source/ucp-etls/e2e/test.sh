@@ -18,6 +18,8 @@ echo "1-Getting Stack information"
 aws s3 cp s3://$bucket/config/ucp-config-$env.json ./ucp-config.json
 cat ./ucp-config.json
 
+export DYNAMODB_CONFIG_TABLE_NAME=$(jq -r .dynamodbConfigTableName ./ucp-config.json)
+
 export GLUE_DB_NAME=$(jq -r .glueDBname ./ucp-config.json)
 export GLUE_ROLE_NAME=$(jq -r .ucpDataAdminRoleName ./ucp-config.json)
 export GLUE_JOB_NAME_AIR_BOOKING=$(jq -r .customerJobNameairbooking ./ucp-config.json)

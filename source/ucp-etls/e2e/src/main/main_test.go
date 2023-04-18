@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	db "tah/core/db"
 	glue "tah/core/glue"
 	s3 "tah/core/s3"
 	sqs "tah/core/sqs"
@@ -16,6 +17,7 @@ import (
 )
 
 var UCP_REGION = getRegion()
+var DYNAMODB_CONFIG_TABLE_NAME = os.Getenv("DYNAMODB_CONFIG_TABLE_NAME")
 var GLUE_ROLE_NAME = os.Getenv("GLUE_ROLE_NAME")
 var GLUE_DB_NAME = os.Getenv("GLUE_DB_NAME")
 var TEST_BUCKET_AIR_BOOKING = os.Getenv("TEST_BUCKET_AIR_BOOKING")
@@ -38,6 +40,9 @@ var GLUE_JOB_NAME_GUEST_PROFILES = os.Getenv("GLUE_JOB_NAME_GUEST_PROFILES")
 var GLUE_JOB_NAME_STAY_REVENUE = os.Getenv("GLUE_JOB_NAME_STAY_REVENUE")
 var GLUE_JOB_NAME_CLICKSTREAM = os.Getenv("GLUE_JOB_NAME_CLICKSTREAM")
 
+var BOOKMARK_PK = "item_id"
+var BOOKMARK_SK = "item_type"
+
 type BusinessObjectTestConfig struct {
 	ObjectName    string
 	GlueJob       string
@@ -51,7 +56,7 @@ type BusinessObjectTestConfig struct {
 }
 
 func TestMain(t *testing.T) {
-	//schedule := "cron(15 12 * * ? *)"
+	// Set up
 	glueClient := glue.Init(UCP_REGION, GLUE_DB_NAME)
 	targetBucketHandler := s3.Init(TEST_BUCKET_ACCP_IMPORT, "", UCP_REGION)
 	sqsClient := sqs.Init(UCP_REGION)
@@ -60,10 +65,15 @@ func TestMain(t *testing.T) {
 	if err != nil {
 		t.Errorf("[TestMain]error creating queue: %v", err)
 	}
+	dynamodbClient := db.Init(DYNAMODB_CONFIG_TABLE_NAME, BOOKMARK_PK, BOOKMARK_SK)
+	pk := "glue_job_bookmark"
+	sk := "clickstream_" + domain
+	data := make(map[string]interface{})
 
-	year := "2023"
+	year := "2022"
 	month := "12"
 	day := "01"
+	hour := "09"
 	bizObjectConfigs := []BusinessObjectTestConfig{
 		BusinessObjectTestConfig{
 			ObjectName:   "air_booking",
@@ -146,6 +156,7 @@ func TestMain(t *testing.T) {
 		},
 	}
 
+	// Run ETL jobs
 	var wg sync.WaitGroup
 	testErrs := []string{}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -157,14 +168,14 @@ func TestMain(t *testing.T) {
 			log.Printf("[%v] 1-Starting e2e tests", c.ObjectName)
 			sourceBucketHandler := s3.Init(c.SourceBucket, "", UCP_REGION)
 
-			log.Printf("[%v] 2-Uploading data to s3://%s/%s", c.ObjectName, c.SourceBucket, strings.Join([]string{year, month, day}, "/")+"/09/")
+			log.Printf("[%v] 2-Uploading data to s3://%s/%s", c.ObjectName, c.SourceBucket, strings.Join([]string{year, month, day, hour}, "/"))
 			for _, file := range c.TestFiles {
 				//Fo single linek json object we unprerttyfy them since gluue cann't process pererttified Json.
 				//For multiline jsonl files we keep them as is. For noo only c
 				if !c.Multiline {
 					unprettyfy(c.TestFilePath + file)
 				}
-				err := sourceBucketHandler.UploadFile("2023/12/01/09/"+file, c.TestFilePath+file)
+				err := sourceBucketHandler.UploadFile(year+"/"+month+"/"+day+"/"+hour+"/"+file, c.TestFilePath+file)
 				if err != nil {
 					testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] Cound not upload files: %v", c.ObjectName, err))
 					cancel()
@@ -202,6 +213,8 @@ func TestMain(t *testing.T) {
 				"--SOURCE_TABLE":    c.GlueTableName,
 				"--ERROR_QUEUE_URL": queueUrl,
 				"--ACCP_DOMAIN":     domain,
+				"--BIZ_OBJECT_NAME": c.ObjectName,
+				"--DYNAMO_TABLE":    DYNAMODB_CONFIG_TABLE_NAME,
 			})
 			if err != nil {
 				testErrs = append(testErrs, fmt.Sprintf("[TestGlue][%v] error running job: %v", c.ObjectName, err))
@@ -269,7 +282,7 @@ func TestMain(t *testing.T) {
 						for _, col := range data[0] {
 							columns[col] = true
 						}
-						//Looking fro mandatory columns
+						//Looking for mandatory columns
 						mandatoryColumns := []string{"traveller_id", "last_updated", "model_version"}
 						log.Printf("[TestGlue][%v] Checking for mandatory columns %v in CSV file", c.ObjectName, mandatoryColumns)
 						for _, colName := range mandatoryColumns {
@@ -302,6 +315,88 @@ func TestMain(t *testing.T) {
 		log.Printf("All Tests successfully completed")
 	}
 
+	// Validate bookmark has been set
+	err = dynamodbClient.Get(pk, sk, &data)
+	if err != nil || data["bookmark"] == "" {
+		t.Errorf("[TestMain] Error: unable to get initial bookmark data")
+	} else {
+		log.Printf("Initial bookmark data: %v", data)
+	}
+	// Validate count of records processed is same as expected
+	count := int(data["records_processed"].(float64))
+	expectedCount := 23 // TODO: improve
+	if count != expectedCount {
+		t.Errorf("[TestMain] The count of processed records on initial run does not match expected.")
+	}
+	// Run one job again, expect only data from partitions since last run to be included
+	log.Printf("Testing incremental job run with a bookmark")
+	ts := time.Now().Format("2006-01-02-15")
+	split := strings.Split(ts, "-")
+	year2 := split[0]
+	month2 := split[1]
+	day2 := split[2]
+	hour2 := split[3]
+	c2 := BusinessObjectTestConfig{
+		ObjectName:   "clickstream",
+		GlueJob:      GLUE_JOB_NAME_CLICKSTREAM,
+		TestFilePath: "../../../../test_data/clickstream/",
+		TestFiles: []string{
+			"data1.json",
+		},
+		GlueTableName: TEST_TABLE_CLICKSTREAM,
+		SourceBucket:  TEST_BUCKET_CLICKSTREAM,
+		CrawlerName:   "glue_e2e_tests_clickstream",
+		TargetPrefix:  "clickstream",
+		Multiline:     true,
+	}
+	// Upload data to S3
+	sourceBucketHandler := s3.Init(c2.SourceBucket, "", UCP_REGION)
+	err = sourceBucketHandler.UploadFile(year2+"/"+month2+"/"+day2+"/"+hour2+"/"+c2.TestFiles[0], c2.TestFilePath+c2.TestFiles[0])
+	if err != nil {
+		t.Errorf("[MainTest] Error uploading test file: %v", err)
+	}
+	// Create Glue table partition
+	errs := glueClient.AddPartitionsToTable(c2.GlueTableName, []glue.Partition{glue.Partition{
+		Values:   []string{year2, month2, day2},
+		Location: "s3://" + c2.SourceBucket + "/" + strings.Join([]string{year2, month2, day2}, "/"),
+	}})
+	if len(errs) > 0 {
+		t.Errorf("[MainTest] Error(s) adding glue partitions: %v", errs)
+	}
+	// Run job
+	err = glueClient.RunJob(c2.GlueJob, map[string]string{
+		"--DEST_BUCKET":     TEST_BUCKET_ACCP_IMPORT,
+		"--SOURCE_TABLE":    c2.GlueTableName,
+		"--ERROR_QUEUE_URL": queueUrl,
+		"--ACCP_DOMAIN":     domain,
+		"--BIZ_OBJECT_NAME": c2.ObjectName,
+		"--DYNAMO_TABLE":    DYNAMODB_CONFIG_TABLE_NAME,
+	})
+	if err != nil {
+		t.Errorf("[MainTest] Error running Glue job: %v", err)
+	}
+	// Wait for job to complete
+	status, err := glueClient.WaitForJobRun(c2.GlueJob, 600)
+	if err != nil {
+		t.Errorf("[MainTest] Error with Glue job: %v", err)
+	}
+	if status != "SUCCEEDED" {
+		t.Errorf("[MainTest] Second Glue job run did not succeed")
+	}
+	// Verify expected records processed
+	err = dynamodbClient.Get(pk, sk, &data)
+	if err != nil || data["bookmark"] == "" {
+		t.Errorf("[TestMain] Error: unable to get bookmark data")
+	} else {
+		log.Printf("Second run bookmark data: %v", data)
+	}
+	// Validate count of records processed is same as expected
+	count = int(data["records_processed"].(float64))
+	expectedCount = 9 // TODO: improve
+	if count != expectedCount {
+		t.Errorf("[TestMain] The count of processed records on second run is not correct.")
+	}
+
 	log.Printf("Cleaning up")
 	for _, c := range bizObjectConfigs {
 		sourceBucketHandler := s3.Init(c.SourceBucket, "", UCP_REGION)
@@ -318,6 +413,12 @@ func TestMain(t *testing.T) {
 			t.Errorf("[TestGlue][%v] Error emptying bucket %v", c.ObjectName, err)
 		}
 	}
+	errs = glueClient.RemovePartitionsFromTable(c2.GlueTableName, []glue.Partition{
+		glue.Partition{Values: []string{year2, month2, day2}},
+	})
+	if len(errs) > 0 {
+		t.Errorf("[TestMain] Error deleting partition for second run: %v", errs)
+	}
 	err = targetBucketHandler.EmptyBucket()
 	if err != nil {
 		t.Errorf("[TestGlue]Error emptying target bucket %v", err)
@@ -326,10 +427,15 @@ func TestMain(t *testing.T) {
 	if err != nil {
 		t.Errorf("[TestGlue]error deleting queue: %v", err)
 	}
-
+	for _, cfg := range bizObjectConfigs {
+		err := dynamodbClient.DeleteByKey(pk, cfg.ObjectName+"_"+domain)
+		if err != nil {
+			t.Errorf("[TestMain] Error deleting job bookmark for %v: %v", cfg.ObjectName, err)
+		}
+	}
 }
 
-//unprettyfy json file before upload
+// unprettyfy json file before upload
 func unprettyfy(path string) error {
 	log.Printf("Unprettyfying: %v", path)
 	data, err := ioutil.ReadFile(path)
