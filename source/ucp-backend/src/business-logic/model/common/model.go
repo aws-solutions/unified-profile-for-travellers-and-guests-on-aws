@@ -8,10 +8,13 @@ import (
 )
 
 type SearchRq struct {
-	Email     string
-	LastName  string
-	Phone     string
-	LoyaltyID string
+	TravellerID    string
+	AirBookingD    string
+	HotelBookingID string
+	Email          string
+	LastName       string
+	Phone          string
+	LoyaltyID      string
 }
 
 type LinkIndustryConnectorRq struct {

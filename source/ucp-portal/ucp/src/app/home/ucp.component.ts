@@ -26,9 +26,11 @@ export class UCPComponent implements OnInit, OnDestroy {
   searchForm = new FormGroup({
     lastName: new FormControl(null, []),
     email: new FormControl(null, []),
+    travellerId: new FormControl(null, []),
     id: new FormControl(null, []),
     phone: new FormControl(null, []),
-    confirmationNumber: new FormControl(null, []),
+    hotelBooking: new FormControl(null, []),
+    airBooking: new FormControl(null, []),
     loyaltyId: new FormControl(null, []),
   })
 

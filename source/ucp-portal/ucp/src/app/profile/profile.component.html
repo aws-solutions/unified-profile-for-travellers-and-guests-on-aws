@@ -9,11 +9,16 @@
                 <div class="profile-category">
                     <h2 class="float-right">Lifetime Revenue: $ {{this.totalRevenueGenertated | number: '1.2-2'}}</h2>
                     <div class="traveller-title">TRAVELLER</div>
-                    <div class="traveller-name"><fa-icon class="traveller-icon" [icon]="faUser"></fa-icon>
+                    <div *ngIf="traveller.lastName" class="traveller-name"><fa-icon class="traveller-icon"
+                            [icon]="faUser"></fa-icon>
                         <span *ngIf="traveller.honorific">{{traveller.honorific}}</span> {{traveller.firstName}}
                         {{traveller.middleName}}
                         {{traveller.lastName}} <span class="pronoun"
                             *ngIf="traveller.pronoun">({{traveller.pronoun}})</span>
+                    </div>
+                    <div *ngIf="!traveller.lastName" class="traveller-name"><fa-icon class="traveller-icon"
+                            [icon]="faUser"></fa-icon>
+                        Anonymous User
                     </div>
                     <br />
                     <div class="row">
@@ -27,7 +32,7 @@
                             <div class="data-element">
                                 <div *ngIf="traveller.personalEmailAddress">{{traveller.personalEmailAddress}}</div>
                                 <div *ngIf="traveller.businessEmailAddress">{{traveller.businessEmailAddress}}</div>
-                                <div *ngIf="!traveller.businessEmailAddress && !traveller.personalEmailAddress">None
+                                <div *ngIf="!traveller.businessEmailAddress && !traveller.personalEmailAddress">-
                                 </div>
                             </div>
                         </div>
@@ -36,12 +41,16 @@
                             <div class="data-element">
                                 <ucp-address *ngIf="traveller.homeAddress"
                                     [address]="traveller.homeAddress"></ucp-address>
+                                <div *ngIf="!traveller.homeAddress">-</div>
                             </div>
                         </div>
 
                         <div class="col-sm-3"><fa-icon class="data-title-icon" [icon]="faBirthdayCake"></fa-icon><span
                                 class="data-title">BIRTHDATE</span>
-                            <div class="data-element">{{traveller.birthDate | date: 'YYYY-MM-dd'}}</div>
+                            <div *ngIf="traveller.birthDate > oldestBirthDate" class="data-element">
+                                {{traveller.birthDate | date:
+                                'YYYY-MM-dd'}}</div>
+                            <div *ngIf="traveller.birthDate <= oldestBirthDate" class="data-element">-</div>
                         </div>
                     </div>
                     <br />

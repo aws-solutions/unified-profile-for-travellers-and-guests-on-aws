@@ -15,6 +15,7 @@ var SEARCH_KEY_EMAIL = "PersonalEmailAddress"
 var SEARCH_KEY_PHONE = "PhoneNumber"
 var SEARCH_KEY_ACCOUNT_NUMBER = "AccountNumber"
 var SEARCH_KEY_CONF_NUMBER = "confirmationNumber"
+var SEARCH_KEY_PROFILE_ID = "profile_id"
 
 type SearchProfile struct {
 	name string
@@ -45,10 +46,13 @@ func (u *SearchProfile) Registry() *registry.Registry {
 func (u *SearchProfile) CreateRequest(req events.APIGatewayProxyRequest) (model.RequestWrapper, error) {
 	rw := model.RequestWrapper{}
 	rw.SearchRq = model.SearchRq{}
+	rw.SearchRq.TravellerID = req.QueryStringParameters["travellerId"]
 	rw.SearchRq.LastName = req.QueryStringParameters["lastName"]
 	rw.SearchRq.Phone = req.QueryStringParameters["phone"]
 	rw.SearchRq.Email = req.QueryStringParameters["email"]
 	rw.SearchRq.LoyaltyID = req.QueryStringParameters["loyaltyId"]
+	rw.SearchRq.AirBookingD = req.QueryStringParameters["airBookingId"]
+	rw.SearchRq.HotelBookingID = req.QueryStringParameters["hotelBookingId"]
 	u.tx.Log("Search Request: %v", rw)
 	return rw, nil
 }
@@ -61,6 +65,9 @@ func (u *SearchProfile) ValidateRequest(rq model.RequestWrapper) error {
 func (u *SearchProfile) Run(req model.RequestWrapper) (model.ResponseWrapper, error) {
 	profiles := []customerprofiles.Profile{}
 	var err error
+	if req.SearchRq.TravellerID != "" {
+		profiles, err = u.reg.Accp.SearchProfiles(SEARCH_KEY_PROFILE_ID, []string{req.SearchRq.TravellerID})
+	}
 	if req.SearchRq.LastName != "" {
 		profiles, err = u.reg.Accp.SearchProfiles(SEARCH_KEY_LAST_NAME, []string{req.SearchRq.LastName})
 	}
@@ -73,6 +80,7 @@ func (u *SearchProfile) Run(req model.RequestWrapper) (model.ResponseWrapper, er
 	if req.SearchRq.Email != "" {
 		profiles, err = u.reg.Accp.SearchProfiles(SEARCH_KEY_EMAIL, []string{req.SearchRq.Email})
 	}
+
 	if err != nil {
 		return model.ResponseWrapper{}, err
 	}

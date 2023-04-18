@@ -1,3 +1,31 @@
 <div class="data-title"><fa-icon class="data-title-icon"
         [icon]="(config.objectTypeIcons || {})[objectType].icon"></fa-icon>
-    WEB AND MOBILE ACTIVTY</div>
+    WEB AND MOBILE ACTIVITY</div>
+<ucp-pagination [nRecords]="records.length" *ngIf="records.length >= pageSize && page===0" [pageSize]="pageSize"
+    (pageChange)="onPageChange($event)"></ucp-pagination>
+<div class="table-container">
+    <div class="row table-header">
+        <div class="col-sm-3 title align-center block-title">
+            Event Type
+        </div>
+        <div class="col-sm-6 title align-center block-title">
+            Products
+        </div>
+        <div class="col-sm-2 title align-center block-title">
+            Last Updated
+        </div>
+    </div>
+    <div class="row table-row" *ngFor="let rec of records">
+        <div class="col-sm-3 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'eventType'" [data]="rec.eventType"></ucp-data>
+        </div>
+        <div class="col-sm-6 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'products'"
+                [data]="rec.products.split('|').join(',')"></ucp-data>
+        </div>
+        <div class="col-sm-2 title align-center">
+            <ucp-data [accpRecord]="objectType" [fieldName]="'lastUpdated'"
+                [data]="rec.lastUpdated | date: 'YYYY-MM-dd hh:mm'"></ucp-data>
+        </div>
+    </div>
+</div>

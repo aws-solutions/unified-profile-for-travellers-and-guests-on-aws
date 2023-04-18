@@ -9,28 +9,35 @@
                 <div class="panel-title">SEARCH TRAVELER</div>
                 <br />
                 <div class="row">
-                    <div class="col-sm-3">
+                    <div class="col-sm-2">
                         <div class="form-group">
-                            <label class="form-label">ID</label>
+                            <label class="form-label">AMAZON CONNECT ID</label>
                             <input class="form-control" type="text" [minLength]="3" placeholder="Unique ID"
                                 formControlName="id">
                         </div>
                     </div>
-                    <div class="col-sm-3">
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="form-label">TRAVELLER ID</label>
+                            <input class="form-control" type="text" [minLength]="3" placeholder="Unique ID"
+                                formControlName="travellerId">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
                         <div class="form-group">
                             <label class="form-label">LAST NAME</label>
                             <input class="form-control" type="text" [minLength]="3" placeholder="Last name"
                                 formControlName="lastName">
                         </div>
                     </div>
-                    <div class="col-sm-3">
+                    <div class="col-sm-2">
                         <div class="form-group">
                             <label class="form-label">EMAIL</label>
                             <input class="form-control" type="email" [minLength]="3" placeholder="Guest Email"
                                 formControlName="email">
                         </div>
                     </div>
-                    <div class="col-sm-3">
+                    <div class="col-sm-2">
                         <div class="form-group">
                             <label class="form-label">PHONE</label>
                             <input class="form-control" type="text" [minLength]="3" placeholder="Phone"
@@ -40,14 +47,21 @@
                 </div>
                 <br />
                 <div class="row">
-                    <div class="col-sm-3">
+                    <div class="col-sm-2">
                         <div class="form-group">
-                            <label class="form-label">CONFIRMATION</label>
+                            <label class="form-label">HOTEL BOOKING</label>
                             <input class="form-control" type="text" [minLength]="3" placeholder="Confirmation"
-                                formControlName="confirmationNumber">
+                                formControlName="hotelBooking">
                         </div>
                     </div>
-                    <div class="col-sm-3">
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="form-label">AIR BOOKING</label>
+                            <input class="form-control" type="text" [minLength]="3" placeholder="Confirmation"
+                                formControlName="airBooking">
+                        </div>
+                    </div>
+                    <div class="col-sm-2">
                         <div class="form-group">
                             <label class="form-label">LOYALTY ID</label>
                             <input class="form-control" type="text" [minLength]="3" placeholder="Loyalty Id"

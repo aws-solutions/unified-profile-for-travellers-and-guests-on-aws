@@ -1,10 +1,9 @@
-import { Component, OnInit, Inject, OnDestroy, Input } from '@angular/core';
-import * as moment from 'moment';
+import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
 import { UcpService } from '../../../service/ucpService';
-import { FormGroup, FormControl, Validators } from '@angular/forms';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
-import { faUser, faPhone, faEnvelope, faMapMarker, faBriefcase, faBirthdayCake, faExclamationTriangle, faPlane, faMousePointer, faHotel, faUsd } from '@fortawesome/free-solid-svg-icons';
+import { Traveller, Clickstream } from '../../../model/traveller.model'
+import { PaginationOptions } from '../../../model/pagination.model'
 
 @Component({
     selector: 'clickstream-widget',
@@ -13,17 +12,53 @@ import { faUser, faPhone, faEnvelope, faMapMarker, faBriefcase, faBirthdayCake, 
 })
 export class ClickstreamWidget implements OnInit {
     @Input()
-    traveller: any = {}
+    traveller: Traveller = new Traveller()
     @Input()
     config: any = {}
     @Input()
-    objectType = ""
+    objectType: string = ""
+    @Output() pageChange = new EventEmitter<PaginationOptions>();
+
+
+    pageSize = 5;
+    page = 0;
+
+    records: Clickstream[] = []
 
     constructor(public dialog: MatDialog,
         private route: ActivatedRoute,
-        private ucpService: UcpService) { }
+        private ucpService: UcpService) {
+
+    }
+
+    ngOnChanges(changes: any) {
+        this.updateRecords()
+    }
+
+    onPageChange(page) {
+        console.log("new page: ", page)
+        this.page = page
+        let po = new PaginationOptions(page, this.pageSize, this.objectType)
+        this.pageChange.emit(po);
+    }
 
     ngOnInit() {
 
+    }
+
+    updateRecords() {
+        console.log("[Clickstream component] traveler: %v", this.traveller)
+        this.records = this.traveller.clickstreamRecords
+        this.records.sort((r1, r2) => {
+            if (r1.lastUpdated < r2.lastUpdated) {
+                return 1;
+            }
+
+            if (r1.lastUpdated > r2.lastUpdated) {
+                return -1;
+            }
+
+            return 0;
+        });
     }
 }

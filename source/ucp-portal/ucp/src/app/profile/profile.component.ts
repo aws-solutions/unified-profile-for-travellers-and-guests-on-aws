@@ -42,6 +42,7 @@ export class ProfileComponent implements OnInit {
   totalRevenueGenertated = 0;
   ingestionErrors = []
   DEFAULT_PAGE_SIZE: number = 5
+  oldestBirthDate = new Date(1900, 1, 1)
 
   allPaginationOptions: Map<string, PaginationOptions> = new Map<string, PaginationOptions>()
 
