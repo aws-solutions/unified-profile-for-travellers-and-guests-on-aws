@@ -1,0 +1,1621 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/Traveller",
+  "$defs": {
+    "Address": {
+      "properties": {
+        "Address1": {
+          "type": "string"
+        },
+        "Address2": {
+          "type": "string"
+        },
+        "Address3": {
+          "type": "string"
+        },
+        "Address4": {
+          "type": "string"
+        },
+        "City": {
+          "type": "string"
+        },
+        "State": {
+          "type": "string"
+        },
+        "Province": {
+          "type": "string"
+        },
+        "PostalCode": {
+          "type": "string"
+        },
+        "Country": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "Address1",
+        "Address2",
+        "Address3",
+        "Address4",
+        "City",
+        "State",
+        "Province",
+        "PostalCode",
+        "Country"
+      ]
+    },
+    "AirBooking": {
+      "properties": {
+        "accpObjectID": {
+          "type": "string"
+        },
+        "travellerId": {
+          "type": "string"
+        },
+        "bookingId": {
+          "type": "string"
+        },
+        "segmentId": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "flightNumber": {
+          "type": "string"
+        },
+        "departureDate": {
+          "type": "string"
+        },
+        "departureTime": {
+          "type": "string"
+        },
+        "arrivalDate": {
+          "type": "string"
+        },
+        "arrivalTime": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "totalPrice": {
+          "type": "number"
+        },
+        "travellerPrice": {
+          "type": "number"
+        },
+        "bookerId": {
+          "type": "string"
+        },
+        "creationChannelId": {
+          "type": "string"
+        },
+        "lastUpdateChannelId": {
+          "type": "string"
+        },
+        "dayOfTravelEmail": {
+          "type": "string"
+        },
+        "dayOfTravelPhone": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "accpObjectID",
+        "travellerId",
+        "bookingId",
+        "segmentId",
+        "from",
+        "to",
+        "flightNumber",
+        "departureDate",
+        "departureTime",
+        "arrivalDate",
+        "arrivalTime",
+        "channel",
+        "status",
+        "lastUpdated",
+        "lastUpdatedBy",
+        "totalPrice",
+        "travellerPrice",
+        "bookerId",
+        "creationChannelId",
+        "lastUpdateChannelId",
+        "dayOfTravelEmail",
+        "dayOfTravelPhone"
+      ]
+    },
+    "AirLoyalty": {
+      "properties": {
+        "accpObjectID": {
+          "type": "string"
+        },
+        "travellerId": {
+          "type": "string"
+        },
+        "loyaltyId": {
+          "type": "string"
+        },
+        "programName": {
+          "type": "string"
+        },
+        "miles": {
+          "type": "string"
+        },
+        "milesToNextLevel": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string"
+        },
+        "joined": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "enrollmentDate": {
+          "type": "string"
+        },
+        "enrollmentSource": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "accountStatus": {
+          "type": "string"
+        },
+        "reasonForClose": {
+          "type": "string"
+        },
+        "languagePreference": {
+          "type": "string"
+        },
+        "displayPreference": {
+          "type": "string"
+        },
+        "mealPreference": {
+          "type": "string"
+        },
+        "seatPreference": {
+          "type": "string"
+        },
+        "homeAirport": {
+          "type": "string"
+        },
+        "dateTimeFormatPreference": {
+          "type": "string"
+        },
+        "cabinPreference": {
+          "type": "string"
+        },
+        "fareTypePreference": {
+          "type": "string"
+        },
+        "expertMode": {
+          "type": "boolean"
+        },
+        "privacyIndicator": {
+          "type": "string"
+        },
+        "carPreferenceVendor": {
+          "type": "string"
+        },
+        "carPreferenceType": {
+          "type": "string"
+        },
+        "specialAccommodation1": {
+          "type": "string"
+        },
+        "specialAccommodation2": {
+          "type": "string"
+        },
+        "specialAccommodation3": {
+          "type": "string"
+        },
+        "specialAccommodation4": {
+          "type": "string"
+        },
+        "specialAccommodation5": {
+          "type": "string"
+        },
+        "marketingOptIns": {
+          "type": "string"
+        },
+        "renewDate": {
+          "type": "string"
+        },
+        "nextBillAmount": {
+          "type": "number"
+        },
+        "clearEnrollDate": {
+          "type": "string"
+        },
+        "clearRenewDate": {
+          "type": "string"
+        },
+        "clearTierLevel": {
+          "type": "string"
+        },
+        "clearNextBillAmount": {
+          "type": "number"
+        },
+        "clearIsActive": {
+          "type": "boolean"
+        },
+        "clearAutoRenew": {
+          "type": "boolean"
+        },
+        "clearHasBiometrics": {
+          "type": "boolean"
+        },
+        "clearHasPartnerPricing": {
+          "type": "boolean"
+        },
+        "tsaType": {
+          "type": "string"
+        },
+        "tsaSeqNum": {
+          "type": "string"
+        },
+        "tsaNumber": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "accpObjectID",
+        "travellerId",
+        "loyaltyId",
+        "programName",
+        "miles",
+        "milesToNextLevel",
+        "level",
+        "joined",
+        "lastUpdated",
+        "lastUpdatedBy",
+        "enrollmentDate",
+        "enrollmentSource",
+        "currency",
+        "amount",
+        "accountStatus",
+        "reasonForClose",
+        "languagePreference",
+        "displayPreference",
+        "mealPreference",
+        "seatPreference",
+        "homeAirport",
+        "dateTimeFormatPreference",
+        "cabinPreference",
+        "fareTypePreference",
+        "expertMode",
+        "privacyIndicator",
+        "carPreferenceVendor",
+        "carPreferenceType",
+        "specialAccommodation1",
+        "specialAccommodation2",
+        "specialAccommodation3",
+        "specialAccommodation4",
+        "specialAccommodation5",
+        "marketingOptIns",
+        "renewDate",
+        "nextBillAmount",
+        "clearEnrollDate",
+        "clearRenewDate",
+        "clearTierLevel",
+        "clearNextBillAmount",
+        "clearIsActive",
+        "clearAutoRenew",
+        "clearHasBiometrics",
+        "clearHasPartnerPricing",
+        "tsaType",
+        "tsaSeqNum",
+        "tsaNumber"
+      ]
+    },
+    "AlternateProfileID": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "lastUpdatedOn": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "value",
+        "lastUpdatedOn"
+      ]
+    },
+    "AncillaryService": {
+      "properties": {
+        "accpObjectID": {
+          "type": "string"
+        },
+        "travellerId": {
+          "type": "string"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "ancillaryType": {
+          "type": "string"
+        },
+        "bookingId": {
+          "type": "string"
+        },
+        "flightNumber": {
+          "type": "string"
+        },
+        "departureDate": {
+          "type": "string"
+        },
+        "baggageType": {
+          "type": "string"
+        },
+        "paxIndex": {
+          "type": "integer"
+        },
+        "quantity": {
+          "type": "integer"
+        },
+        "weight": {
+          "type": "number"
+        },
+        "dimentionsLength": {
+          "type": "number"
+        },
+        "dimentionsWidth": {
+          "type": "number"
+        },
+        "dimentionsHeight": {
+          "type": "number"
+        },
+        "priorityBagDrop": {
+          "type": "boolean"
+        },
+        "priorityBagReturn": {
+          "type": "boolean"
+        },
+        "lotBagInsurance": {
+          "type": "boolean"
+        },
+        "valuableBaggageInsurance": {
+          "type": "boolean"
+        },
+        "handsFreeBaggage": {
+          "type": "boolean"
+        },
+        "seatNumber": {
+          "type": "string"
+        },
+        "seatZone": {
+          "type": "string"
+        },
+        "neighborFreeSeat": {
+          "type": "boolean"
+        },
+        "upgradeAuction": {
+          "type": "boolean"
+        },
+        "changeType": {
+          "type": "string"
+        },
+        "otherAncilliaryType": {
+          "type": "string"
+        },
+        "priorityServiceType": {
+          "type": "string"
+        },
+        "loungeAccess": {
+          "type": "boolean"
+        },
+        "price": {
+          "type": "number"
+        },
+        "currency": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "accpObjectID",
+        "travellerId",
+        "lastUpdated",
+        "lastUpdatedBy",
+        "ancillaryType",
+        "bookingId",
+        "flightNumber",
+        "departureDate",
+        "baggageType",
+        "paxIndex",
+        "quantity",
+        "weight",
+        "dimentionsLength",
+        "dimentionsWidth",
+        "dimentionsHeight",
+        "priorityBagDrop",
+        "priorityBagReturn",
+        "lotBagInsurance",
+        "valuableBaggageInsurance",
+        "handsFreeBaggage",
+        "seatNumber",
+        "seatZone",
+        "neighborFreeSeat",
+        "upgradeAuction",
+        "changeType",
+        "otherAncilliaryType",
+        "priorityServiceType",
+        "loungeAccess",
+        "price",
+        "currency"
+      ]
+    },
+    "Clickstream": {
+      "properties": {
+        "accpObjectId": {
+          "type": "string"
+        },
+        "travellerId": {
+          "type": "string"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "eventTimestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "eventType": {
+          "type": "string"
+        },
+        "eventVersion": {
+          "type": "string"
+        },
+        "arrivalTimestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "customEventName": {
+          "type": "string"
+        },
+        "customerBirthdate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "customerCountry": {
+          "type": "string"
+        },
+        "customerEmail": {
+          "type": "string"
+        },
+        "customerFirstName": {
+          "type": "string"
+        },
+        "customerGender": {
+          "type": "string"
+        },
+        "customerId": {
+          "type": "string"
+        },
+        "customerLastName": {
+          "type": "string"
+        },
+        "customerNationality": {
+          "type": "string"
+        },
+        "customerPhone": {
+          "type": "string"
+        },
+        "customerType": {
+          "type": "string"
+        },
+        "customerLoyaltyId": {
+          "type": "string"
+        },
+        "languageCode": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "products": {
+          "type": "string"
+        },
+        "quantities": {
+          "type": "string"
+        },
+        "productsPrices": {
+          "type": "string"
+        },
+        "ecommerceAction": {
+          "type": "string"
+        },
+        "orderPaymentType": {
+          "type": "string"
+        },
+        "orderPromoCode": {
+          "type": "string"
+        },
+        "pageName": {
+          "type": "string"
+        },
+        "pageTypeEnvironment": {
+          "type": "string"
+        },
+        "transactionId": {
+          "type": "string"
+        },
+        "bookingId": {
+          "type": "string"
+        },
+        "geofenceLatitude": {
+          "type": "string"
+        },
+        "geofenceLongitude": {
+          "type": "string"
+        },
+        "geofenceId": {
+          "type": "string"
+        },
+        "geofenceName": {
+          "type": "string"
+        },
+        "poiId": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "custom": {
+          "type": "string"
+        },
+        "fareClass": {
+          "type": "string"
+        },
+        "fareType": {
+          "type": "string"
+        },
+        "flightSegmentsDepartureDateTime": {
+          "type": "string"
+        },
+        "flightSegmentsArrivalDateTime": {
+          "type": "string"
+        },
+        "flightSegments": {
+          "type": "string"
+        },
+        "flightSegmentsSku": {
+          "type": "string"
+        },
+        "flightRoute": {
+          "type": "string"
+        },
+        "flightNumbers": {
+          "type": "string"
+        },
+        "flightMarket": {
+          "type": "string"
+        },
+        "flightType": {
+          "type": "string"
+        },
+        "originDate": {
+          "type": "string"
+        },
+        "originDateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "returnDate": {
+          "type": "string"
+        },
+        "returnDateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "returnFlightRoute": {
+          "type": "string"
+        },
+        "numPaxAdults": {
+          "type": "integer"
+        },
+        "numPaxInf": {
+          "type": "integer"
+        },
+        "numPaxChildren": {
+          "type": "integer"
+        },
+        "paxType": {
+          "type": "string"
+        },
+        "totalPassengers": {
+          "type": "integer"
+        },
+        "roomType": {
+          "type": "string"
+        },
+        "ratePlan": {
+          "type": "string"
+        },
+        "checkinDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "checkoutDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "numNights": {
+          "type": "integer"
+        },
+        "numGuests": {
+          "type": "integer"
+        },
+        "numGuestsAdult": {
+          "type": "integer"
+        },
+        "numGuestsChildren": {
+          "type": "integer"
+        },
+        "hotelCode": {
+          "type": "string"
+        },
+        "hotelCodeList": {
+          "type": "string"
+        },
+        "hotelName": {
+          "type": "string"
+        },
+        "destination": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "accpObjectId",
+        "travellerId",
+        "lastUpdated",
+        "sessionId",
+        "eventTimestamp",
+        "eventType",
+        "eventVersion",
+        "arrivalTimestamp",
+        "userAgent",
+        "customEventName",
+        "customerBirthdate",
+        "customerCountry",
+        "customerEmail",
+        "customerFirstName",
+        "customerGender",
+        "customerId",
+        "customerLastName",
+        "customerNationality",
+        "customerPhone",
+        "customerType",
+        "customerLoyaltyId",
+        "languageCode",
+        "currency",
+        "products",
+        "quantities",
+        "productsPrices",
+        "ecommerceAction",
+        "orderPaymentType",
+        "orderPromoCode",
+        "pageName",
+        "pageTypeEnvironment",
+        "transactionId",
+        "bookingId",
+        "geofenceLatitude",
+        "geofenceLongitude",
+        "geofenceId",
+        "geofenceName",
+        "poiId",
+        "url",
+        "custom",
+        "fareClass",
+        "fareType",
+        "flightSegmentsDepartureDateTime",
+        "flightSegmentsArrivalDateTime",
+        "flightSegments",
+        "flightSegmentsSku",
+        "flightRoute",
+        "flightNumbers",
+        "flightMarket",
+        "flightType",
+        "originDate",
+        "originDateTime",
+        "returnDate",
+        "returnDateTime",
+        "returnFlightRoute",
+        "numPaxAdults",
+        "numPaxInf",
+        "numPaxChildren",
+        "paxType",
+        "totalPassengers",
+        "roomType",
+        "ratePlan",
+        "checkinDate",
+        "checkoutDate",
+        "numNights",
+        "numGuests",
+        "numGuestsAdult",
+        "numGuestsChildren",
+        "hotelCode",
+        "hotelCodeList",
+        "hotelName",
+        "destination"
+      ]
+    },
+    "CustomerServiceInteraction": {
+      "properties": {
+        "accpObjectID": {
+          "type": "string"
+        },
+        "travellerId": {
+          "type": "string"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "startTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "string"
+        },
+        "interactionType": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "languageCode": {
+          "type": "string"
+        },
+        "languageName": {
+          "type": "string"
+        },
+        "conversation": {
+          "type": "string"
+        },
+        "sentimentScore": {
+          "type": "number"
+        },
+        "campaignJobId": {
+          "type": "string"
+        },
+        "campaignStrategy": {
+          "type": "string"
+        },
+        "campaignProgram": {
+          "type": "string"
+        },
+        "campaignProduct": {
+          "type": "string"
+        },
+        "campaignName": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "loyaltyProgramName": {
+          "type": "string"
+        },
+        "isVoiceOtp": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "accpObjectID",
+        "travellerId",
+        "lastUpdated",
+        "lastUpdatedBy",
+        "startTime",
+        "endTime",
+        "duration",
+        "sessionId",
+        "channel",
+        "interactionType",
+        "status",
+        "languageCode",
+        "languageName",
+        "conversation",
+        "sentimentScore",
+        "campaignJobId",
+        "campaignStrategy",
+        "campaignProgram",
+        "campaignProduct",
+        "campaignName",
+        "category",
+        "subject",
+        "loyaltyProgramName",
+        "isVoiceOtp"
+      ]
+    },
+    "EmailHistory": {
+      "properties": {
+        "accpObjectID": {
+          "type": "string"
+        },
+        "travellerId": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "isVerified": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "accpObjectID",
+        "travellerId",
+        "address",
+        "type",
+        "lastUpdated",
+        "lastUpdatedBy",
+        "isVerified"
+      ]
+    },
+    "HotelBooking": {
+      "properties": {
+        "accpObjectID": {
+          "type": "string"
+        },
+        "travellerId": {
+          "type": "string"
+        },
+        "bookingId": {
+          "type": "string"
+        },
+        "hotelCode": {
+          "type": "string"
+        },
+        "numNights": {
+          "type": "integer"
+        },
+        "numGuests": {
+          "type": "integer"
+        },
+        "productId": {
+          "type": "string"
+        },
+        "checkInDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "roomTypeCode": {
+          "type": "string"
+        },
+        "roomTypeName": {
+          "type": "string"
+        },
+        "roomTypeDescription": {
+          "type": "string"
+        },
+        "ratePlanCode": {
+          "type": "string"
+        },
+        "ratePlanName": {
+          "type": "string"
+        },
+        "ratePlanDescription": {
+          "type": "string"
+        },
+        "attributeCodes": {
+          "type": "string"
+        },
+        "attributeNames": {
+          "type": "string"
+        },
+        "attributeDescriptions": {
+          "type": "string"
+        },
+        "addOnCodes": {
+          "type": "string"
+        },
+        "addOnNames": {
+          "type": "string"
+        },
+        "addOnDescriptions": {
+          "type": "string"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "pricePerTraveller": {
+          "type": "string"
+        },
+        "bookerId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "totalSegmentBeforeTax": {
+          "type": "number"
+        },
+        "totalSegmentAfterTax": {
+          "type": "number"
+        },
+        "creationChannelId": {
+          "type": "string"
+        },
+        "lastUpdateChannelId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "accpObjectID",
+        "travellerId",
+        "bookingId",
+        "hotelCode",
+        "numNights",
+        "numGuests",
+        "productId",
+        "checkInDate",
+        "roomTypeCode",
+        "roomTypeName",
+        "roomTypeDescription",
+        "ratePlanCode",
+        "ratePlanName",
+        "ratePlanDescription",
+        "attributeCodes",
+        "attributeNames",
+        "attributeDescriptions",
+        "addOnCodes",
+        "addOnNames",
+        "addOnDescriptions",
+        "lastUpdated",
+        "lastUpdatedBy",
+        "pricePerTraveller",
+        "bookerId",
+        "status",
+        "totalSegmentBeforeTax",
+        "totalSegmentAfterTax",
+        "creationChannelId",
+        "lastUpdateChannelId"
+      ]
+    },
+    "HotelLoyalty": {
+      "properties": {
+        "accpObjectID": {
+          "type": "string"
+        },
+        "travellerId": {
+          "type": "string"
+        },
+        "loyaltyId": {
+          "type": "string"
+        },
+        "programName": {
+          "type": "string"
+        },
+        "points": {
+          "type": "string"
+        },
+        "units": {
+          "type": "string"
+        },
+        "pointsToNextLevel": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string"
+        },
+        "joined": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "accpObjectID",
+        "travellerId",
+        "loyaltyId",
+        "programName",
+        "points",
+        "units",
+        "pointsToNextLevel",
+        "level",
+        "joined",
+        "lastUpdated",
+        "lastUpdatedBy"
+      ]
+    },
+    "HotelStay": {
+      "properties": {
+        "accpObjectID": {
+          "type": "string"
+        },
+        "travellerId": {
+          "type": "string"
+        },
+        "stayId": {
+          "type": "string"
+        },
+        "bookingId": {
+          "type": "string"
+        },
+        "currencyCode": {
+          "type": "string"
+        },
+        "currencyName": {
+          "type": "string"
+        },
+        "currencySymbol": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hotelCode": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "accpObjectID",
+        "travellerId",
+        "stayId",
+        "bookingId",
+        "currencyCode",
+        "currencyName",
+        "currencySymbol",
+        "firstName",
+        "lastName",
+        "email",
+        "phone",
+        "startDate",
+        "hotelCode",
+        "type",
+        "description",
+        "amount",
+        "date",
+        "lastUpdated",
+        "lastUpdatedBy"
+      ]
+    },
+    "LoyaltyTx": {
+      "properties": {
+        "accpObjectID": {
+          "type": "string"
+        },
+        "travellerId": {
+          "type": "string"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "pointsOffset": {
+          "type": "number"
+        },
+        "pointUnit": {
+          "type": "string"
+        },
+        "originPointsOffset": {
+          "type": "number"
+        },
+        "qualifyingPointsOffset": {
+          "type": "number"
+        },
+        "source": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "bookingDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "orderNumber": {
+          "type": "string"
+        },
+        "productId": {
+          "type": "string"
+        },
+        "expireInDays": {
+          "type": "integer"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "amountType": {
+          "type": "string"
+        },
+        "voucherQuantity": {
+          "type": "integer"
+        },
+        "corporateReferenceNumber": {
+          "type": "string"
+        },
+        "promotions": {
+          "type": "string"
+        },
+        "activityDay": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "location": {
+          "type": "string"
+        },
+        "toLoyaltyId": {
+          "type": "string"
+        },
+        "fromLoyaltyId": {
+          "type": "string"
+        },
+        "organizationCode": {
+          "type": "string"
+        },
+        "eventName": {
+          "type": "string"
+        },
+        "documentNumber": {
+          "type": "string"
+        },
+        "corporateId": {
+          "type": "string"
+        },
+        "programName": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "accpObjectID",
+        "travellerId",
+        "lastUpdated",
+        "lastUpdatedBy",
+        "pointsOffset",
+        "pointUnit",
+        "originPointsOffset",
+        "qualifyingPointsOffset",
+        "source",
+        "category",
+        "bookingDate",
+        "orderNumber",
+        "productId",
+        "expireInDays",
+        "amount",
+        "amountType",
+        "voucherQuantity",
+        "corporateReferenceNumber",
+        "promotions",
+        "activityDay",
+        "location",
+        "toLoyaltyId",
+        "fromLoyaltyId",
+        "organizationCode",
+        "eventName",
+        "documentNumber",
+        "corporateId",
+        "programName"
+      ]
+    },
+    "PhoneHistory": {
+      "properties": {
+        "accpObjectID": {
+          "type": "string"
+        },
+        "travellerId": {
+          "type": "string"
+        },
+        "number": {
+          "type": "string"
+        },
+        "countryCode": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "isVerified": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "accpObjectID",
+        "travellerId",
+        "number",
+        "countryCode",
+        "type",
+        "lastUpdated",
+        "lastUpdatedBy",
+        "isVerified"
+      ]
+    },
+    "Traveller": {
+      "properties": {
+        "modelVersion": {
+          "type": "string"
+        },
+        "errors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
+        "mergedIn": {
+          "type": "string"
+        },
+        "connectId": {
+          "type": "string"
+        },
+        "travellerId": {
+          "type": "string"
+        },
+        "pssId": {
+          "type": "string"
+        },
+        "gdsId": {
+          "type": "string"
+        },
+        "pmsId": {
+          "type": "string"
+        },
+        "crsId": {
+          "type": "string"
+        },
+        "honorific": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "middleName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "string"
+        },
+        "pronoun": {
+          "type": "string"
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "jobTitle": {
+          "type": "string"
+        },
+        "companyName": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        },
+        "mobilePhoneNumber": {
+          "type": "string"
+        },
+        "homePhoneNumber": {
+          "type": "string"
+        },
+        "businessPhoneNumber": {
+          "type": "string"
+        },
+        "personalEmailAddress": {
+          "type": "string"
+        },
+        "businessEmailAddress": {
+          "type": "string"
+        },
+        "nationalityCode": {
+          "type": "string"
+        },
+        "nationalityName": {
+          "type": "string"
+        },
+        "languageCode": {
+          "type": "string"
+        },
+        "languageName": {
+          "type": "string"
+        },
+        "homeAddress": {
+          "$ref": "#/$defs/Address"
+        },
+        "businessAddress": {
+          "$ref": "#/$defs/Address"
+        },
+        "mailingAddress": {
+          "$ref": "#/$defs/Address"
+        },
+        "billingAddress": {
+          "$ref": "#/$defs/Address"
+        },
+        "airBookingRecords": {
+          "items": {
+            "$ref": "#/$defs/AirBooking"
+          },
+          "type": "array"
+        },
+        "airLoyaltyRecords": {
+          "items": {
+            "$ref": "#/$defs/AirLoyalty"
+          },
+          "type": "array"
+        },
+        "lotaltyTxRecords": {
+          "items": {
+            "$ref": "#/$defs/LoyaltyTx"
+          },
+          "type": "array"
+        },
+        "clickstreamRecords": {
+          "items": {
+            "$ref": "#/$defs/Clickstream"
+          },
+          "type": "array"
+        },
+        "emailHistoryRecords": {
+          "items": {
+            "$ref": "#/$defs/EmailHistory"
+          },
+          "type": "array"
+        },
+        "hotelBookingRecords": {
+          "items": {
+            "$ref": "#/$defs/HotelBooking"
+          },
+          "type": "array"
+        },
+        "hotelLoyaltyRecords": {
+          "items": {
+            "$ref": "#/$defs/HotelLoyalty"
+          },
+          "type": "array"
+        },
+        "hotelStayRecords": {
+          "items": {
+            "$ref": "#/$defs/HotelStay"
+          },
+          "type": "array"
+        },
+        "phoneHistoryRecords": {
+          "items": {
+            "$ref": "#/$defs/PhoneHistory"
+          },
+          "type": "array"
+        },
+        "customerServiceInteractionRecords": {
+          "items": {
+            "$ref": "#/$defs/CustomerServiceInteraction"
+          },
+          "type": "array"
+        },
+        "ancillaryServiceRecords": {
+          "items": {
+            "$ref": "#/$defs/AncillaryService"
+          },
+          "type": "array"
+        },
+        "alternateProfileIds": {
+          "items": {
+            "$ref": "#/$defs/AlternateProfileID"
+          },
+          "type": "array"
+        },
+        "parsingErrors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "modelVersion",
+        "errors",
+        "lastUpdated",
+        "lastUpdatedBy",
+        "domain",
+        "mergedIn",
+        "connectId",
+        "travellerId",
+        "pssId",
+        "gdsId",
+        "pmsId",
+        "crsId",
+        "honorific",
+        "firstName",
+        "middleName",
+        "lastName",
+        "gender",
+        "pronoun",
+        "birthDate",
+        "jobTitle",
+        "companyName",
+        "phoneNumber",
+        "mobilePhoneNumber",
+        "homePhoneNumber",
+        "businessPhoneNumber",
+        "personalEmailAddress",
+        "businessEmailAddress",
+        "nationalityCode",
+        "nationalityName",
+        "languageCode",
+        "languageName",
+        "homeAddress",
+        "businessAddress",
+        "mailingAddress",
+        "billingAddress",
+        "airBookingRecords",
+        "airLoyaltyRecords",
+        "lotaltyTxRecords",
+        "clickstreamRecords",
+        "emailHistoryRecords",
+        "hotelBookingRecords",
+        "hotelLoyaltyRecords",
+        "hotelStayRecords",
+        "phoneHistoryRecords",
+        "customerServiceInteractionRecords",
+        "ancillaryServiceRecords",
+        "alternateProfileIds",
+        "parsingErrors"
+      ]
+    }
+  }
+}

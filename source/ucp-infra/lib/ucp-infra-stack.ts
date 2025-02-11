@@ -1,847 +1,1151 @@
-// Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: MIT-0
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
 
-import { Stack, CfnOutput, RemovalPolicy, StackProps, Duration, Tags } from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as iam from 'aws-cdk-lib/aws-iam';
-import * as kms from 'aws-cdk-lib/aws-kms';
+import { Aspects, Aws, CfnCondition, CfnMapping, CfnParameter, CfnResource, Fn, Resource, Stack, StackProps } from 'aws-cdk-lib';
+import * as apiGatewayV2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as firehose from 'aws-cdk-lib/aws-kinesisfirehose';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
+import * as logs from 'aws-cdk-lib/aws-logs';
+import * as rds from 'aws-cdk-lib/aws-rds';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 
-import { CorsHttpMethod, HttpApi, HttpMethod, HttpRoute, HttpStage, PayloadFormatVersion } from '@aws-cdk/aws-apigatewayv2-alpha';
-import { HttpUserPoolAuthorizer } from '@aws-cdk/aws-apigatewayv2-authorizers-alpha';
-import { HttpLambdaIntegration, } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
-import { Database } from '@aws-cdk/aws-glue-alpha';
-import { CfnCrawler, CfnJob, CfnTrigger, CfnWorkflow } from 'aws-cdk-lib/aws-glue';
-import { Queue } from 'aws-cdk-lib/aws-sqs';
-import * as tah_s3 from '../tah-cdk-common/s3';
-import * as tah_glue from '../tah-cdk-common/glue';
-import * as tah_core from '../tah-cdk-common/core';
+import { Construct } from 'constructs';
+import * as tahCore from '../tah-cdk-common/core';
 
+import { AppRegistry } from './app-registry';
+import { Backend } from './backend';
+import { CdkBaseProps, ConditionalPermissionsBoundary, LambdaProps, UIDeploymentOptions } from './cdk-base';
+import { ChangeProcessor } from './change-processor';
+import { CommonResource } from './common-resource';
+import { CustomResource } from './custom-resource';
+import { Dashboard } from './dashboard';
+import { DataIngestion, DataIngestionProps } from './data-ingestion';
+import { ErrorManagement } from './error-management';
+import { Frontend } from './frontend';
+import { MatchProcessor } from './match-processor';
+import { MergeProcessor } from './merge-processor';
+import { ProfileStorage, ProfileStorageOutput } from './profile-storage';
 
-/////////////////////////////////////////////////////////////////////
-//Infrastructure Script for the AWS DynamoDB Blog Demo
-//This script takes the name of the Environement to spawn and create 
-// A lambda function, A DynamoDB table and a set of Api Gateway enpoints.
-/////////////////////////////////////////////////////////////////////
+import { StringParameter } from 'aws-cdk-lib/aws-ssm';
+import * as tahS3 from '../tah-cdk-common/s3';
+import * as tahSqs from '../tah-cdk-common/sqs';
+import { CPIndexer } from './cp-indexer';
+import { CPWriter } from './cp-writer';
+import { FargateResource } from './fargate-resource/fargate-resource';
+import { S3ExciseQueueProcessor } from './s3-excise-queue-processor';
+import { UptVpc, UptVpcProps } from './vpc/vpc-index';
+
+const TRAVELER_S3_ROOT_PATH = 'profiles';
+const BACKUP_S3_ROOT_PATH = 'data';
+
+export type EcrProps = { publishEcrAssets: false; publicEcrRegistry: string; publicEcrTag: string } | { publishEcrAssets: true };
+
+interface UCPInfraStackProps extends StackProps {
+    readonly solutionId: string;
+    readonly solutionName: string;
+    readonly solutionVersion: string;
+    readonly ecrProps: EcrProps;
+    readonly isByoVpcTemplate: boolean;
+}
+
+type CfnNagSuppressRule = {
+    readonly id: string;
+    readonly reason: string;
+};
+
 export class UCPInfraStack extends Stack {
+    constructor(scope: Construct, id: string, props: UCPInfraStackProps) {
+        super(scope, id, props);
 
-  constructor(scope: Construct, id: string, props?: StackProps) {
+        const envName = this.node.tryGetContext('envName');
+        const artifactBucketPath = this.node.tryGetContext('artifactBucketPath');
+        const artifactBucketName = this.node.tryGetContext('artifactBucket');
 
-    super(scope, id, props);
+        if (!envName) {
+            throw new Error('No environment name provided for stack');
+        }
 
-    const envName = this.node.tryGetContext("envName");
-    const artifactBucket = this.node.tryGetContext("artifactBucket");
-    const region = (props && props.env) ? props.env.region : ""
-    const account = (props && props.env) ? props.env.account : ""
-    if (!envName) {
-      throw new Error('No environemnt name provided for stack');
+        if (!artifactBucketName) {
+            throw new Error('No bucket name provided for stack');
+        }
+
+        const solutionName = props.solutionName;
+        const solutionId = props.solutionId;
+        const solutionVersion = props.solutionVersion;
+
+        /**
+         * CloudFormation parameters
+         */
+        const eventBridgeEnabled = new CfnParameter(this, 'eventbridgeActivated', {
+            type: 'String',
+            default: 'true',
+            allowedValues: ['true', 'false'],
+            description:
+                'If set to true, any change within a traveler profile will trigger a event in Amazon EvenBridge Bus created by the solution'
+        });
+        const industryConnectorBucketNameParam = new CfnParameter(this, 'industryConnectorBucketName', {
+            type: 'String',
+            default: '',
+            description:
+                '[DEPRECATED] If provided the solution will support ingesting data from the AWS Travel and Hospitality connector Catalog'
+        });
+        const indConBucketCondition = new CfnCondition(this, 'indConnectorBucketCondition', {
+            expression: Fn.conditionEquals(industryConnectorBucketNameParam.valueAsString, '')
+        });
+        const isPlaceholderConnectorBucket = Fn.conditionIf(indConBucketCondition.logicalId, 'true', 'false').toString();
+        const partitionStartDateParam = new CfnParameter(this, 'partitionStartDate', {
+            type: 'String',
+            // Set default to the solution launch date if not provided
+            default: '2023/07/01',
+            description: 'Date to start ingesting customer records from (YYYY/MM/DD)',
+            allowedPattern: '^(?!0000)[0-9]{4}/(0?[1-9]|1[0-2])/(0?[1-9]|[1-2][0-9]|3[0-1])$',
+            constraintDescription: 'Date with yyyy/mm/dd format'
+        });
+        const errorTTL = new CfnParameter(this, 'errorTTL', {
+            type: 'Number',
+            default: 7,
+            description: 'The number of days to retain ingestion error records'
+        });
+        const skipJobRun = new CfnParameter(this, 'skipJobRun', {
+            type: 'String',
+            default: 'true',
+            description: 'Whether or not to disable scheduled job runs, true to disable'
+        });
+        const inputStreamMode = new CfnParameter(this, 'inputStreamMode', {
+            type: 'String',
+            default: 'ON_DEMAND',
+            allowedValues: ['ON_DEMAND', 'PROVISIONED'],
+            description: 'Solution input stream capacity mode'
+        });
+        const inputStreamShards = new CfnParameter(this, 'inputStreamShards', {
+            type: 'Number',
+            default: 100,
+            maxValue: 10000,
+            description: 'Solution input stream shards count (if capacity mode is PROVISIONED)'
+        });
+        const ingestorShardsCount = new CfnParameter(this, 'ingestorShardsCount', {
+            type: 'Number',
+            default: 10,
+            maxValue: 100,
+            description: 'Shard count for the ingestor stream. Reach out to your account team to validate any value above 10.'
+        });
+        const exportStreamMode = new CfnParameter(this, 'exportStreamMode', {
+            type: 'String',
+            default: 'ON_DEMAND',
+            allowedValues: ['ON_DEMAND', 'PROVISIONED'],
+            description: 'Solution Export Stream Capacity Mode'
+        });
+        const exportStreamShardsCount = new CfnParameter(this, 'exportStreamShards', {
+            type: 'Number',
+            default: 10,
+            maxValue: 10000,
+            description: 'Solution export stream shards count (if capacity mode is PROVISIONED)'
+        });
+        const enableRealtimeBackup = new CfnParameter(this, 'enableRealtimeBackup', {
+            type: 'String',
+            allowedValues: [`${true}`, `${false}`],
+            default: `${false}`,
+            description:
+                'Enable or disable (default) the Real Time Backup. Enabling this option requires manual GDPR compliance for the RealTime Export S3 Bucket'
+        });
+        const isRealTimeBackupEnabled = enableRealtimeBackup.valueAsString === `${true}`;
+        const customerProfileStorageMode = new CfnParameter(this, 'customerProfileStorageMode', {
+            type: 'String',
+            allowedValues: [`${true}`, `${false}`],
+            default: `${true}`,
+            description: 'Flag for customer profiles storage mode'
+        });
+        const dynamoStorageMode = new CfnParameter(this, 'dynamoStorageMode', {
+            type: 'String',
+            allowedValues: [`${true}`, `${false}`],
+            default: `${true}`,
+            description: 'Flag for dynamo storage mode'
+        });
+        const maxCustomerProfileConcurrency = new CfnParameter(this, 'maxCustomerProfileConcurrency', {
+            type: 'Number',
+            default: 40,
+            description:
+                'Max concurrent writes to Amazon Connect Customer Profiles (if Customer Profiles storage mode is enabled). Please check with your account team before changing the default value.'
+        });
+        const frontendDeploymentOption = new CfnParameter(this, 'FrontendDeploymentOption', {
+            type: 'String',
+            allowedValues: Object.keys(UIDeploymentOptions),
+            default: UIDeploymentOptions.CloudFront,
+            description: 'Frontend deployment option'
+        });
+        const deployFrontendToCloudFrontCondition = new CfnCondition(this, 'deployFrontendToCloudFront', {
+            expression: Fn.conditionEquals(frontendDeploymentOption.valueAsString, UIDeploymentOptions.CloudFront)
+        });
+        const deployFrontendToEcsCondition = new CfnCondition(this, 'deployFrontendToEcs', {
+            expression: Fn.conditionEquals(frontendDeploymentOption.valueAsString, UIDeploymentOptions.ECS)
+        });
+        const permissionBoundaryArn = new CfnParameter(this, 'permissionBoundaryArn', {
+            type: 'String',
+            default: '',
+            description: 'If provided, the solution will apply a permission boundary to all created roles'
+        });
+        const permissionBoundaryCondition = new CfnCondition(this, 'permissionBoundaryCondition', {
+            expression: Fn.conditionNot(Fn.conditionEquals(permissionBoundaryArn.valueAsString, ''))
+        });
+        Aspects.of(this).add(new ConditionalPermissionsBoundary(permissionBoundaryCondition, permissionBoundaryArn.valueAsString));
+        const artifactBucketPrefix = new CfnParameter(this, 'artifactBucketPrefix', {
+            type: 'String',
+            default: artifactBucketName,
+            description:
+                'By default, assets required to deploy the solution are in a public AWS Solutions S3 bucket. If required, you can provide an internal S3 bucket instead (all assets must be copied over to your internal S3 bucket, see Implementation Guide for guidance).'
+        });
+        const usePermissionSystem = new CfnParameter(this, 'usePermissionSystem', {
+            type: 'String',
+            allowedValues: [`${true}`, `${false}`],
+            default: `${true}`,
+            description:
+                'By default, UPT deploys with a permission system to manage granular data access and admin task permissions via Amazon Cognito. If you wish to manage access without Amazon Cognito user groups for granular permissions, disable this feature. See Implementation Guide for guidance.'
+        });
+
+        const logLevel = new CfnParameter(this, 'logLevel', {
+            type: 'String',
+            allowedValues: ['DEBUG', 'INFO', 'WARN', 'ERROR'],
+            default: 'INFO',
+            description: 'Sets logging verbosity, from most (DEBUG) to least (ERROR) verbose.'
+        });
+
+        // Conditional BYO VPC params
+        let uptVpcProps: UptVpcProps;
+        if (props.isByoVpcTemplate) {
+            const vpcIdParam = new CfnParameter(this, 'vpcId', {
+                type: 'String',
+                description: 'VPC ID that UPT will be deployed in.',
+                minLength: 1
+            });
+            const vpcCidrBlockParam = new CfnParameter(this, 'vpcCidrBlock', {
+                type: 'String',
+                description: 'VPC CIDR block that UPT will be deployed in.',
+                minLength: 1
+            });
+            const privateSubnetId1Param = new CfnParameter(this, 'privateSubnetId1', {
+                type: 'String',
+                description: 'Private subnet ID for AZ 1',
+                minLength: 1
+            });
+            const privateSubnetId2Param = new CfnParameter(this, 'privateSubnetId2', {
+                type: 'String',
+                description: 'Private subnet ID for AZ 2',
+                minLength: 1
+            });
+            const privateSubnetId3Param = new CfnParameter(this, 'privateSubnetId3', {
+                type: 'String',
+                description: 'Private subnet ID for AZ 3',
+                minLength: 1
+            });
+            const privateSubnetRouteTableId1Param = new CfnParameter(this, 'privateSubnetRouteTableId1', {
+                type: 'String',
+                description: 'Private subnet route table IDs.',
+                minLength: 1
+            });
+            const privateSubnetRouteTableId2Param = new CfnParameter(this, 'privateSubnetRouteTableId2', {
+                type: 'String',
+                description: 'Private subnet route table IDs.',
+                minLength: 1
+            });
+            const privateSubnetRouteTableId3Param = new CfnParameter(this, 'privateSubnetRouteTableId3', {
+                type: 'String',
+                description: 'Private subnet route table IDs.',
+                minLength: 1
+            });
+
+            uptVpcProps = {
+                isByoVpcTemplate: true,
+                privateSubnetId1Param,
+                privateSubnetId2Param,
+                privateSubnetId3Param,
+                privateSubnetRouteTableId1Param,
+                privateSubnetRouteTableId2Param,
+                privateSubnetRouteTableId3Param,
+                vpcCidrBlockParam,
+                vpcIdParam
+            };
+        } else {
+            uptVpcProps = {
+                isByoVpcTemplate: false
+            };
+        }
+
+        const map = new CfnMapping(this, 'Solution');
+        map.setValue('Data', 'ID', solutionId);
+        map.setValue('Data', 'Version', solutionVersion);
+        map.setValue('Data', 'AppRegistryApplicationName', 'unified-profile-for-travellers-and-guests-on-aws'); // Use a short name for application as there is 128 char limit currently. This can be a shorter version of legal solution name
+        map.setValue('Data', 'SolutionName', solutionName);
+        map.setValue('Data', 'ApplicationType', 'AWS-Solutions');
+        map.setValue('Data', 'SendAnonymizedData', 'Yes');
+
+        const sendAnonymizedData = map.findInMap('Data', 'SendAnonymizedData');
+        const regionalBucketName = Fn.join('-', [artifactBucketPrefix.valueAsString, Aws.REGION]);
+        const artifactBucket = s3.Bucket.fromBucketName(this, 'ArtifactBucket', regionalBucketName);
+        const cdkProps: CdkBaseProps = { envName, stack: this };
+        const lambdaProps: LambdaProps = { artifactBucketPath, artifactBucket, sendAnonymizedData, solutionId, solutionVersion };
+
+        /**
+         * VPC
+         */
+        const uptVpcObj = new UptVpc(cdkProps, uptVpcProps);
+        const uptVpc = uptVpcObj.uptVpc;
+
+        /**
+         * App Registry
+         */
+        const appReg = new AppRegistry(cdkProps, {
+            applicationName: map.findInMap('Data', 'AppRegistryApplicationName'),
+            applicationType: map.findInMap('Data', 'ApplicationType'),
+            solutionId: map.findInMap('Data', 'ID'),
+            solutionName: map.findInMap('Data', 'SolutionName'),
+            solutionVersion: map.findInMap('Data', 'Version')
+        });
+        tahCore.Output.add(this, 'appRegistry', appReg.props.applicationName);
+
+        /**
+         * Common resources used widely
+         */
+        const {
+            accessLogBucket,
+            athenaResultsBucket,
+            athenaWorkGroup,
+            athenaSearchProfileS3PathsPreparedStatement,
+            athenaGetS3PathsByConnectIdsPreparedStatement,
+            configTable,
+            connectProfileDomainErrorQueue,
+            connectProfileImportBucket,
+            dataLakeAdminRole,
+            dataSyncLogGroup,
+            gdprPurgeLogGroup,
+            dynamoDbKey,
+            glueDatabase,
+            glueTravelerTable,
+            outputBucket,
+            portalConfigTable,
+            privacySearchResultsTable,
+            distributedMutexTable
+        } = new CommonResource(cdkProps, { outputBucketPrefix: TRAVELER_S3_ROOT_PATH });
+
+        /**
+         * Low cost storage
+         */
+        const profileStorage = new ProfileStorage(cdkProps, { uptVpc: uptVpcObj, dynamoDbKey });
+        const profileStorageOutput: ProfileStorageOutput = {
+            lambdaToProxyGroup: profileStorage.lambdaToProxyGroup,
+            storageDbName: profileStorage.dbName,
+            storageDb: profileStorage.storageAuroraCluster,
+            storageProxy: profileStorage.storageRdsProxy!,
+            storageProxyEndpoint: profileStorage.storageRdsProxy ? profileStorage.storageRdsProxy.endpoint : '',
+            storageProxyReadonlyEndpoint: profileStorage.storageRdsProxyReadonlyEndpoint!,
+            storageSecretArn: profileStorage.storageAuroraCluster.secret!.secretArn,
+            storageConfigTable: profileStorage.storageConfigTable,
+            storageConfigTablePk: profileStorage.storageConfigTablePk,
+            storageConfigTableSk: profileStorage.storageConfigTableSk
+        };
+
+        /**
+         * Amazon Connect Customer Profiles Writer
+         */
+        const { writerQueue, writerLambda, writerDLQ } = new CPWriter(cdkProps, {
+            maxConcurrency: maxCustomerProfileConcurrency.valueAsNumber,
+            ...lambdaProps
+        });
+
+        const { cpIndexTable, cpExportStream, cpIndexerDLQ, indexLambda } = new CPIndexer(cdkProps, {
+            maxConcurrency: maxCustomerProfileConcurrency.valueAsNumber,
+            dynamoDbKey: dynamoDbKey,
+            ...lambdaProps
+        });
+
+        /**
+         * Change processor
+         */
+        const { changeProcessorKinesisLambda, dlqChangeProcessor, deliveryStreamLogGroup, deliveryStream, firehoseFormatConversionRole } =
+            new ChangeProcessor(cdkProps, {
+                bucket: outputBucket,
+                bucketPrefix: TRAVELER_S3_ROOT_PATH,
+                eventBridgeEnabled: eventBridgeEnabled.valueAsString,
+                exportStreamMode: exportStreamMode.valueAsString,
+                exportStreamShardCount: exportStreamShardsCount.valueAsNumber,
+                glueDatabase,
+                glueTravelerTable,
+                profileStorageOutput,
+                uptVpc,
+                ...lambdaProps
+            });
+
+        /**
+         * Match processor
+         */
+        const { matchBucket, matchLambdaFunction, matchTable } = new MatchProcessor(cdkProps, {
+            accessLogBucket,
+            dynamoDbKey,
+            profileStorageOutput,
+            changeProcessorKinesisStream: changeProcessorKinesisLambda.kinesisStream,
+            portalConfigTable,
+            uptVpc,
+            ...lambdaProps
+        });
+
+        /**
+         * Data ingestion
+         */
+        // Industry connector placeholder bucket (in case industry connector is not provided)
+        const industryConnectorPlaceholderBucket = new tahS3.Bucket(this, 'ucp-ind-connector-placeholder', accessLogBucket);
+        const industryConnectorBucketName = Fn.conditionIf(
+            indConBucketCondition.logicalId,
+            industryConnectorPlaceholderBucket.bucketName,
+            industryConnectorBucketNameParam.valueAsString
+        ).toString();
+        const dataIngestionProps: DataIngestionProps = {
+            accessLogBucket,
+            athenaWorkGroup,
+            configTable,
+            connectProfileDomainErrorQueue,
+            connectProfileImportBucket,
+            dataLakeAdminRole,
+            deliveryStreamBucketPrefix: BACKUP_S3_ROOT_PATH,
+            entryStreamMode: inputStreamMode.valueAsString,
+            entryStreamShardCount: inputStreamShards.valueAsNumber,
+            glueDatabase,
+            industryConnectorBucketName,
+            ingestorShardCount: ingestorShardsCount.valueAsNumber,
+            matchBucket,
+            partitionStartDate: partitionStartDateParam.valueAsString,
+            region: Aws.REGION,
+            skipJobRun: skipJobRun.valueAsString,
+            enableRealTimeBackup: isRealTimeBackupEnabled,
+            profileStorageOutput,
+            changeProcessorKinesisStream: changeProcessorKinesisLambda.kinesisStream,
+            uptVpc,
+            ...lambdaProps
+        };
+
+        const {
+            // Dead letter queues
+            dlqGo,
+            dlqPython,
+            dlqBatchProcessor,
+            // Real-time processing
+            entryKinesisLambda,
+            ingestorKinesisLambda,
+            realTimeDeliveryStreamLogGroup,
+            realTimeDeliveryStream,
+            // Batch processing
+            airBookingBatch,
+            clickStreamBatch,
+            customerServiceInteractionBatch,
+            hotelBookingBatch,
+            hotelStayBatch,
+            guestProfileBatch,
+            paxProfileBatch,
+            syncLambdaFunction,
+            batchLambdaFunction,
+            // Industry connector
+            industryConnectorBucket,
+            industryConnectorDataSyncRole,
+            industryConnectorLambdaFunction
+        } = new DataIngestion(cdkProps, dataIngestionProps);
+
+        /**
+         * Error management
+         */
+        const { errorLambdaFunction, errorRetryLambdaFunction, errorTable, errorRetryTable } = new ErrorManagement(cdkProps, {
+            dynamoDbKey,
+            errorTtl: errorTTL.valueAsString,
+            profileStorageOutput,
+            changeProcessorKinesisStream: changeProcessorKinesisLambda.kinesisStream,
+            ...lambdaProps
+        });
+
+        /**
+         * Merge Processor
+         */
+        const { dlqMerger, mergeQueue, mergerLambda } = new MergeProcessor(cdkProps, {
+            profileStorageOutput,
+            changeProcessorKinesisStream: changeProcessorKinesisLambda.kinesisStream,
+            uptVpc,
+            ...lambdaProps
+        });
+
+        mergeQueue.grantConsumeMessages(ingestorKinesisLambda.lambdaFunction);
+        mergeQueue.grantSendMessages(ingestorKinesisLambda.lambdaFunction);
+        mergeQueue.grantSendMessages(batchLambdaFunction);
+        mergeQueue.grantSendMessages(matchLambdaFunction);
+
+        // SSM parameters are to make resource IDs available to Lambdas
+        // our Lambda environments are near the 4KiB limit
+        const ssmParamNamespace = `/upt${envName}/`;
+        tahCore.Output.add(this, 'ssmParamNamespace', ssmParamNamespace);
+        const { irResources, rebuildCacheResources } = new FargateResource(this, {
+            profileStorageOutput,
+            mergeQueueUrl: mergeQueue.queueUrl,
+            cpWriterQueueUrl: writerQueue.queueUrl,
+            changeProcessorKinesisStream: changeProcessorKinesisLambda.kinesisStream,
+            ecrProps: props.ecrProps,
+            solutionId,
+            solutionVersion,
+            uptVpc,
+            logLevel: logLevel.valueAsString
+        });
+
+        const ssmIdResClusterArn = new StringParameter(this, 'IdResClusterArn', {
+            stringValue: irResources.cluster.clusterArn,
+            parameterName: `${ssmParamNamespace}IdResClusterArn`
+        });
+        const ssmIdResTaskDefinitionArn = new StringParameter(this, 'IdResTaskDefinitionArn', {
+            stringValue: irResources.taskDefinition.taskDefinitionArn,
+            parameterName: `${ssmParamNamespace}IdResTaskDefinitionArn`
+        });
+        if (!irResources.taskDefinition.defaultContainer) {
+            throw new Error('No default container for ID resolution');
+        }
+        const ssmIdResContainerName = new StringParameter(this, 'IdResContainerName', {
+            stringValue: irResources.taskDefinition.defaultContainer.containerName,
+            parameterName: `${ssmParamNamespace}IdResContainerName`
+        });
+
+        const ssmRebuildCacheClusterArn = new StringParameter(this, 'RebuildCacheClusterArn', {
+            stringValue: rebuildCacheResources.cluster.clusterArn,
+            parameterName: `${ssmParamNamespace}RebuildCacheClusterArn`
+        });
+        const ssmRebuildCacheTaskDefinitionArn = new StringParameter(this, 'RebuildCacheTaskDefinitionArn', {
+            stringValue: rebuildCacheResources.taskDefinition.taskDefinitionArn,
+            parameterName: `${ssmParamNamespace}RebuildCacheTaskDefinitionArn`
+        });
+        if (!rebuildCacheResources.taskDefinition.defaultContainer) {
+            throw new Error('No default container for ID resolution');
+        }
+        const ssmRebuildCacheContainerName = new StringParameter(this, 'RebuildCacheContainerName', {
+            stringValue: rebuildCacheResources.taskDefinition.defaultContainer.containerName,
+            parameterName: `${ssmParamNamespace}RebuildCacheContainerName`
+        });
+
+        mergeQueue.grantConsumeMessages(irResources.taskRole);
+        mergeQueue.grantSendMessages(irResources.taskRole);
+
+        /**
+         * S3 Excise Queue Lambda Processor
+         */
+        const { s3ExciseQueue, s3ExciseQueueLambdaProcessor } = new S3ExciseQueueProcessor({
+            artifactBucket,
+            artifactBucketPath,
+            glueDatabase,
+            glueTravelerTable,
+            outputBucket,
+            travelerS3RootPath: TRAVELER_S3_ROOT_PATH,
+            distributedMutexTable,
+            privacySearchResultsTable,
+            ...cdkProps
+        });
+
+        const ssmVpcSubnets = new StringParameter(this, 'VpcSubnets', {
+            stringValue: Fn.join(
+                ',',
+                uptVpc.privateSubnets.map(subnet => subnet.subnetId)
+            ),
+            parameterName: `${ssmParamNamespace}VpcSubnets`
+        });
+        const ssmVpcSecurityGroup = new StringParameter(this, 'VpcSecurityGroup', {
+            stringValue: profileStorageOutput.lambdaToProxyGroup.securityGroupId,
+            parameterName: `${ssmParamNamespace}VpcSecurityGroup`
+        });
+
+        //fixes the constructor SonarQube issue and does not hurt to have these as output.
+        tahCore.Output.add(this, 'ssmIdResClusterArn', ssmIdResClusterArn.parameterArn);
+        tahCore.Output.add(this, 'ssmIdResTaskDefinitionArn', ssmIdResTaskDefinitionArn.parameterArn);
+        tahCore.Output.add(this, 'ssmIdResContainerName', ssmIdResContainerName.parameterArn);
+        tahCore.Output.add(this, 'ssmRebuildCacheClusterArn', ssmRebuildCacheClusterArn.parameterArn);
+        tahCore.Output.add(this, 'ssmRebuildCacheTaskDefinitionArn', ssmRebuildCacheTaskDefinitionArn.parameterArn);
+        tahCore.Output.add(this, 'ssmRebuildCacheContainerName', ssmRebuildCacheContainerName.parameterArn);
+        tahCore.Output.add(this, 'ssmVpcSubnets', ssmVpcSubnets.parameterArn);
+        tahCore.Output.add(this, 'ssmVpcSecurityGroup', ssmVpcSecurityGroup.parameterArn);
+
+        /**
+         * Backend
+         */
+        const { api, asyncLambdaFunction, backendLambdaFunction, userPool, userPoolClient, stage, domainKey } = new Backend(cdkProps, {
+            configTable,
+            connectProfileDomainErrorQueue,
+            connectProfileImportBucket,
+            dataLakeAdminRole,
+            errorRetryLambdaFunction,
+            errorTable,
+            glueDatabase,
+            glueTravelerTable,
+            industryConnectorDataSyncRole,
+            isPlaceholderConnectorBucket,
+            matchBucket,
+            matchTable,
+            privacySearchResultsTable,
+            athenaResultsBucket,
+            athenaWorkGroup,
+            athenaSearchProfileS3PathsPreparedStatement,
+            athenaGetS3PathsByConnectIdsPreparedStatement,
+            outputBucket,
+            portalConfigTable,
+            stackLogicalId: id,
+            syncLambdaFunction,
+            travelerS3RootPath: TRAVELER_S3_ROOT_PATH,
+            // Batch processing
+            airBookingBatch,
+            clickStreamBatch,
+            customerServiceInteractionBatch,
+            guestProfileBatch,
+            hotelBookingBatch,
+            hotelStayBatch,
+            paxProfileBatch,
+            // Low cost storage
+            profileStorageOutput,
+            changeProcessorKinesisStream: changeProcessorKinesisLambda.kinesisStream,
+            // GDPR
+            s3ExciseQueue,
+            gdprPurgeLogGroup,
+            ssmParamNamespace,
+            irCluster: irResources.cluster,
+            uptVpc,
+            ...lambdaProps
+        });
+
+        if (!asyncLambdaFunction.role) {
+            throw new Error('No role for async lambda');
+        }
+        irResources.taskDefinition.grantRun(asyncLambdaFunction.role);
+        rebuildCacheResources.taskDefinition.grantRun(asyncLambdaFunction.role);
+
+        /**
+         * Frontend
+         */
+        const { websiteDistribution, websiteStaticContentBucket } = new Frontend(cdkProps, {
+            accessLogBucket,
+            deployFrontendToCloudFrontCondition,
+            deployFrontendToEcsCondition,
+            uptVpc: uptVpc,
+            ecrProps: props.ecrProps,
+            ucpApiUrl: api.url ?? '',
+            cognitoUserPoolId: userPool.userPoolId,
+            cognitoClientId: userPoolClient.userPoolClientId,
+            usePermissionSystem: usePermissionSystem.valueAsString
+        });
+
+        /**
+         * Custom resource that generate UUID for usage metrics and deploys frontend assets.
+         */
+        const { customResourceLambda, uuid } = new CustomResource(cdkProps, {
+            frontEndConfig: {
+                cognitoClientId: userPoolClient.userPoolClientId,
+                cognitoUserPoolId: userPool.userPoolId,
+                deployed: new Date().toISOString(),
+                ucpApiUrl: api.url ?? '',
+                staticContentBucketName: websiteStaticContentBucket.bucketName,
+                usePermissionSystem: usePermissionSystem.valueAsString
+            },
+            solutionName,
+            ...lambdaProps
+        });
+
+        /**
+         * Dashboard
+         */
+        const dashboard = new Dashboard(cdkProps, {
+            // Real-time ingestion
+            entryKinesisStream: entryKinesisLambda.kinesisStream,
+            entryLambdaFunction: entryKinesisLambda.lambdaFunction,
+            ingestorKinesisStream: ingestorKinesisLambda.kinesisStream,
+            ingestorLambdaFunction: ingestorKinesisLambda.lambdaFunction,
+            // Change processor
+            changeProcessorKinesisStream: changeProcessorKinesisLambda.kinesisStream,
+            changeProcessorLambdaFunction: changeProcessorKinesisLambda.lambdaFunction,
+            // Error queues, Lambda function, and DynamoDB table
+            airBookingBatchErrorQueue: airBookingBatch.errorQueue,
+            clickStreamBatchErrorQueue: clickStreamBatch.errorQueue,
+            customerServiceInteractionBatchErrorQueue: customerServiceInteractionBatch.errorQueue,
+            guestProfileBatchErrorQueue: guestProfileBatch.errorQueue,
+            hotelBookingBatchErrorQueue: hotelBookingBatch.errorQueue,
+            hotelStayBatchErrorQueue: hotelStayBatch.errorQueue,
+            paxProfileBatchErrorQueue: paxProfileBatch.errorQueue,
+            dlqChangeProcessor,
+            dlqGo,
+            dlqPython,
+            dlqBatchProcessor,
+            connectProfileDomainErrorQueue,
+            errorRetryLambdaFunction,
+            errorTable,
+            // API
+            api,
+            // Sync Lambda function
+            syncLambdaFunction,
+            // CP Writer
+            cpWriterQueue: writerQueue
+        });
+
+        tahCore.Output.add(this, 'cloudwatchDashboard', dashboard.dashboard.dashboardName);
+
+        /**
+         * Error Lambda function event sources
+         */
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(connectProfileDomainErrorQueue));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(airBookingBatch.errorQueue));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(clickStreamBatch.errorQueue));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(customerServiceInteractionBatch.errorQueue));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(guestProfileBatch.errorQueue));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(hotelBookingBatch.errorQueue));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(hotelStayBatch.errorQueue));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(paxProfileBatch.errorQueue));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(dlqChangeProcessor));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(dlqMerger));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(dlqGo));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(dlqPython));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(dlqBatchProcessor));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(writerDLQ));
+        errorLambdaFunction.addEventSource(new lambdaEventSources.SqsEventSource(cpIndexerDLQ));
+
+        /**
+         * Additional cross functional permissions
+         */
+        // Async Lambda function
+        configTable.grantReadWriteData(asyncLambdaFunction);
+        matchTable.grantReadWriteData(asyncLambdaFunction);
+
+        // Backend Lambda function
+        airBookingBatch.bucket.grantRead(backendLambdaFunction);
+        clickStreamBatch.bucket.grantRead(backendLambdaFunction);
+        customerServiceInteractionBatch.bucket.grantRead(backendLambdaFunction);
+        guestProfileBatch.bucket.grantRead(backendLambdaFunction);
+        hotelBookingBatch.bucket.grantRead(backendLambdaFunction);
+        hotelStayBatch.bucket.grantRead(backendLambdaFunction);
+        paxProfileBatch.bucket.grantRead(backendLambdaFunction);
+        connectProfileImportBucket.grantRead(backendLambdaFunction);
+        configTable.grantReadWriteData(backendLambdaFunction);
+        errorTable.grantReadWriteData(backendLambdaFunction);
+        matchTable.grantReadWriteData(backendLambdaFunction);
+        portalConfigTable.grantReadWriteData(backendLambdaFunction);
+        matchBucket.grantReadWrite(backendLambdaFunction);
+
+        // Match Lambda function
+        configTable.grantReadWriteData(matchLambdaFunction);
+        portalConfigTable.grantReadWriteData(matchLambdaFunction);
+        cpIndexTable.grantReadData(matchLambdaFunction);
+
+        //CP Writer Lambda
+        cpIndexTable.grantReadData(writerLambda);
+
+        // Granting permission to read and write on the Athena result bucket thus allowing Lambda function
+        // to successfully execute Athena queries using the workgroup created in this stack.
+        athenaResultsBucket.grantReadWrite(syncLambdaFunction);
+        configTable.grantReadWriteData(syncLambdaFunction);
+
+        // Low Cost Storage
+        if (profileStorageOutput.storageProxy && profileStorageOutput.storageDb && profileStorageOutput.storageConfigTable) {
+            // Interact with Aurora cluster
+            profileStorageOutput.storageProxy.grantConnect(backendLambdaFunction);
+            profileStorageOutput.storageProxy.grantConnect(asyncLambdaFunction);
+            profileStorageOutput.storageProxy.grantConnect(ingestorKinesisLambda.lambdaFunction);
+            profileStorageOutput.storageProxy.grantConnect(mergerLambda);
+            profileStorageOutput.storageProxy.grantConnect(irResources.taskRole);
+            profileStorageOutput.storageProxy.grantConnect(rebuildCacheResources.taskRole);
+            profileStorageOutput.storageProxy.grantConnect(changeProcessorKinesisLambda.lambdaFunction);
+            profileStorageOutput.storageProxy.grantConnect(matchLambdaFunction);
+            profileStorageOutput.storageDb.secret?.grantRead(backendLambdaFunction);
+            profileStorageOutput.storageDb.secret?.grantRead(asyncLambdaFunction);
+            profileStorageOutput.storageDb.secret?.grantRead(ingestorKinesisLambda.lambdaFunction);
+            profileStorageOutput.storageDb.secret?.grantRead(mergerLambda);
+            profileStorageOutput.storageDb.secret?.grantRead(irResources.taskRole);
+            profileStorageOutput.storageDb.secret?.grantRead(rebuildCacheResources.taskRole);
+            profileStorageOutput.storageDb.secret?.grantRead(changeProcessorKinesisLambda.lambdaFunction);
+            profileStorageOutput.storageDb.secret?.grantRead(matchLambdaFunction);
+            // Update config table
+            profileStorageOutput.storageConfigTable.grantReadWriteData(backendLambdaFunction);
+            profileStorageOutput.storageConfigTable.grantReadWriteData(asyncLambdaFunction);
+            profileStorageOutput.storageConfigTable.grantReadWriteData(ingestorKinesisLambda.lambdaFunction);
+            profileStorageOutput.storageConfigTable.grantReadData(changeProcessorKinesisLambda.lambdaFunction);
+            profileStorageOutput.storageConfigTable.grantReadData(mergerLambda);
+            profileStorageOutput.storageConfigTable.grantReadData(irResources.taskRole);
+            profileStorageOutput.storageConfigTable.grantReadData(rebuildCacheResources.taskRole);
+            profileStorageOutput.storageConfigTable.grantReadData(matchLambdaFunction);
+            // Send events to Kinesis
+            changeProcessorKinesisLambda.kinesisStream.grantWrite(ingestorKinesisLambda.lambdaFunction);
+            changeProcessorKinesisLambda.kinesisStream.grantWrite(mergerLambda);
+        }
+
+        // Change processor
+        outputBucket.grantReadWrite(changeProcessorKinesisLambda.lambdaFunction);
+
+        // Industry connector Lambda function
+        configTable.grantReadData(<iam.Role>industryConnectorLambdaFunction.role);
+
+        // We need to grant the data admin (which will be the role for all glue jobs) access to the artifact bucket
+        // since the Python scripts are stored there.
+        artifactBucket.grantReadWrite(dataLakeAdminRole);
+
+        // Custom resource Lambda function
+        artifactBucket.grantReadWrite(customResourceLambda);
+        websiteStaticContentBucket.grantReadWrite(customResourceLambda);
+
+        /**
+         * Lambda function environment variables
+         */
+        // Add Lambda env variables required to create DataSync tasks
+        backendLambdaFunction.addEnvironment('ACCP_DESTINATION_STREAM', changeProcessorKinesisLambda.kinesisStream.streamArn);
+        backendLambdaFunction.addEnvironment('INDUSTRY_CONNECTOR_BUCKET_NAME', industryConnectorBucket.bucketName);
+        backendLambdaFunction.addEnvironment('DATASYNC_ROLE_ARN', industryConnectorDataSyncRole.roleArn);
+        backendLambdaFunction.addEnvironment('DATASYNC_LOG_GROUP_ARN', dataSyncLogGroup.logGroupArn);
+        backendLambdaFunction.addEnvironment('MERGE_QUEUE_URL', mergeQueue.queueUrl);
+        asyncLambdaFunction.addEnvironment('MERGE_QUEUE_URL', mergeQueue.queueUrl);
+        asyncLambdaFunction.addEnvironment('CP_EXPORT_STREAM', cpExportStream.streamArn);
+        changeProcessorKinesisLambda.lambdaFunction.addEnvironment('MERGE_QUEUE_URL', mergeQueue.queueUrl);
+        ingestorKinesisLambda.lambdaFunction.addEnvironment('MERGE_QUEUE_URL', mergeQueue.queueUrl);
+        syncLambdaFunction.addEnvironment('MERGE_QUEUE_URL', mergeQueue.queueUrl);
+        errorRetryLambdaFunction.addEnvironment('MERGE_QUEUE_URL', mergeQueue.queueUrl);
+        batchLambdaFunction.addEnvironment('MERGE_QUEUE_URL', mergeQueue.queueUrl);
+        matchLambdaFunction.addEnvironment('MERGE_QUEUE_URL', mergeQueue.queueUrl);
+        writerLambda.addEnvironment('CP_INDEX_TABLE', cpIndexTable.tableName);
+
+        // UUID for metrics
+        asyncLambdaFunction.addEnvironment('METRICS_UUID', uuid);
+        backendLambdaFunction.addEnvironment('METRICS_UUID', uuid);
+        changeProcessorKinesisLambda.lambdaFunction.addEnvironment('METRICS_UUID', uuid);
+        entryKinesisLambda.lambdaFunction.addEnvironment('METRICS_UUID', uuid);
+        errorLambdaFunction.addEnvironment('METRICS_UUID', uuid);
+        errorRetryLambdaFunction.addEnvironment('METRICS_UUID', uuid);
+        industryConnectorLambdaFunction.addEnvironment('METRICS_UUID', uuid);
+        ingestorKinesisLambda.lambdaFunction.addEnvironment('METRICS_UUID', uuid);
+        matchLambdaFunction.addEnvironment('METRICS_UUID', uuid);
+        syncLambdaFunction.addEnvironment('METRICS_UUID', uuid);
+        batchLambdaFunction.addEnvironment('METRICS_UUID', uuid);
+        writerLambda.addEnvironment('METRICS_UUID', uuid);
+
+        //storage modes
+        asyncLambdaFunction.addEnvironment('CUSTOMER_PROFILE_STORAGE_MODE', customerProfileStorageMode.valueAsString);
+        asyncLambdaFunction.addEnvironment('DYNAMO_STORAGE_MODE', dynamoStorageMode.valueAsString);
+
+        // Granular permission system usage
+        backendLambdaFunction.addEnvironment('USE_PERMISSION_SYSTEM', usePermissionSystem.valueAsString);
+        asyncLambdaFunction.addEnvironment('USE_PERMISSION_SYSTEM', usePermissionSystem.valueAsString);
+
+        // Log level
+        backendLambdaFunction.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        asyncLambdaFunction.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        changeProcessorKinesisLambda.lambdaFunction.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        entryKinesisLambda.lambdaFunction.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        errorLambdaFunction.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        errorRetryLambdaFunction.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        industryConnectorLambdaFunction.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        ingestorKinesisLambda.lambdaFunction.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        matchLambdaFunction.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        syncLambdaFunction.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        batchLambdaFunction.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        writerLambda.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        indexLambda.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        mergerLambda.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+        customResourceLambda.addEnvironment('LOG_LEVEL', logLevel.valueAsString);
+
+        // CP Writer Queue
+        writerQueue.grantSendMessages(ingestorKinesisLambda.lambdaFunction);
+        writerQueue.grantSendMessages(batchLambdaFunction);
+        writerQueue.grantSendMessages(backendLambdaFunction);
+        writerQueue.grantSendMessages(asyncLambdaFunction);
+        writerQueue.grantSendMessages(mergerLambda);
+        writerQueue.grantSendMessages(s3ExciseQueueLambdaProcessor);
+        writerQueue.grantSendMessages(rebuildCacheResources.taskRole);
+
+        writerLambda.addToRolePolicy(
+            new iam.PolicyStatement({
+                actions: ['kms:GenerateDataKey'],
+                effect: iam.Effect.ALLOW,
+                resources: [domainKey.keyArn]
+            })
+        );
+
+        asyncLambdaFunction.addEnvironment('CP_WRITER_QUEUE_URL', writerQueue.queueUrl);
+        backendLambdaFunction.addEnvironment('CP_WRITER_QUEUE_URL', writerQueue.queueUrl);
+        batchLambdaFunction.addEnvironment('CP_WRITER_QUEUE_URL', writerQueue.queueUrl);
+        changeProcessorKinesisLambda.lambdaFunction.addEnvironment('CP_WRITER_QUEUE_URL', writerQueue.queueUrl);
+        mergerLambda.addEnvironment('CP_WRITER_QUEUE_URL', writerQueue.queueUrl);
+        ingestorKinesisLambda.lambdaFunction.addEnvironment('CP_WRITER_QUEUE_URL', writerQueue.queueUrl);
+        errorRetryLambdaFunction.addEnvironment('CP_WRITER_QUEUE_URL', writerQueue.queueUrl);
+        syncLambdaFunction.addEnvironment('CP_WRITER_QUEUE_URL', writerQueue.queueUrl);
+        matchLambdaFunction.addEnvironment('CP_WRITER_QUEUE_URL', writerQueue.queueUrl);
+        matchLambdaFunction.addEnvironment('INDEX_TABLE', cpIndexTable.tableName);
+
+        /**
+         * CFN NAG suppressions
+         */
+        this.suppressLambdaFunction(entryKinesisLambda.lambdaFunction);
+        this.suppressLambdaFunction(ingestorKinesisLambda.lambdaFunction);
+        this.suppressLambdaFunction(asyncLambdaFunction);
+        this.suppressLambdaFunction(backendLambdaFunction);
+        this.suppressLambdaFunction(customResourceLambda);
+        this.suppressLambdaFunction(errorLambdaFunction);
+        this.suppressLambdaFunction(errorRetryLambdaFunction);
+        this.suppressLambdaFunction(industryConnectorLambdaFunction);
+        this.suppressLambdaFunction(matchLambdaFunction);
+        this.suppressLambdaFunction(syncLambdaFunction);
+        this.suppressLambdaFunction(batchLambdaFunction);
+        this.suppressLambdaFunction(s3ExciseQueueLambdaProcessor);
+        this.suppressLambdaFunction(writerLambda);
+        this.suppressLambdaFunction(indexLambda);
+        this.suppressLambdaFunction(mergerLambda);
+        this.suppressLambdaFunction(changeProcessorKinesisLambda.lambdaFunction);
+        this.suppressLambdaFunction(ingestorKinesisLambda.lambdaFunction);
+        this.suppressAccessLogBucket(accessLogBucket);
+        this.suppressDynamoDb(configTable);
+        this.suppressDynamoDb(errorTable);
+        this.suppressDynamoDb(errorRetryTable);
+        this.suppressDynamoDb(matchTable);
+        this.suppressDynamoDb(portalConfigTable);
+        this.suppressDynamoDb(profileStorageOutput.storageConfigTable);
+        this.suppressLog(dataSyncLogGroup);
+        this.suppressLog(gdprPurgeLogGroup);
+        this.suppressLog(deliveryStreamLogGroup);
+        this.suppressLog(realTimeDeliveryStreamLogGroup);
+        this.suppressCloudfront(websiteDistribution);
+        this.suppressSqs(connectProfileDomainErrorQueue);
+        this.suppressSqs(airBookingBatch.errorQueue);
+        this.suppressSqs(clickStreamBatch.errorQueue);
+        this.suppressSqs(customerServiceInteractionBatch.errorQueue);
+        this.suppressSqs(guestProfileBatch.errorQueue);
+        this.suppressSqs(hotelStayBatch.errorQueue);
+        this.suppressSqs(hotelBookingBatch.errorQueue);
+        this.suppressSqs(paxProfileBatch.errorQueue);
+        this.suppressSqs(cpIndexerDLQ);
+        this.suppressSqs(dlqChangeProcessor);
+        this.suppressSqs(dlqGo);
+        this.suppressSqs(dlqPython);
+        this.suppressSqs(s3ExciseQueue);
+        this.suppressSqs(dlqMerger);
+        this.suppressSqs(mergeQueue);
+        this.suppressAccessLogHttp(stage);
+        this.suppressAccessLogHttp(api.defaultStage as apiGatewayV2.HttpStage);
+        this.suppressRole(dataLakeAdminRole);
+        this.suppressRole(industryConnectorDataSyncRole);
+        this.suppressRole(firehoseFormatConversionRole);
+        this.suppressRdsWarnings(uptVpc, profileStorage);
+        this.suppressDeliveryStream(deliveryStream);
+        this.suppressDeliveryStream(realTimeDeliveryStream);
+        this.addDependencies(matchBucket, industryConnectorPlaceholderBucket);
     }
-    if (!artifactBucket) {
-      throw new Error('No bucket name provided for stack');
-    }
-    if (!account) {
-      throw new Error('No account ID provided for stack');
-    }
 
-    /*************
-     * Datalake admin Role
-     */
-    const datalakeAdminRole = new iam.Role(this, "ucp-data-admin-role-" + envName, {
-      assumedBy: new iam.ServicePrincipal("glue.amazonaws.com"),
-      description: "Glue role for UCP data",
-      roleName: "ucp-data-admin-role-" + envName
-    })
-    new CfnOutput(this, 'ucpDataAdminRoleArn', {
-      value: datalakeAdminRole.roleArn
-    });
-    new CfnOutput(this, 'ucpDataAdminRoleName', {
-      value: datalakeAdminRole.roleName
-    });
-    //we need to gran the data admin (which will be the rol for all glue jobs) access to the artifact bucket
-    //since the python scripts are stored there
-    const artifactsBucket = s3.Bucket.fromBucketName(this, 'ucpArtifactBucket', artifactBucket);
-    artifactsBucket.grantReadWrite(datalakeAdminRole)
-    //granting general logging
-    datalakeAdminRole.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName("service-role/AWSGlueServiceRole"))
-    datalakeAdminRole.addToPolicy(new iam.PolicyStatement({
-      resources: ["arn:aws:logs:" + this.region + ":" + this.account + ":log-group:/*"],
-      actions: ["logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents",
-        "logs:DescribeLogStreams"]
-    }))
+    private addDependencies(matchBucket: tahS3.Bucket, industryConnectorPlaceholderBucket: tahS3.Bucket): void {
+        for (const child of this.node.children) {
+            /**
+             * As "BucketNotificationsHandler" Lambda function has all other resources as children,
+             * this is going to be run just once eventually.
+             */
+            if (child.node.id.startsWith('BucketNotificationsHandler')) {
+                // Run your function on the child here
+                this.suppressConstruct(child);
 
-    datalakeAdminRole.addToPolicy(new iam.PolicyStatement({
-      resources: [datalakeAdminRole.roleArn],
-      actions: ["iam:PassRole"]
-    }))
-    const accessLogBucket = new tah_s3.AccessLogBucket(this, "ucp-access-logging")
+                /**
+                 * To fix occasional CloudFormation stack deletion failure issue,
+                 * bucket policy should be a dependency of this Lambda function.
+                 * `buckets` are S3 buckets which needs to create bucket notifications.
+                 */
+                const buckets = [matchBucket, industryConnectorPlaceholderBucket];
 
-    /*************************
-     * Datalake 3rd party users
-     ********************/
-    //Amperity
-    //TODO: move to cross account role when Amperity supports it
-    let amperityUser = new iam.User(this, "ucp3pUserAmperity", {
-      userName: "ucp3pUserAmperity" + envName
-    })
+                for (const bucket of buckets) {
+                    const policy = bucket.node.tryFindChild('Policy');
 
-    /**************
-     * SQS Queues
-     ********************/
-    const connectorCrawlerQueue = new Queue(this, "ucp-connector-crawler-queue-" + envName)
-    const connectorCrawlerDlq = new Queue(this, "ucp-connector-crawler-dlq-" + envName)
-
-    /**************
-     * Glue Database
-     ********************/
-    const glueDb = new Database(this, "ucp-data-glue-database-" + envName, {
-      databaseName: "ucp_db_" + envName
-    })
-
-    new CfnOutput(this, 'glueDBArn', {
-      value: glueDb.databaseArn
-    });
-    new CfnOutput(this, 'glueDBname', {
-      value: glueDb.databaseName
-    });
-
-    /***************************
-   * Data Buckets for temporary processing
-   *****************************/
-    //Target Bucket for Amazon connect profile import
-    const connectProfileImportBucket = new tah_s3.Bucket(this, "connectProfileImportBucket", accessLogBucket)
-    const connectProfileImportBucketTest = new tah_s3.Bucket(this, "connectProfileImportBucketTest", accessLogBucket)
-    //temp bucket for Amazon connect profile identity resolution matches
-    const idResolution = new tah_s3.Bucket(this, "ucp-connect-id-resolution-temp", accessLogBucket)
-
-    let hotelBookingOutput = this.buildBusinessObjectPipeline("hotel-booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    let airBookingOutput = this.buildBusinessObjectPipeline("air_booking", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    let guestProfileOutput = this.buildBusinessObjectPipeline("guest-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    let paxProfileOutput = this.buildBusinessObjectPipeline("pax-profile", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    let clickstreamOutput = this.buildBusinessObjectPipeline("clickstream", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-    let hotelStayOutput = this.buildBusinessObjectPipeline("hotel-stay", envName, datalakeAdminRole, glueDb, artifactBucket, accessLogBucket, connectProfileImportBucket)
-
-    //Target Bucket for Amazon connect profile export
-    let connectProfileExportBucket = new tah_s3.Bucket(this, "ucp-mazon-connect-profile-export", accessLogBucket);
-    let amperityImportBucket = new tah_s3.Bucket(this, "ucp-amperity-import", accessLogBucket);
-    let amperityExportBucket = new tah_s3.Bucket(this, "ucp-amperity-export", accessLogBucket);
-
-    /*****************************
-     * Bucket Permission
-     **************************/
-    connectProfileImportBucket.grantReadWrite(datalakeAdminRole)
-    connectProfileImportBucketTest.grantReadWrite(datalakeAdminRole)
-    connectProfileExportBucket.grantReadWrite(datalakeAdminRole)
-    amperityExportBucket.grantReadWrite(datalakeAdminRole)
-
-    //Special Permissions for Integration Business Objects
-    connectProfileExportBucket.addToResourcePolicy(new iam.PolicyStatement({
-      resources: [connectProfileExportBucket.arnForObjects("*"), connectProfileExportBucket.bucketArn],
-      actions: ["s3:PutObject", "s3:ListBucket", "s3:GetObject", "s3:GetBucketLocation", "s3:GetBucketPolicy"],
-      principals: [new iam.ServicePrincipal("appflow.amazonaws.com")]
-    }))
-
-    connectProfileImportBucket.addToResourcePolicy(new iam.PolicyStatement({
-      resources: [connectProfileImportBucket.arnForObjects("*"), connectProfileImportBucket.bucketArn],
-      actions: ["s3:PutObject", "s3:ListBucket", "s3:GetObject", "s3:GetBucketLocation", "s3:GetBucketPolicy"],
-      principals: [new iam.ServicePrincipal("appflow.amazonaws.com")]
-    }))
-
-    //Amperity
-    amperityUser.addToPolicy(new iam.PolicyStatement({
-      resources: ["arn:aws:s3:::" + amperityImportBucket.bucketName + "*"],
-      actions: ["s3:*"]
-    }))
-
-    //Amperity job
-    let amperityImportJob = this.job("ucp-amperity-import", envName, artifactBucket, "connectProfileToAmperity", glueDb, datalakeAdminRole, new Map([
-      ["SOURCE_TABLE", connectProfileExportBucket.toAthenaTable()],
-      ["DEST_BUCKET", amperityImportBucket.bucketName]
-    ]))
-    let amperityExportJob = this.job("ucp-amperity-export", envName, artifactBucket, "amperityToMatches", glueDb, datalakeAdminRole, new Map([
-      ["SOURCE_TABLE", amperityExportBucket.toAthenaTable()],
-      ["DEST_DYNAMO_TABLE", "to_be_added"]
-    ]))
-
-    /*******************
-   * 3- Job Triggers
-   ******************/
-    this.jobOnDemandTrigger("ucp-amperity-data-import", envName, [amperityImportJob])
-    this.jobOnDemandTrigger("ucp-amperity-data-export", envName, [amperityExportJob])
-
-    /////////////////////////
-    //Appflow and Amazon Connect Customer profile
-    ///////////////////////////
-    /*******
-     * KMS Key
-     */
-    //TODO: to rename the key into something moroe explicit
-    const kmsKeyProfileDomain = new kms.Key(this, "ucpDomainKey", {
-      removalPolicy: RemovalPolicy.DESTROY,
-      pendingWindow: Duration.days(20),
-      alias: 'alias/ucpDomainKey' + envName,
-      description: 'KMS key for encrypting business object S3 buckets',
-      enableKeyRotation: true,
-    });
-
-    //Customer Profile Outputs for Domain Testing
-    new CfnOutput(this, "connectProfileImportBucketOut", { value: connectProfileImportBucket.bucketName })
-    new CfnOutput(this, "connectProfileImportBucketTestOut", { value: connectProfileImportBucketTest.bucketName })
-    new CfnOutput(this, "connectProfileExportBucket", { value: connectProfileExportBucket.bucketName })
-    new CfnOutput(this, "kmsKeyProfileDomain", { value: kmsKeyProfileDomain.keyArn })
-
-    //////////////////////////
-    //LAMBDA FUNCTION
-    /////////////////////////
-    const lambdaArtifactRepositoryBucket = s3.Bucket.fromBucketName(this, 'BucketByName', artifactBucket);
-    const ucpBackEndLambdaPrefix = 'ucpBackEnd'
-    const ucpBackEndLambda = new lambda.Function(this, 'ucpBackEnd' + envName, {
-      code: new lambda.S3Code(lambdaArtifactRepositoryBucket, [envName, ucpBackEndLambdaPrefix, 'main.zip'].join("/")),
-      functionName: ucpBackEndLambdaPrefix + envName,
-      handler: 'main',
-      runtime: lambda.Runtime.GO_1_X,
-      tracing: lambda.Tracing.ACTIVE,
-      timeout: Duration.seconds(60),
-      environment: {
-        LAMBDA_ACCOUNT_ID: account,
-        LAMBDA_ENV: envName,
-        ATHENA_WORKGROUP: "",
-        ATHENA_DB: "",
-        HOTEL_BOOKING_JOB_NAME: hotelBookingOutput.connectorJobName,
-        AIR_BOOKING_JOB_NAME: airBookingOutput.connectorJobName,
-        GUEST_PROFILE_JOB_NAME: guestProfileOutput.connectorJobName,
-        PAX_PROFILE_JOB_NAME: paxProfileOutput.connectorJobName,
-        CLICKSTREAM_JOB_NAME: clickstreamOutput.connectorJobName,
-        HOTEL_STAY_JOB_NAME: hotelStayOutput.connectorJobName,
-        CONNECTOR_CRAWLER_QUEUE: connectorCrawlerQueue.queueArn,
-        CONNECTOR_CRAWLER_DLQ: connectorCrawlerDlq.queueArn,
-        GLUE_DB: glueDb.databaseName,
-        DATALAKE_ADMIN_ROLE_ARN: datalakeAdminRole.roleArn,
-        UCP_GUEST360_TABLE_NAME: "",
-        UCP_GUEST360_TABLE_PK: "",
-        UCP_GUEST360_ATHENA_TABLE: "",
-        CONNECT_PROFILE_SOURCE_BUCKET: connectProfileImportBucket.bucketName,
-        KMS_KEY_PROFILE_DOMAIN: kmsKeyProfileDomain.keyArn,
-      }
-    });
-
-    ucpBackEndLambda.addToRolePolicy(new iam.PolicyStatement({
-      resources: ["*"],
-      actions: [
-        'appflow:DescribeFlow',
-        'appflow:CreateFlow',
-        'appflow:DeleteFlow',
-        'glue:CreateCrawler',
-        'glue:DeleteCrawler',
-        'glue:CreateTrigger',
-        'glue:GetTrigger',
-        'glue:UpdateTrigger',
-        'glue:DeleteTrigger',
-        'glue:GetTags',
-        'glue:TagResource',
-        'glue:GetJob',
-        'glue:UpdateJob',
-        'kms:GenerateDataKey',
-        'kms:Decrypt',
-        'kms:CreateGrant',
-        'kms:ListGrants',
-        'kms:ListAliases',
-        'kms:DescribeKey',
-        'kms:ListKeys',
-        // TODO: remove iam actions and set up permission boundary instead
-        'iam:AttachRolePolicy',
-        'iam:CreatePolicy',
-        'iam:CreateRole',
-        'iam:DeletePolicy',
-        'iam:DeleteRole',
-        'iam:DetachRolePolicy',
-        'iam:GetPolicy',
-        'iam:ListAttachedRolePolicies',
-        'iam:PassRole',
-        'profile:SearchProfiles',
-        'profile:GetDomain',
-        'profile:CreateDomain',
-        'profile:ListDomains',
-        'profile:ListIntegrations',
-        'profile:DeleteDomain',
-        'profile:DeleteProfile',
-        'profile:PutIntegration',
-        'profile:PutProfileObjectType',
-        'profile:DeleteProfileObjectType',
-        'profile:GetMatches',
-        'profile:ListProfileObjects',
-        'profile:ListProfileObjectTypes',
-        'profile:GetProfileObjectType',
-        'profile:TagResource',
-        'appflow:DescribeFlow',
-        'servicecatalog:ListApplications',
-        's3:ListBucket',
-        's3:ListAllMyBuckets',
-        's3:GetBucketLocation',
-        's3:GetBucketPolicy',
-        's3:PutBucketPolicy',
-        'sqs:CreateQueue',
-        'sqs:ReceiveMessage',
-        'sqs:SetQueueAttributes',
-        'sqs:GetQueueAttributes',
-        'sqs:DeleteQueue']
-    }));
-
-    //////////////////////////
-    // COGNITO USER POOL
-    ///////////////////////////////////////
-
-
-    const userPool: cognito.UserPool = new cognito.UserPool(this, "ucpUserpool", {
-      signInAliases: { email: true },
-      userPoolName: "ucpUserpool" + envName
-    });
-
-    const cognitoAppClient = new cognito.UserPoolClient(this, "ucpUserPoolClient", {
-      userPool: userPool,
-      oAuth: {
-        flows: { authorizationCodeGrant: true, implicitCodeGrant: true },
-        scopes: [cognito.OAuthScope.PHONE,
-        cognito.OAuthScope.EMAIL,
-        cognito.OAuthScope.OPENID,
-        cognito.OAuthScope.PROFILE,
-        cognito.OAuthScope.COGNITO_ADMIN],
-        callbackUrls: ["http://localhost:4200"],
-        logoutUrls: ["http://localhost:4200"]
-      },
-      supportedIdentityProviders: [cognito.UserPoolClientIdentityProvider.COGNITO],
-      authFlows: {
-        userPassword: true,
-        userSrp: true,
-        adminUserPassword: true
-      },
-      generateSecret: false,
-      refreshTokenValidity: Duration.days(30),
-      userPoolClientName: "ucpPortal",
-    })
-
-    //Adding the account ID in order to ensure uniqueness per account per region per env
-    const domain = new cognito.CfnUserPoolDomain(this, id + "ucpCognitoDomain", {
-      userPoolId: userPool.userPoolId,
-      domain: "ucp-domain-" + account + "-" + envName
-    })
-
-    //Generating outputs used to obtain refresh token
-    new CfnOutput(this, "userPoolId", { value: userPool.userPoolId })
-    new CfnOutput(this, "cognitoAppClientId", { value: cognitoAppClient.userPoolClientId })
-    new CfnOutput(this, "tokenEnpoint", { value: "https://" + domain.domain + ".auth." + region + ".amazoncognito.com/oauth2/token" })
-    new CfnOutput(this, "cognitoDomain", { value: domain.domain })
-
-
-    //////////////////////////
-    //API GATEWAY
-    /////////////////////////
-
-    let apiV2 = new HttpApi(this, "apiGatewayV2", {
-      apiName: "ucpBackEnd" + envName,
-      corsPreflight: {
-        allowOrigins: ["*"],
-        allowMethods: [CorsHttpMethod.OPTIONS, CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PUT, CorsHttpMethod.DELETE],
-        allowHeaders: ["*"]
-      }
-    })
-
-
-    const authorizer = new HttpUserPoolAuthorizer("ucpPortalUserPoolAuthorizer", userPool, {
-      userPoolClients: [cognitoAppClient]
-    });
-
-
-    const ucpEndpointName = "ucp"
-    const ucpEndpointProfile = "profile"
-    const ucpEndpointMerge = "merge"
-    const ucpEndpointAdmin = "admin"
-    const ucpEndpointIndustryConnector = "connector"
-    const ucpEndpointErrors = "error"
-    const stageName = "api"
-    //partner api enpoint
-    let allRoutes: Array<HttpRoute>;
-    allRoutes = apiV2.addRoutes({
-      path: '/' + ucpEndpointName + "/" + ucpEndpointProfile,
-      authorizer: authorizer,
-      methods: [HttpMethod.GET],
-      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationProfile', ucpBackEndLambda, {
-        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
-      })
-    })
-    apiV2.addRoutes({
-      path: '/' + ucpEndpointName + "/" + ucpEndpointProfile + "/{id}",
-      authorizer: authorizer,
-      methods: [HttpMethod.GET],
-      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationProfileId', ucpBackEndLambda, {
-        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
-      })
-    }).forEach(route => {
-      allRoutes.push(route)
-    });
-    apiV2.addRoutes({
-      path: '/' + ucpEndpointName + "/" + ucpEndpointMerge,
-      authorizer: authorizer,
-      methods: [HttpMethod.GET],
-      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationMerge', ucpBackEndLambda, {
-        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
-      })
-    }).forEach(route => {
-      allRoutes.push(route)
-    });
-    apiV2.addRoutes({
-      path: '/' + ucpEndpointName + "/" + ucpEndpointMerge + "/{id}",
-      authorizer: authorizer,
-      methods: [HttpMethod.GET],
-      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationMergeId', ucpBackEndLambda, {
-        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
-      })
-    }).forEach(route => {
-      allRoutes.push(route)
-    });
-    apiV2.addRoutes({
-      path: '/' + ucpEndpointName + "/" + ucpEndpointAdmin,
-      authorizer: authorizer,
-      methods: [HttpMethod.GET, HttpMethod.POST],
-      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationProfileAdmin', ucpBackEndLambda, {
-        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
-      })
-    }).forEach(route => {
-      allRoutes.push(route)
-    });
-    apiV2.addRoutes({
-      path: '/' + ucpEndpointName + "/" + ucpEndpointAdmin + "/{id}",
-      authorizer: authorizer,
-      methods: [HttpMethod.GET, HttpMethod.DELETE],
-      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationProfileAdminId', ucpBackEndLambda, {
-        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
-      })
-    }).forEach(route => {
-      allRoutes.push(route)
-    });
-    apiV2.addRoutes({
-      path: '/' + ucpEndpointName + "/" + ucpEndpointIndustryConnector,
-      authorizer: authorizer,
-      methods: [HttpMethod.GET],
-      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationIndustryConnector', ucpBackEndLambda, {
-        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
-      })
-    }).forEach(route => {
-      allRoutes.push(route)
-    });
-    apiV2.addRoutes({
-      path: '/' + ucpEndpointName + '/' + ucpEndpointIndustryConnector + '/link',
-      authorizer: authorizer,
-      methods: [HttpMethod.POST],
-      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationLinkIndustryConnector', ucpBackEndLambda, {
-        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
-      })
-    }).forEach(route => {
-      allRoutes.push(route)
-    });
-    apiV2.addRoutes({
-      path: '/' + ucpEndpointName + '/' + ucpEndpointIndustryConnector + '/crawler',
-      authorizer: authorizer,
-      methods: [HttpMethod.POST],
-      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationCreateConnectorCrawler', ucpBackEndLambda, {
-        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
-      })
-    }).forEach(route => {
-      allRoutes.push(route)
-    });
-    apiV2.addRoutes({
-      path: '/' + ucpEndpointName + "/" + ucpEndpointErrors,
-      authorizer: authorizer,
-      methods: [HttpMethod.GET],
-      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationErrors', ucpBackEndLambda, {
-        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
-      })
-    }).forEach(route => {
-      allRoutes.push(route)
-    });
-    apiV2.addRoutes({
-      path: '/' + ucpEndpointName + "/" + ucpEndpointErrors + "/{id}",
-      authorizer: authorizer,
-      methods: [HttpMethod.GET],
-      integration: new HttpLambdaIntegration('UCPBackendLambdaIntegrationErrorsId', ucpBackEndLambda, {
-        payloadFormatVersion: PayloadFormatVersion.VERSION_1_0,
-      })
-    }).forEach(route => {
-      allRoutes.push(route)
-    });
-    new HttpStage(this, "apiGarewayv2Stage", {
-      httpApi: apiV2,
-      stageName: stageName,
-      autoDeploy: true
-    })
-    new CfnOutput(this, 'httpApiUrl', {
-      value: apiV2.apiEndpoint || ""
-    });
-    new CfnOutput(this, 'ucpApiId', {
-      value: apiV2.apiId || ""
-    });
-
-    /////////////////////////////////
-    // WEBSITE, CDN, DNS
-    /////////////////////////////////
-
-    /*********************************
-    * S3 Bucket for static content
-    ******************************/
-
-    const websiteStaticContentBucket = new tah_s3.Bucket(this, "ucp-connector-fe-" + envName, accessLogBucket)
-    const cloudfrontLogBucket = new tah_s3.Bucket(this, "ucp-connector-fe-logs-" + envName, accessLogBucket)
-
-    tah_core.Output.add(this, "websiteBucket", websiteStaticContentBucket.bucketName)
-
-    /*************************
-     * CloudFront Distribution
-     ****************************/
-
-
-    const oai = new cloudfront.OriginAccessIdentity(this, 'websiteDistributionOAI' + envName, {
-      comment: "Origin access identity for website in " + envName
-    })
-
-    let distributionConfig: cloudfront.CloudFrontWebDistributionProps = {
-      originConfigs: [
-        {
-          s3OriginSource: {
-            s3BucketSource: websiteStaticContentBucket,
-            originAccessIdentity: oai
-          },
-          behaviors: [
-            {
-              isDefaultBehavior: true,
-              forwardedValues: {
-                "queryString": true,
-                "cookies": {
-                  "forward": "none"
+                    if (policy) child.node.addDependency(policy);
                 }
-              }
 
-            }]
+                break;
+            }
         }
-      ],
-      loggingConfig: {
-        bucket: cloudfrontLogBucket,
-        includeCookies: false,
-        prefix: 'prefix',
-      },
-      viewerCertificate: cloudfront.ViewerCertificate.fromCloudFrontDefaultCertificate(),
-      errorConfigurations: [
-        {
-          "errorCachingMinTtl": 300,
-          "errorCode": 403,
-          "responseCode": 200,
-          "responsePagePath": "/index.html"
-        },
-        {
-          "errorCachingMinTtl": 300,
-          "errorCode": 404,
-          "responseCode": 200,
-          "responsePagePath": "/index.html"
+    }
+
+    private addSuppressRules(resource: Resource | CfnResource, rules: CfnNagSuppressRule[]): void {
+        if (resource instanceof Resource) {
+            resource = <CfnResource>resource.node.defaultChild;
         }
-      ]
+
+        const cfnNagMetadata = resource.getMetadata('cfn_nag');
+
+        if (cfnNagMetadata) {
+            const existingRules = cfnNagMetadata.rules_to_suppress;
+
+            if (Array.isArray(existingRules)) {
+                for (const rule of existingRules) {
+                    if (typeof rules.find(newRule => newRule.id === rule.id) === 'undefined') {
+                        rules.push(rule);
+                    }
+                }
+            }
+        }
+
+        resource.addMetadata('cfn_nag', {
+            rules_to_suppress: rules
+        });
     }
 
+    private addGuardSuppressRules(resource: Resource | CfnResource, rules: string[]): void {
+        if (resource instanceof Resource) {
+            resource = <CfnResource>resource.node.defaultChild;
+        }
 
+        const cfnGuardMetadata = resource.getMetadata('guard');
 
+        if (cfnGuardMetadata) {
+            const existingRules = cfnGuardMetadata.SuppressedRules;
 
-    const websiteDistribution = new cloudfront.CloudFrontWebDistribution(this, 'ucpWebsiteDistribution' + envName, distributionConfig);
+            if (Array.isArray(existingRules)) {
+                for (const rule of existingRules) {
+                    if (typeof rules.find(newRule => newRule === rule) === 'undefined') {
+                        rules.push(rule);
+                    }
+                }
+            }
+        }
 
-    //We create adedicated response ehader policy to include the AWS recommanded HTTP Headers
-    const responseHeaderPolicy = new cloudfront.ResponseHeadersPolicy(this, 'ResponseHeadersPolicy', {
-      customHeadersBehavior: {
-        customHeaders: [
-          { header: 'Cache-Control', value: 'no-store, no-cache', override: true },
-          { header: 'Pragma', value: 'no-cache', override: false },
-        ],
-      },
-      securityHeadersBehavior: {
-        contentTypeOptions: { override: true },
-        frameOptions: { frameOption: cloudfront.HeadersFrameOption.DENY, override: true },
-        contentSecurityPolicy: { contentSecurityPolicy: "default-src 'none'; img-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; object-src 'none'; connect-src *.amazonaws.com", override: true },
-        strictTransportSecurity: { accessControlMaxAge: Duration.seconds(600), includeSubdomains: true, override: true },
-      },
-    });
-    //adding the response policy ID to cloudfront distributiono using an escape hatch
-    const cfnDistribution = websiteDistribution.node.defaultChild as cloudfront.CfnDistribution;
-    cfnDistribution.addPropertyOverride(
-      'DistributionConfig.DefaultCacheBehavior.ResponseHeadersPolicyId',
-      responseHeaderPolicy.responseHeadersPolicyId
-    );
-
-    websiteStaticContentBucket.addToResourcePolicy(new iam.PolicyStatement({
-      actions: ['s3:GetObject'],
-      effect: iam.Effect.ALLOW,
-      resources: [websiteStaticContentBucket.arnForObjects("*")],
-      principals: [new iam.CanonicalUserPrincipal(oai.cloudFrontOriginAccessIdentityS3CanonicalUserId)],
-    }));
-
-
-    tah_core.Output.add(this, "accessLogging", accessLogBucket.bucketName)
-    tah_core.Output.add(this, "websiteDistributionId", websiteDistribution.distributionId)
-    tah_core.Output.add(this, "websiteDomainName", websiteDistribution.distributionDomainName)
-
-  }
-
-
-  /*******************
-  * HELPER FUNCTIONS
-  ******************/
-
-  buildBusinessObjectPipeline(businessObjectName: string, envName: string, dataLakeAdminRole: iam.Role, glueDb: Database, artifactBucketName: string, accessLogBucket: s3.Bucket, connectProfileImportBucket: s3.Bucket): BusinessObjectPipelineOutput {
-    //0-create bucket
-    let bucketRaw = new tah_s3.Bucket(this, "ucp" + businessObjectName, accessLogBucket);
-    //we create a test bucket to be able to test  the job run
-    let testBucketRaw = new tah_s3.Bucket(this, "ucp" + businessObjectName + "Test", accessLogBucket);
-    //1-Bucket permission
-    bucketRaw.grantReadWrite(dataLakeAdminRole)
-    testBucketRaw.grantReadWrite(dataLakeAdminRole)
-    //2-Creating workflow to visualize
-    let workflow = new CfnWorkflow(this, businessObjectName, {
-      name: "ucp" + businessObjectName + envName
-    })
-    //3-Raw Data Crawlers
-    let crawler = new tah_glue.S3Crawler(this, "ucp" + businessObjectName + envName, glueDb, bucketRaw, dataLakeAdminRole)
-    //4-Raw Data Crawler Triggers
-    this.scheduledCrawlerTrigger("ucp" + businessObjectName, envName, crawler, "cron(0 * * * ? *)", workflow)
-    this.crawlerOnDemandTrigger("ucp" + businessObjectName, envName, crawler)
-    //5- Jobs
-
-    let toUcpScript = businessObjectName.replace('-', '_') + "ToUcp"
-    let transformScript = businessObjectName.replace('-', '_') + "Transform.py"
-    let job = this.job(businessObjectName + "FromCustomer", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
-      ["SOURCE_TABLE", bucketRaw.toAthenaTable()],
-      ["DEST_BUCKET", connectProfileImportBucket.bucketName],
-      ["BUSINESS_OBJECT", businessObjectName],
-      ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
-    ]))
-    let industryConnectorJob = this.job(businessObjectName + "FromConnector", envName, artifactBucketName, toUcpScript, glueDb, dataLakeAdminRole, new Map([
-      // SOURCE_TABLE provided by customer when linking connector
-      ["DEST_BUCKET", connectProfileImportBucket.bucketName],
-      ["BUSINESS_OBJECT", businessObjectName],
-      ["extra-py-files", "s3://" + artifactBucketName + "/" + envName + "/etl/tah_lib.zip"]
-    ]))
-    //6- Job Triggers
-    let jobTrigger = this.jobTriggerFromCrawler("ucp" + businessObjectName, envName, [crawler], job, workflow)
-    //7-Cfn Output
-    new CfnOutput(this, 'customerBucket' + businessObjectName, {
-      value: bucketRaw.bucketName
-    });
-    new CfnOutput(this, 'customerTestBucket' + businessObjectName, {
-      value: testBucketRaw.bucketName
-    });
-    new CfnOutput(this, 'customerJobName' + businessObjectName, {
-      value: job.name || "",
-    });
-    new CfnOutput(this, 'industryConnectorJobName' + businessObjectName, {
-      value: job.name || "",
-    });
-    let output: BusinessObjectPipelineOutput = {
-      connectorJobName: industryConnectorJob.name ?? "",
+        resource.addMetadata('guard', {
+            SuppressedRules: rules
+        });
     }
-    return output;
-  }
 
-  job(prefix: string, envName: string, artifactBucket: string, scriptName: string, glueDb: Database, dataLakeAdminRole: iam.Role, envVar: Map<string, string>): CfnJob {
-    let job = new CfnJob(this, prefix + "Job" + envName, {
-      command: {
-        name: "glueetl",
-        scriptLocation: "s3://" + artifactBucket + "/" + envName + "/etl/" + scriptName + ".py"
-      },
-      glueVersion: "2.0",
-      defaultArguments: {
-        '--enable-continuous-cloudwatch-log': 'true',
-        "--job-bookmark-option": "job-bookmark-enable",
-        "--enable-metrics": "true",
-        "--GLUE_DB": glueDb.databaseName,
-      },
-      executionProperty: {
-        maxConcurrentRuns: 2
-      },
-      maxRetries: 0,
-      name: prefix + "Job" + envName,
-      role: dataLakeAdminRole.roleArn
-    })
-    for (let [key, value] of envVar) {
-      job.defaultArguments["--" + key] = value
+    private suppressRdsWarnings(uptVpc: ec2.IVpc, storage: ProfileStorage): void {
+        const cluster: rds.DatabaseCluster = storage.storageAuroraCluster;
+        this.addGuardSuppressRules(cluster, ['RDS_CLUSTER_MASTER_USER_PASSWORD_NO_PLAINTEXT_PASSWORD']);
+        this.addGuardSuppressRules(storage.lambdaToProxyGroup, ['SECURITY_GROUP_EGRESS_ALL_PROTOCOLS_RULE']);
+        this.addGuardSuppressRules(storage.lambdaToProxyGroup, ['EC2_SECURITY_GROUP_EGRESS_OPEN_TO_WORLD_RULE']);
+        this.addGuardSuppressRules(storage.dbConnectionGroup, ['SECURITY_GROUP_MISSING_EGRESS_RULE']);
+
+        uptVpc.publicSubnets.forEach(subnet => {
+            this.addGuardSuppressRules(<ec2.PublicSubnet>subnet, ['SUBNET_AUTO_ASSIGN_PUBLIC_IP_DISABLED']);
+        });
+        /*
+        let writer: rds.ClusterInstance = <rds.IClusterInstance>storage.storageAuroraWriter
+        this.addGuardSuppressRules(writer, ["RDS_MASTER_USER_PASSWORD_NO_PLAINTEXT_PASSWORD"])
+        //let reader1: rds.IAuroraClusterInstance = storage.storageAuroraReader1<rds.IAuroraClusterInstance>
+        //let reader2: rds.IAuroraClusterInstance = storage.storageAuroraReader2<rds.IAuroraClusterInstance>
+        this.addGuardSuppressRules(writer, ["RDS_MASTER_USER_PASSWORD_NO_PLAINTEXT_PASSWORD"])
+        this.addGuardSuppressRules(reader1, ["RDS_MASTER_USER_PASSWORD_NO_PLAINTEXT_PASSWORD"])
+        this.addGuardSuppressRules(reader2, ["RDS_MASTER_USER_PASSWORD_NO_PLAINTEXT_PASSWORD"])
+        this.addGuardSuppressRules(writer, ["RDS_STORAGE_ENCRYPTED"])
+        this.addGuardSuppressRules(reader1, ["RDS_STORAGE_ENCRYPTED"])
+        this.addGuardSuppressRules(reader2, ["RDS_STORAGE_ENCRYPTED"])*/
     }
-    return job
-  }
 
-
-
-
-  jobTriggerFromCrawler(prefix: string, envName: string, crawlers: Array<CfnCrawler>, job: CfnJob, workflow?: CfnWorkflow): CfnTrigger {
-    let conditions = []
-    for (let crawler of crawlers) {
-      conditions.push({
-        crawlerName: crawler.name,
-        crawlState: "SUCCEEDED",
-        logicalOperator: "EQUALS"
-      })
+    private suppressDeliveryStream(deliveryStream: firehose.CfnDeliveryStream): void {
+        this.addGuardSuppressRules(deliveryStream, [
+            'KINESIS_FIREHOSE_REDSHIFT_DESTINATION_CONFIGURATION_NO_PLAINTEXT_PASSWORD',
+            'KINESIS_FIREHOSE_SPLUNK_DESTINATION_CONFIGURATION_NO_PLAINTEXT_PASSWORD'
+        ]);
     }
-    let trigger = new CfnTrigger(this, prefix + "jobTriggerFromCrawler" + envName, {
-      type: "CONDITIONAL",
-      name: prefix + "jobTriggerFromCrawler" + envName,
-      predicate: {
-        logical: "AND",
-        conditions: conditions
-      },
-      startOnCreation: true,
-      actions: [
-        { jobName: job.name }
-      ]
-    })
-    if (workflow) {
-      trigger.addDependency(workflow)
-      trigger.workflowName = workflow.name
+
+    private suppressLambdaFunction(lambda: lambda.Function): void {
+        const lambdaRules: CfnNagSuppressRule[] = [
+            { id: 'W58', reason: 'Lambda functions do have permissions to write cloudwatch logs, through custom policy' },
+            { id: 'W89', reason: 'Solution deployed locally, no need to encase in VPC. Not a general rule' },
+            { id: 'F10', reason: 'Policy needed' },
+            {
+                id: 'W12',
+                reason: 'Role uses minimum permissions and needs to communicate with client generated resources, such as ACCP domains'
+            },
+            { id: 'W92', reason: 'Impossible for us to define the correct concurrency for clients' }
+        ];
+        this.addSuppressRules(lambda, lambdaRules);
+
+        if (lambda.role) {
+            const lambdaRoleRules: CfnNagSuppressRule[] = [
+                {
+                    id: 'W12',
+                    reason: 'Role uses minimum permissions and needs to communicate with client generated resources, such as ACCP domains'
+                },
+                { id: 'W76', reason: 'Permissions are needed for solution to work' }
+            ];
+            this.addGuardSuppressRules(<iam.Role>lambda.role, ['IAM_NO_INLINE_POLICY_CHECK']);
+
+            lambda.role.node.children.forEach(element => {
+                if (element.node.id === 'DefaultPolicy') {
+                    this.addSuppressRules(<CfnResource>element.node.defaultChild, lambdaRoleRules);
+                }
+            });
+        }
     }
-    return trigger
-  }
 
-  jobOnDemandTrigger(prefix: string, envName: string, jobs: Array<CfnJob>, workflow?: CfnWorkflow) {
-    let actions = []
-    for (let job of jobs) {
-      actions.push({ jobName: job.name })
+    private suppressConstruct(lambda: Construct): void {
+        const rules: CfnNagSuppressRule[] = [
+            { id: 'W58', reason: 'This is a hidden resource created by an API call the solution itself has no control or access to' },
+            { id: 'W89', reason: 'This is a hidden resource created by an API call the solution itself has no control or access to' },
+            { id: 'W92', reason: 'This is a hidden resource created by an API call the solution itself has no control or access to' }
+        ];
+        this.addSuppressRules(<CfnResource>lambda.node.defaultChild, rules);
+
+        lambda.node.children.forEach(element => {
+            if (element.node.id === 'Role') {
+                this.suppressRole(<iam.Role>element);
+            }
+        });
     }
-    let trigger = new CfnTrigger(this, prefix + "jobOnDemandTrigger" + envName, {
-      type: "ON_DEMAND",
-      name: prefix + "jobOnDemandTrigger" + envName,
-      actions: actions
-    })
-    if (workflow) {
-      trigger.addDependency(workflow)
-      trigger.workflowName = workflow.name
+
+    private suppressRole(role: iam.Role): void {
+        const rules: CfnNagSuppressRule[] = [
+            {
+                id: 'W12',
+                reason: 'Role uses minimum permissions and needs to communicate with client generated resources, such as ACCP domains'
+            },
+            { id: 'W76', reason: 'Permissions are needed for solution to work' }
+        ];
+
+        role.node.children.forEach(element => {
+            if (element.node.id === 'DefaultPolicy') {
+                this.addSuppressRules(<CfnResource>element.node.defaultChild, rules);
+            }
+        });
+        this.addGuardSuppressRules(role, ['IAM_NO_INLINE_POLICY_CHECK']);
     }
-    return trigger
-  }
 
-  crawlerOnDemandTrigger(prefix: string, envName: string, crawler: CfnCrawler, workflow?: CfnWorkflow) {
-    let trigger = new CfnTrigger(this, prefix + "crawlerOnDemandTrigger" + envName, {
-      type: "ON_DEMAND",
-      name: crawler.name + "crawlerOnDemandTrigger" + envName,
-      actions: [
-        { crawlerName: crawler.name }
-      ]
-    })
-    if (workflow) {
-      trigger.addDependency(workflow)
-      trigger.workflowName = workflow.name
+    private suppressAccessLogBucket(bucket: tahS3.AccessLogBucket): void {
+        const rules: CfnNagSuppressRule[] = [
+            { id: 'W35', reason: 's3 bucket does have access logging configured, special wrapper for that purpose' }
+        ];
+        this.addSuppressRules(bucket, rules);
     }
-    return trigger
-  }
 
-  crawlerTriggerFromJob(prefix: string, envName: string, job: CfnJob, crawler: CfnCrawler, workflow?: CfnWorkflow): CfnTrigger {
-    let trigger = new CfnTrigger(this, prefix + "crawlerTriggerFromJob" + envName, {
-      type: "CONDITIONAL",
-      name: prefix + "crawlerTriggerFromJob" + envName,
-      predicate: {
-        conditions: [
-          {
-            jobName: job.name,
-            state: "SUCCEEDED",
-            logicalOperator: "EQUALS"
-          }
-        ]
-      },
-      startOnCreation: true,
-      actions: [
-        { crawlerName: crawler.name }
-      ]
-    })
-    if (workflow) {
-      trigger.addDependency(workflow)
-      trigger.workflowName = workflow.name
+    private suppressAccessLogHttp(httpStage: apiGatewayV2.HttpStage): void {
+        const rules: CfnNagSuppressRule[] = [
+            { id: 'W46', reason: 'access is logged through API widgets, which record metrics for API logging' }
+        ];
+        this.addSuppressRules(httpStage, rules);
     }
-    return trigger
-  }
 
-  scheduledCrawlerTrigger(prefix: string, envName: string, crawler: CfnCrawler, cron: string, workflow?: CfnWorkflow): CfnTrigger {
-    let trigger = new CfnTrigger(this, prefix + "scheduledCrawlerTrigger" + envName, {
-      type: "SCHEDULED",
-      name: prefix + "scheduledCrawlerTrigger" + envName,
-      //every hour:  "cron(10 * * * ? *)"
-      schedule: cron,
-      startOnCreation: true,
-      actions: [
-        { crawlerName: crawler.name }
-      ]
-    })
-    if (workflow) {
-      trigger.addDependency(workflow)
-      trigger.workflowName = workflow.name
+    private suppressDynamoDb(table: dynamodb.Table): void {
+        const rules: CfnNagSuppressRule[] = [
+            {
+                id: 'W28',
+                reason: 'Resource must have a name, and there is no workaround to renaming upon update, so that is what will be done'
+            }
+        ];
+        this.addSuppressRules(table, rules);
+        this.addGuardSuppressRules(table, ['CFN_NO_EXPLICIT_RESOURCE_NAMES']);
     }
-    return trigger
-  }
 
-  scheduledJobTrigger(prefix: string, envName: string, job: CfnJob, cron: string, workflow?: CfnWorkflow): CfnTrigger {
-    let trigger = new CfnTrigger(this, prefix + "scheduledJobTrigger" + envName, {
-      type: "SCHEDULED",
-      name: prefix + "scheduledJobTrigger" + envName,
-      //every hour:  "cron(10 * * * ? *)"
-      schedule: cron,
-      startOnCreation: true,
-      actions: [
-        { jobName: job.name }
-      ]
-    })
-    if (workflow) {
-      trigger.addDependency(workflow)
-      trigger.workflowName = workflow.name
+    private suppressLog(log: logs.LogGroup): void {
+        const rules: CfnNagSuppressRule[] = [
+            { id: 'W84', reason: 'Local deployment, logs do not contain sensitive information, no need for encryption' }
+        ];
+        this.addSuppressRules(log, rules);
     }
-    return trigger
-  }
 
-
-  addTargetBucketToDatalake(prefix: string, envName: string, dataLakeAdminRole: iam.Role, servicePrincipal?: iam.ServicePrincipal): s3.Bucket {
-    const bucket = new s3.Bucket(this, prefix + "-" + envName, {
-      removalPolicy: RemovalPolicy.DESTROY,
-      bucketName: prefix + "-" + envName,
-      versioned: true
-    })
-    Tags.of(bucket).add('cloudrack-data-zone', 'gold');
-    bucket.grantReadWrite(dataLakeAdminRole)
-    return bucket
-  }
-
-  addExistingBucketToDatalake(bucketName: string, envName: string, glueDb: Database, dataLakeAdminRole: iam.Role, crawlerConfig?: any): s3.IBucket {
-    const bucket = s3.Bucket.fromBucketName(this, bucketName, bucketName);
-    dataLakeAdminRole.addToPolicy(new iam.PolicyStatement({
-      resources: ["arn:aws:s3:::" + bucket.bucketName + "*"],
-      actions: ["s3:GetObject", "s3:PutObject"]
-    }))
-
-    let crawler = new CfnCrawler(this, bucket + "-crawler-", {
-      role: dataLakeAdminRole.roleArn,
-      targets: {
-        s3Targets: [{ path: "s3://" + bucket.bucketName }]
-      },
-      configuration: `{
-          "Version": 1.0,
-          "Grouping": {
-             "TableGroupingPolicy": "CombineCompatibleSchemas" }
-       }`,
-      databaseName: glueDb.databaseName,
-      name: bucketName + "-crawler-" + envName,
-    })
-
-    if (crawlerConfig && crawlerConfig.type === "ondemand") {
-      new CfnTrigger(this, crawler.name + "Trigger", {
-        type: "ON_DEMAND",
-        name: crawler.name + "Trigger",
-        actions: [
-          { crawlerName: crawler.name }
-        ]
-      })
+    private suppressCloudfront(cloudfront: cloudfront.CloudFrontWebDistribution): void {
+        const rules: CfnNagSuppressRule[] = [
+            {
+                id: 'W70',
+                reason: 'Using default viewer certificate, cannot enforce higher TLS version without creating custom alias or certificate'
+            }
+        ];
+        this.addSuppressRules(cloudfront, rules);
     }
-    return bucket
-  }
 
+    private suppressSqs(queue: tahSqs.Queue): void {
+        const rules: CfnNagSuppressRule[] = [
+            { id: 'W48', reason: 'Queues are encrypted using sqs managed encryption, no need to specify kms master key' }
+        ];
+        this.addSuppressRules(queue, rules);
+    }
 }

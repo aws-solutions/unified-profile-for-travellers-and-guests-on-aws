@@ -1,0 +1,19 @@
+{
+  "nGuestProfiles": 10,
+  "nPaxProfiles": 10,
+  "nObjectFiles": 2,
+  "nLines": 5,
+  "saveTarget": "s3",
+  "saveGuestProfiles": "n",
+  "savePaxProfiles": "n",
+  "saveHotelBooking": "n",
+  "saveAirBooking": "n",
+  "saveHotelClickstream": "n",
+  "saveAirClickstream": "n",
+  "saveHotelCsi": "n",
+  "saveAirCsi": "n",
+  "saveHotelStay": "n",
+  "domain": "load_test_batch_1",
+  "enableValidation": "n",
+  "batchSize": 50
+}

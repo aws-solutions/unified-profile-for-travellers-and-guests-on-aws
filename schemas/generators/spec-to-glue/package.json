@@ -1,0 +1,22 @@
+{
+  "name": "tah-common-glue-table-generator",
+  "version": "1.0.0",
+  "description": "Package for converting JSON schemas into AWS Glue schemas",
+  "author": {
+        "name": "Amazon Web Services",
+        "url": "https://aws.amazon.com/solutions"
+    },
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@aws-cdk/aws-glue-alpha": "2.118.0-alpha.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.15.3",
+    "typescript": "^5.4.5"
+  }
+}

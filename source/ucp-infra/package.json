@@ -1,35 +1,48 @@
 {
-  "name": "ucp-infra",
-  "version": "0.2.0",
-  "bin": {
-    "ucp-infra": "bin/ucp-infra.js"
-  },
-  "scripts": {
-    "build": "tsc",
-    "watch": "tsc -w",
-    "test": "jest",
-    "cdk": "cdk"
-  },
-  "peerDependencies": {
-    "aws-cdk-lib": "^2.60.0",
-    "constructs": "^10.0.0",
-    "@aws-cdk/aws-synthetics-alpha": "^2.60.0-alpha.0",
-    "@aws-cdk/aws-glue-alpha": "^2.60.0-alpha.0",
-    "@aws-cdk/aws-apigatewayv2-alpha": "^2.60.0-alpha.0",
-    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.60.0-alpha.0"
-  },
-  "devDependencies": {
-    "aws-cdk-lib": "^2.60.0",
-    "@aws-cdk/aws-synthetics-alpha": "^2.60.0-alpha.0",
-    "@aws-cdk/aws-glue-alpha": "^2.60.0-alpha.0",
-    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.60.0-alpha.0",
-    "constructs": "^10.0.0",
-    "typescript": "~3.9.0"
-  },
-  "dependencies": {
-    "@aws-cdk/aws-apigatewayv2-alpha": "^2.60.0-alpha.0",
-    "@aws-cdk/aws-apigatewayv2-authorizers-alpha": "^2.60.0-alpha.0",
-    "@types/node": "^17.0.41",
-    "cdk-nag": "^2.21.68"
-  }
+    "name": "ucp-infra",
+    "description": "CDK project for UPT infra",
+    "license": "Apache-2.0",
+    "author": {
+        "name": "Amazon Web Services",
+        "url": "https://aws.amazon.com/solutions"
+    },
+    "version": "1.2.0",
+    "bin": {
+        "ucp-infra": "bin/ucp-infra.js"
+    },
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc -w",
+        "test": "jest --coverage",
+        "cdk": "cdk"
+    },
+    "devDependencies": {
+        "@aws-cdk/aws-glue-alpha": "^2.118.0-alpha.0",
+        "@aws-cdk/aws-kinesisfirehose-alpha": "^2.118.0-alpha.0",
+        "@aws-cdk/aws-kinesisfirehose-destinations-alpha": "^2.118.0-alpha.0",
+        "@aws-cdk/aws-lambda-go-alpha": "^2.118.0-alpha.0",
+        "@aws-cdk/aws-servicecatalogappregistry-alpha": "^2.118.0-alpha.0",
+        "@aws-solutions-constructs/aws-kinesisstreams-lambda": "^2.49.0",
+        "@types/jest": "^29.5.12",
+        "@types/node": "^20.17.10",
+        "@typescript-eslint/eslint-plugin": "^7.2.0",
+        "aws-cdk-lib": "^2.138.0",
+        "cdk-assets": "^2.137.0",
+        "cdk-nag": "^2.27.69",
+        "constructs": "^10.3.0",
+        "esbuild": "^0.20.2",
+        "eslint": "^8.45.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-plugin-import": "^2.26.0",
+        "eslint-plugin-node": "^11.1.0",
+        "eslint-plugin-prettier": "^5.0.0",
+        "jest": "^29.6.1",
+        "prettier": "^3.0.0",
+        "ts-jest": "^29.1.1",
+        "typescript": "^5.1.6"
+    },
+    "dependencies": {
+        "aws-cdk": "^2.118.0",
+        "ts-node": "^10.9.2"
+    }
 }

@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/Stay",
+  "$defs": {
+    "AlternateProfileID": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "lastUpdatedOn": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "value",
+        "lastUpdatedOn"
+      ]
+    },
+    "Currency": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "symbol": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code"
+      ]
+    },
+    "Stay": {
+      "properties": {
+        "objectVersion": {
+          "type": "integer"
+        },
+        "modelVersion": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "bookingId": {
+          "type": "string"
+        },
+        "guestId": {
+          "type": "string"
+        },
+        "lastUpdatedOn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdOn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "startDate": {
+          "type": "string"
+        },
+        "hotelCode": {
+          "type": "string"
+        },
+        "revenue": {
+          "items": {
+            "$ref": "#/$defs/StayRevenueItem"
+          },
+          "type": "array"
+        },
+        "alternateProfileIds": {
+          "items": {
+            "$ref": "#/$defs/AlternateProfileID"
+          },
+          "type": "array"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "objectVersion",
+        "modelVersion",
+        "id",
+        "bookingId",
+        "guestId",
+        "lastUpdatedOn",
+        "createdOn",
+        "lastUpdatedBy",
+        "createdBy",
+        "currency",
+        "firstName",
+        "lastName",
+        "email",
+        "phone",
+        "startDate",
+        "hotelCode",
+        "revenue"
+      ]
+    },
+    "StayRevenueItem": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "type",
+        "description",
+        "currency",
+        "amount",
+        "date"
+      ]
+    }
+  }
+}

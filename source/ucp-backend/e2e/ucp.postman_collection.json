@@ -1,0 +1,4042 @@
+{
+	"info": {
+		"_postman_id": "c5a24823-dfdf-4a02-b333-159c9ac2eb54",
+		"name": "ucp",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1350914",
+		"_collection_link": "https://winter-capsule-902216.postman.co/workspace/aws~c461ed0c-13c4-4fd0-980e-bb0ad9429ef9/collection/1350914-c5a24823-dfdf-4a02-b333-159c9ac2eb54?action=share&creator=1350914&source=collection_link"
+	},
+	"item": [
+		{
+			"name": "0-AuthTests",
+			"item": [
+				{
+					"name": "get-admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/admin/{{domainName}}",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"admin",
+								"{{domainName}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-async",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/async",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"async"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-error",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/error",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"error"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-connector",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/connector",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"connector"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-jobs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/jobs",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"jobs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "post-link",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/connector/link",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"connector",
+								"link"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-merge",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/merge",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"merge"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "post-unmerge",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/unmerge",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"unmerge"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-portalConfig",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/portalConfig",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"portalConfig"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/profile",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-profile-summay",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/profile/summary",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"profile",
+								"summary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-ruleSet",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/ruleSet",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"ruleSet"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "post-ruleSet-activate",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/ruleSet/activate",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"ruleSet",
+								"activate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-ruleSetCache",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/ruleSetCache",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"ruleSetCache"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "post-ruleSetCache-activate",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/ruleSetCache/activate",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"ruleSetCache",
+								"activate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "post-privacy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/privacy",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"privacy"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-privacy-purge",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/privacy/purge",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"privacy",
+								"purge"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-interactionHistory",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/interactionHistory/{{profileId}}",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"interactionHistory",
+								"{{profileId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "post-cache",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/cache",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"cache"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get-promptConfig",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 401 for non-authenticated request\", function () {",
+									"    pm.response.to.have.status(401);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/promptConfig",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"promptConfig"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "0-getTokenFromRefreshToken",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Access tken returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.access_token).to.length.gt(0)",
+									"});",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"accessToken\", jsonData.access_token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {
+							"user-agent": true,
+							"accept": true,
+							"accept-encoding": true,
+							"connection": true
+						}
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Basic ",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{tokenEndpoint}}?grant_type=refresh_token&client_id={{clientId}}&refresh_token={{refreshToken}}",
+							"host": [
+								"{{tokenEndpoint}}"
+							],
+							"query": [
+								{
+									"key": "grant_type",
+									"value": "refresh_token"
+								},
+								{
+									"key": "client_id",
+									"value": "{{clientId}}"
+								},
+								{
+									"key": "refresh_token",
+									"value": "{{refreshToken}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AWYValidation",
+			"item": [
+				{
+					"name": "longTxID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"pm.test(\"Permission Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"transaction ID header is too long. Should be limited to 36 characters\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							},
+							{
+								"key": "aws-tah-tx-id",
+								"value": "1234567890123456789012345678901234567890",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/admin/{{domainName}}",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"admin",
+								"{{domainName}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "longDomainName",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"pm.test(\"Permission Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"domain name provided, but invalid: Domain name length should be between 3 and 26 chars\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "test_domain_domain01test_domain_domain01test_domain_domain01test_domain_domain01",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/admin/{{domainName}}",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"admin",
+								"{{domainName}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "linkIndConnectorDomainNameValidation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"pm.test(\"Permission Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"validation error: domain name length should be between 3 and 26 chars\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "",
+								"value": "",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"linkIndustryConnectorRq\": {\n    \"DomainName\": \"test_domain_domain01test_domain_domain01test_domain_domain01test_domain_domain01\"\n}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/connector/link",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"connector",
+								"link"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "CreateDomain",
+			"item": [
+				{
+					"name": "createDomainGood",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Async event returned\", function () {",
+									"    pm.expect(jsonData.asyncEvent.item_id).eq(\"createDomain\")",
+									"    pm.expect(jsonData.asyncEvent.item_type).not.eq(\"\")",
+									"    pm.variables.set(\"asyncEventId\", jsonData.asyncEvent.item_type)",
+									"    pm.variables.set(\"asyncEventUsecase\", jsonData.asyncEvent.item_id)",
+									"});",
+									"// Await domain creation to finish",
+									"postman.setNextRequest(\"getAsyncEvent\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"domain\": {\n        \"customerProfileDomain\": \"{{domainName}}\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/admin",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"admin"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{accessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "ManageDomain",
+			"item": [
+				{
+					"name": "getJobStatus",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const lodash = require('lodash');",
+									"",
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Test job list\", function () {",
+									"    env = pm.variables.get(\"environment\")",
+									"    arrList = [\"clickstreamJob\"+env, \"air_bookingJob\"+env, \"hotel-stayJob\"+env, \"guest-profileJob\"+env, \"hotel-bookingJob\"+env, \"pax-profileJob\"+env, \"customer_service_interactionJob\" + env]",
+									"    pm.expect(jsonData.awsResources.jobs.length).eq(7)",
+									"    pm.expect(lodash.includes(arrList, jsonData.awsResources.jobs[0].jobName)).to.be.true",
+									"    pm.expect(lodash.includes(arrList, jsonData.awsResources.jobs[1].jobName)).to.be.true",
+									"    pm.expect(lodash.includes(arrList, jsonData.awsResources.jobs[2].jobName)).to.be.true",
+									"    pm.expect(lodash.includes(arrList, jsonData.awsResources.jobs[3].jobName)).to.be.true",
+									"    pm.expect(lodash.includes(arrList, jsonData.awsResources.jobs[4].jobName)).to.be.true",
+									"    pm.expect(lodash.includes(arrList, jsonData.awsResources.jobs[5].jobName)).to.be.true",
+									"    pm.expect(lodash.includes(arrList, jsonData.awsResources.jobs[6].jobName)).to.be.true",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/jobs",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"jobs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "postRunJob",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"startJobRq\": {\n        \"jobName\": \"hotel-stayJob{{environment}}\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/jobs",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"jobs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "postRunInvalidJob",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"pm.test(\"Error Response\", function () {",
+									"    env = pm.variables.get(\"environment\")",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"validation error: invalid job name: invalid_job_name, should be within [hotel-bookingJob\"+env+\" air_bookingJob\"+env+\" guest-profileJob\"+env+\" pax-profileJob\"+env+\" clickstreamJob\"+env+\" hotel-stayJob\"+env+\" customer_service_interactionJob\"+env+\" run-all-jobs]\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"startJobRq\": {\n        \"jobName\": \"invalid_job_name\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/jobs",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"jobs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "postAllRunJobs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"startJobRq\": {\n        \"jobName\": \"run-all-jobs\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/jobs",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"jobs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getListErrors",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/error?page=0&pageSize=10",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"error"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getListDomain",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Domain created in list\", function () {",
+									"    var createdDomainName = pm.variables.get(\"domainName\")",
+									"    pm.expect(jsonData.config.domains.some(function(domain) {",
+									"        return domain.customerProfileDomain === createdDomainName",
+									"    })).to.be.true",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/admin",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"admin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getPortalConfig",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Portal Config field not null\", function () {",
+									"    pm.expect(jsonData.portalConfig.hyperlinkMappings).to.not.be.null",
+									"    pm.variables.set(\"portalUrlMappings\", JSON.stringify(jsonData.portalConfig.hyperlinkMappings))",
+									"})",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/portalConfig",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"portalConfig"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdatePortalConfig",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"portalConfig\": {\n    \"hyperlinkMappings\": [\n    {\n        \"accpObject\": \"loyalty_transaction\",\n        \"fieldName\": \"corporate_reference_number\",\n        \"hyperlinkTemplate\": \"https://www.example.com\"\n    }\n    ]\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/portalConfig",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"portalConfig"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getPortalConfigAfterUpdate",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Portal Config field not null\", function () {",
+									"    pm.expect(jsonData.portalConfig.hyperlinkMappings).to.not.be.null",
+									"    pm.expect(jsonData.portalConfig.hyperlinkMappings.length).eq(1)",
+									"    pm.expect(jsonData.portalConfig.hyperlinkMappings[0].accpObject).eq(\"loyalty_transaction\")",
+									"    pm.expect(jsonData.portalConfig.hyperlinkMappings[0].fieldName).eq(\"corporate_reference_number\")",
+									"    pm.expect(jsonData.portalConfig.hyperlinkMappings[0].hyperlinkTemplate).eq(\"https://www.example.com\")",
+									"})",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/portalConfig",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"portalConfig"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "deletePortalConfig",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.variables.set('body', JSON.stringify({\"hyperlinkMappings\": JSON.parse(pm.variables.get(\"portalUrlMappings\"))}))"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{{body}}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/portalConfig",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"portalConfig"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getPortalConfig",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Portal Config field not null\", function () {",
+									"    pm.expect(jsonData.portalConfig.hyperlinkMappings).to.not.be.null",
+									"    pm.expect(JSON.stringify(jsonData.portalConfig.hyperlinkMappings)).eq(pm.variables.get(\"portalUrlMappings\"))",
+									"})",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/portalConfig",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"portalConfig"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getDomainConfig",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Domain created was returned\", function () {",
+									"    var createdDomainName = pm.variables.get(\"domainName\")",
+									"    pm.expect(jsonData.config.domains.some(function(domain) {",
+									"        return domain.customerProfileDomain === createdDomainName",
+									"    })).to.be.true",
+									"})",
+									"pm.test(\"Only the selected domain returned\", function () {",
+									"    pm.expect(jsonData.config.domains).to.have.lengthOf(1)",
+									"});",
+									"pm.test(\"Mappings are not null\", function () {",
+									"    pm.expect(jsonData.config.domains[0].mappings).to.not.be.null",
+									"});",
+									"",
+									"pm.variables.set(\"isLowCostStorageEnabled\", jsonData.config.domains[0].isLowCostStorageEnabled)"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/admin/{{domainName}}",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"admin",
+								"{{domainName}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getConnector",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Connectors are returned\", function () {",
+									"    pm.expect(jsonData.connectors).is.not.null",
+									"    pm.expect(jsonData.connectors.name).is.not.eq(\"\")",
+									"});",
+									"",
+									"//we skip the traveller use cases as we only want to test admin use cases",
+									"if (!pm.variables.get(\"isLowCostStorageEnabled\")) {",
+									"    postman.setNextRequest(\"mergeProfilesNoPerm\")",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/connector",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"connector"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "RuleSet",
+			"item": [
+				{
+					"name": "saveRuleSet1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"saveRuleSetRq\": {\n        \"rules\": [\n            {\n                \"index\": 2,\n                \"name\": \"B\",\n                \"description\": \"test_rule_2\",\n                \"derivedFrom\": \"\"\n            },\n            {\n                \"index\": 1,\n                \"name\": \"A\",\n                \"description\": \"test_rule_1\",\n                \"derivedFrom\": \"\"\n            }\n        ]\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/ruleSet",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"ruleSet"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "activateRuleSet1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/ruleSet/activate",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"ruleSet",
+								"activate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "listRuleSetsNonHistorical",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Rule Set Activated and Draft Deleted\", function () {",
+									"    pm.expect(jsonData.ruleSets).to.not.be.null;",
+									"    pm.expect(jsonData.ruleSets).lengthOf(2);",
+									"    pm.expect(jsonData.ruleSets[0].Name).eq(\"active\");",
+									"    pm.expect(jsonData.ruleSets[0].Rules).lengthOf(2);",
+									"    pm.expect(jsonData.ruleSets[0].Rules[0].Name).eq(\"A\");",
+									"    pm.expect(jsonData.ruleSets[0].Rules[1].Name).eq(\"B\");",
+									"    pm.expect(jsonData.ruleSets[1].Name).eq(\"draft\");",
+									"    pm.expect(jsonData.ruleSets[1].Rules).lengthOf(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/ruleSet",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"ruleSet"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "saveRuleSet2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"saveRuleSetRq\": {\n        \"rules\": [\n            {\n                \"index\": 2,\n                \"name\": \"D\",\n                \"description\": \"test_rule_4\",\n                \"derivedFrom\": \"\"\n            },\n            {\n                \"index\": 1,\n                \"name\": \"C\",\n                \"description\": \"test_rule_3\",\n                \"derivedFrom\": \"\"\n            }\n        ]\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/ruleSet",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"ruleSet"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "activateRuleSet2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/ruleSet/activate",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"ruleSet",
+								"activate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "saveRuleSet3",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"saveRuleSetRq\": {\n        \"rules\": [\n            {\n                \"index\": 2,\n                \"name\": \"F\",\n                \"description\": \"test_rule_6\",\n                \"derivedFrom\": \"\"\n            },\n            {\n                \"index\": 1,\n                \"name\": \"E\",\n                \"description\": \"test_rule_5\",\n                \"derivedFrom\": \"\"\n            },\n            {\n                \"index\": 3,\n                \"name\": \"G\",\n                \"description\": \"test_rule_7\",\n                \"derivedFrom\": \"\"\n            }\n        ]\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/ruleSet",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"ruleSet"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "listRuleSetHistorical",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"New active, draft, and historical rule sets all present\", function () {",
+									"    pm.expect(jsonData.ruleSets).to.not.be.null;",
+									"    pm.expect(jsonData.ruleSets).lengthOf(3);",
+									"    pm.expect(jsonData.ruleSets[0].Name).eq(\"draft\");",
+									"    pm.expect(jsonData.ruleSets[0].Rules).lengthOf(3);",
+									"    pm.expect(jsonData.ruleSets[0].Rules[0].Name).eq(\"E\");",
+									"    pm.expect(jsonData.ruleSets[0].Rules[1].Name).eq(\"F\");",
+									"    pm.expect(jsonData.ruleSets[0].Rules[2].Name).eq(\"G\");",
+									"    pm.expect(jsonData.ruleSets[1].Name).eq(\"v1\");",
+									"    pm.expect(jsonData.ruleSets[1].Rules).lengthOf(2);",
+									"    pm.expect(jsonData.ruleSets[1].Rules[0].Name).eq(\"A\");",
+									"    pm.expect(jsonData.ruleSets[1].Rules[1].Name).eq(\"B\");",
+									"    pm.expect(jsonData.ruleSets[2].Name).eq(\"active\");",
+									"    pm.expect(jsonData.ruleSets[2].Rules).lengthOf(2);",
+									"    pm.expect(jsonData.ruleSets[2].Rules[0].Name).eq(\"C\");",
+									"    pm.expect(jsonData.ruleSets[2].Rules[1].Name).eq(\"D\");",
+									"});",
+									"//we skip the traveller use cases as we only want to test admin use cases",
+									"postman.setNextRequest(\"mergeProfilesNoPerm\")"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/ruleSet?includesHistorical=true",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"ruleSet"
+							],
+							"query": [
+								{
+									"key": "includesHistorical",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "SearchProfiles",
+			"item": [
+				{
+					"name": "searchProfiles",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Skip test if we don't have a profile to query",
+									"if (pm.variables.get(\"searchProfilesQuery\") === \"\") {",
+									"    return",
+									"}",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/profile?{{searchProfilesQuery}}",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"profile"
+							],
+							"query": [
+								{
+									"key": "{{searchProfilesQuery}}",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "searchMatches",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Skip test if we don't have a profile to query",
+									"if (pm.variables.get(\"searchProfilesQuery\") === \"\") {",
+									"    return",
+									"}",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/profile?matches=true",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"profile"
+							],
+							"query": [
+								{
+									"key": "matches",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getProfile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Skip test if we don't have a profile to query",
+									"if (pm.variables.get(\"profileId\") === \"\") {",
+									"    return",
+									"}",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/profile/{{profileId}}",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"profile",
+								"{{profileId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "advancedSearchProfile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Skip test if we don't have a profile to query",
+									"if (pm.variables.get(\"advancedSearchQuery\") === \"\") {",
+									"    return;",
+									"}",
+									"",
+									"if (pm.variables.get(\"testCase\") === \"\") {",
+									"    return;",
+									"}",
+									"",
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\");",
+									"    pm.expect(jsonData.error.msg).eq(\"\");",
+									"    pm.expect(jsonData.error.type).eq(\"\");",
+									"});",
+									"",
+									"pm.test(\"Test Case Validation\", function() {",
+									"    var testCase = pm.variables.get(\"testCase\");",
+									"    var expectedResults = JSON.parse(testCase)",
+									"    pm.expect(jsonData.profiles.length).eq(expectedResults.profiles.length);",
+									"    if (jsonData.profiles.length > 0) {",
+									"        for(var i = 0; i < jsonData.profiles.length; i++) {",
+									"            pm.expect(jsonData.profiles[i].travellerId, \"Assert TravellerIDs are equal\").eq(expectedResults.profiles[i].travellerId)",
+									"        }",
+									"    }",
+									"});",
+									"",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/profile?{{advancedSearchQuery}}",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"profile"
+							],
+							"query": [
+								{
+									"key": "{{advancedSearchQuery}}",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "MergeProfiles",
+			"item": [
+				{
+					"name": "mergeProfiles",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mergeRq\": [{\n        \"source\": \"{{mergeSource}}\",\n        \"target\": \"{{mergeTarget}}\"\n    }]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/merge",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"merge"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "UnmergeProfiles",
+			"item": [
+				{
+					"name": "unmergeProfiles",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"unmergeRq\": {\n        \"mergedIntoConnectID\": \"{{mergeSource}}\",\n        \"toUnmergeConnectID\": \"{{mergeTarget}}\",\n        \"interactionToUnmerge\": \"{{interactionId}}\",\n        \"interactionType\": \"{{objectType}}\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/unmerge",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"unmerge"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "MergeProfiles-no-permition",
+			"item": [
+				{
+					"name": "mergeProfilesNoPerm",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"pm.test(\"Permission Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"validation error: only administrator can merge profiles\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mergeRq\": [{\n        \"source\": \"abcde\",\n        \"target\": \"fghig\"\n    }]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/merge",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"merge"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ErrorManagement",
+			"item": [
+				{
+					"name": "deleteErrors",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Async event returned\", function () {",
+									"    pm.expect(jsonData.asyncEvent.item_id).eq(\"emptyTable\")",
+									"    pm.expect(jsonData.asyncEvent.item_type).not.eq(\"\")",
+									"    pm.variables.set(\"asyncEventId\", jsonData.asyncEvent.item_type)",
+									"    pm.variables.set(\"asyncEventUsecase\", jsonData.asyncEvent.item_id)",
+									"});",
+									"// Await domain creation to finish",
+									"postman.setNextRequest(\"getAsyncEvent\");",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/error/*",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"error",
+								"*"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "CreatePrivacySearch",
+			"item": [
+				{
+					"name": "createPrivacySearch",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Async event returned\", function () {",
+									"    pm.expect(jsonData.asyncEvent.item_id).eq(\"createPrivacySearch\")",
+									"    pm.expect(jsonData.asyncEvent.item_type).not.eq(\"\")",
+									"    pm.variables.set(\"asyncEventId\", jsonData.asyncEvent.item_type)",
+									"    pm.variables.set(\"asyncEventUsecase\", jsonData.asyncEvent.item_id)",
+									"});",
+									"",
+									"if(pm.response.code == 200) {",
+									"    // Await search to finish",
+									"    postman.setNextRequest(\"getAsyncEvent\");",
+									"}",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"privacySearchRq\": [\n        {\n            \"connectId\": \"fb891209-6bc6-48de-8edd-443a48b94ef5\"\n        },\n        {\n            \"connectId\": \"fb891209-6bc6-48de-8edd-443a48b94ef6\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/privacy",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"privacy"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ListPrivacySearches",
+			"item": [
+				{
+					"name": "listPrivacySearches",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Response has results\", function () {",
+									"    pm.expect(jsonData.privacySearchResults.length).not.eq(0)",
+									"    pm.expect(jsonData.privacySearchResults[0].totalResultsFound).to.eq(2)",
+									"    pm.expect(jsonData.privacySearchResults[1].totalResultsFound).to.eq(2)",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/privacy",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"privacy"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "PrivacyPurge",
+			"item": [
+				{
+					"name": "purgeProfile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"postman.setNextRequest(\"getIsPurgeRunning\")"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"createPrivacyPurgeRq\": {\n        \"connectIds\": [\n            \"{{privacySearchConnectId1}}\", \"{{privacySearchConnectId2}}\"\n        ],\n        \"agentCognitoId\": \"{{privacyAgentCognitoId}}\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/privacy/purge",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"privacy",
+								"purge"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getIsPurgeRunning",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Event status returned\", function() {",
+									"    pm.expect(jsonData.privacyPurgeStatus.domainName).not.empty",
+									"});",
+									"",
+									"if (jsonData.privacyPurgeStatus.isPurgeRunning === false) {",
+									"    postman.setNextRequest(\"listPrivacySearchesAfterPurge\")",
+									"} else {",
+									"    console.log(\"event \", jsonData.privacyPurgeStatus)",
+									"    console.log(\"waiting 5 seconds before checking status again\")",
+									"    setTimeout(() => {}, 5000); ",
+									"    postman.setNextRequest(\"getIsPurgeRunning\")",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/privacy/purge",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"privacy",
+								"purge"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ListPrivacySearchesAfterPurge",
+			"item": [
+				{
+					"name": "listPrivacySearchesAfterPurge",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Response has results\", function () {",
+									"    pm.expect(jsonData.privacySearchResults.length).not.eq(0)",
+									"    pm.expect(jsonData.privacySearchResults[0].totalResultsFound).to.eq(0)",
+									"    pm.expect(jsonData.privacySearchResults[1].totalResultsFound).to.eq(0)",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "InvocationType",
+								"value": "Event",
+								"type": "default"
+							},
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/privacy",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"privacy"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "InteractionHistory",
+			"item": [
+				{
+					"name": "retrieveInteractionHistory",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/interactionHistory/{{interactionId}}?objectType={{objectType}}",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"interactionHistory",
+								"{{interactionId}}"
+							],
+							"query": [
+								{
+									"key": "objectType",
+									"value": "{{objectType}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "retrieveInteractionHistorySqInjection",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 400 for invalid id\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"",
+									"pm.test(\"Error should not be DB related\", function () {",
+									"    pm.expect(jsonData.error.msg).eq(\"validation error: interaction Id contains invalid characters\")",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/interactionHistory/1' or 1=1';--?objectType={{objectType}}",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"interactionHistory",
+								"1' or 1=1';--"
+							],
+							"query": [
+								{
+									"key": "objectType",
+									"value": "{{objectType}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "DeleteDomain",
+			"item": [
+				{
+					"name": "deleteDomainGood",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Async event returned\", function () {",
+									"    pm.expect(jsonData.asyncEvent.item_id).eq(\"deleteDomain\")",
+									"    pm.expect(jsonData.asyncEvent.item_type).not.eq(\"\")",
+									"    pm.variables.set(\"asyncEventId\", jsonData.asyncEvent.item_type)",
+									"    pm.variables.set(\"asyncEventUsecase\", jsonData.asyncEvent.item_id)",
+									"});",
+									"// Await domain creation to finish",
+									"postman.setNextRequest(\"getAsyncEvent\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/admin/{{domainName}}",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"admin",
+								"{{domainName}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "listRuleSetAfterDelete",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"New active, draft, and historical rule sets all present\", function () {",
+									"    pm.expect(jsonData.ruleSets).to.not.be.null;",
+									"    pm.expect(jsonData.ruleSets).lengthOf(0);",
+									"});",
+									"postman.setNextRequest(null);",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "customer-profiles-domain",
+								"value": "{{domainName}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/ruleSet?includesHistorical=true",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"ruleSet"
+							],
+							"query": [
+								{
+									"key": "includesHistorical",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "PollAsyncEvent",
+			"item": [
+				{
+					"name": "getAsyncEvent",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test(\"No Error Response\", function () {",
+									"    pm.expect(jsonData.error.code).eq(\"\")",
+									"    pm.expect(jsonData.error.msg).eq(\"\")",
+									"    pm.expect(jsonData.error.type).eq(\"\")",
+									"});",
+									"pm.test(\"Event status returned\", function() {",
+									"    pm.expect(jsonData.asyncEvent.item_type).not.empty",
+									"    pm.expect(jsonData.asyncEvent.item_id).not.empty",
+									"    pm.expect(jsonData.asyncEvent.status).not.empty",
+									"});",
+									"pm.test(\"Async event should not fail\", function() {",
+									"    pm.expect(jsonData.asyncEvent.status).not.eq(\"failed\")",
+									"});",
+									"",
+									"if (jsonData.asyncEvent.status === \"success\") {",
+									"    if(jsonData.asyncEvent.item_id==\"createDomain\") {",
+									"        postman.setNextRequest(\"getJobStatus\")",
+									"    }",
+									"    else if(jsonData.asyncEvent.item_id==\"emptyTable\") {",
+									"        postman.setNextRequest(\"createPrivacySearch\")",
+									"    }",
+									"     else if(jsonData.asyncEvent.item_id==\"createPrivacySearch\") {",
+									"        postman.setNextRequest(\"purgeProfile\")",
+									"    } else {",
+									"        if (pm.variables.get(\"isLowCostStorageEnabled\")) {",
+									"            postman.setNextRequest(\"listRuleSetAfterDelete\")",
+									"        } else {",
+									"            postman.setNextRequest(null)",
+									"        }",
+									"    }",
+									"} else if (jsonData.asyncEvent.status === \"failed\") {",
+									"    if (pm.variables.get(\"isLowCostStorageEnabled\")) {",
+									"            postman.setNextRequest(\"listRuleSetAfterDelete\")",
+									"        } else {",
+									"            postman.setNextRequest(null)",
+									"        }",
+									"} else {",
+									"    console.log(\"event \", jsonData.asyncEvent)",
+									"    console.log(\"waiting 5 seconds before checking status again\")",
+									"    setTimeout(() => {}, 5000); ",
+									"    postman.setNextRequest(\"getAsyncEvent\")",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiGatewayUrl}}/api/ucp/async?id={{asyncEventId}}&usecase={{asyncEventUsecase}}",
+							"host": [
+								"{{apiGatewayUrl}}"
+							],
+							"path": [
+								"api",
+								"ucp",
+								"async"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "{{asyncEventId}}"
+								},
+								{
+									"key": "usecase",
+									"value": "{{asyncEventUsecase}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": []
+}

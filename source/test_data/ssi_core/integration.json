@@ -1,0 +1,313 @@
+{
+    "ObjectTypeName": "loyalty",
+    "FlowDefinition": {
+        "FlowName": "Customer_Profiles_test-domain-2_S3_loyalty_1661264772759",
+        "KmsArn": "arn:aws:kms:eu-central-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab",
+        "Description": "Created by Customer Profiles",
+        "TriggerConfig": {
+            "TriggerType": "Scheduled",
+            "TriggerProperties": {
+                "Scheduled": {
+                    "ScheduleExpression": "rate(1hours)",
+                    "DataPullMode": "Incremental",
+                    "ScheduleStartTime": 1661265130.348
+                }
+            }
+        },
+        "SourceFlowConfig": {
+            "ConnectorType": "S3",
+            "SourceConnectorProperties": {
+                "S3": {
+                    "BucketName": "aws-ucp-customer-profile-test-1",
+                    "BucketPrefix": "loyalty"
+                }
+            }
+        },
+        "Tasks": [
+            {
+                "TaskType": "Filter",
+                "SourceFields": [
+                    "stateCode",
+                    "lastName",
+                    "jobTitle",
+                    "postalCode",
+                    "chain",
+                    "city",
+                    "points",
+                    "state",
+                    "error",
+                    "parentCompany",
+                    "honorific",
+                    "addressLine1",
+                    "gender",
+                    "ageGroup",
+                    "birthdate",
+                    "status",
+                    "joined",
+                    "email",
+                    "program",
+                    "id",
+                    "phone",
+                    "firstName",
+                    "modelVersion"
+                ],
+                "ConnectorOperator": {
+                    "S3": "PROJECTION"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "stateCode"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "stateCode",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "lastName"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "lastName",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "jobTitle"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "jobTitle",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "postalCode"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "postalCode",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "chain"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "chain",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "city"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "city",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "points"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "points",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "state"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "state",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "error"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "error",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "parentCompany"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "parentCompany",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "honorific"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "honorific",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "addressLine1"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "addressLine1",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "gender"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "gender",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "ageGroup"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "ageGroup",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "birthdate"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "birthdate",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "status"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "status",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "joined"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "joined",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "email"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "email",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "program"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "program",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "id"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "id",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "phone"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "phone",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "firstName"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "firstName",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            },
+            {
+                "TaskType": "Map",
+                "SourceFields": [
+                    "modelVersion"
+                ],
+                "TaskProperties": {},
+                "DestinationField": "modelVersion",
+                "ConnectorOperator": {
+                    "S3": "NO_OP"
+                }
+            }
+        ]
+    }
+}

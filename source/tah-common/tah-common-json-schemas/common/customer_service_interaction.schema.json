@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/CustomerServiceInteraction",
+  "$defs": {
+    "AlternateProfileID": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "lastUpdatedOn": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "value",
+        "lastUpdatedOn"
+      ]
+    },
+    "Attachment": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "size": {
+          "type": "string"
+        },
+        "contentType": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "content"
+      ]
+    },
+    "ConversationItem": {
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "startTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "type": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "attachment": {
+          "$ref": "#/$defs/Attachment"
+        },
+        "sentiment": {
+          "type": "string"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "content",
+        "startTime"
+      ]
+    },
+    "CustomerServiceInteraction": {
+      "properties": {
+        "objectVersion": {
+          "type": "integer"
+        },
+        "modelVersion": {
+          "type": "string"
+        },
+        "sessionId": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "string"
+        },
+        "loyaltyId": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phoneNumber": {
+          "type": "string"
+        },
+        "relatedBookingId": {
+          "type": "string"
+        },
+        "startTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "interactionType": {
+          "type": "string"
+        },
+        "conversation": {
+          "items": {
+            "$ref": "#/$defs/ConversationItem"
+          },
+          "type": "array"
+        },
+        "endTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string"
+        },
+        "language": {
+          "$ref": "#/$defs/Language"
+        },
+        "overallSentimentAgent": {
+          "type": "number"
+        },
+        "overallSentimentCustomer": {
+          "type": "number"
+        },
+        "talkTime": {
+          "type": "integer"
+        },
+        "nonTalkTime": {
+          "type": "integer"
+        },
+        "interruptions": {
+          "type": "integer"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "alternateProfileIds": {
+          "items": {
+            "$ref": "#/$defs/AlternateProfileID"
+          },
+          "type": "array"
+        },
+        "campaignJobId": {
+          "type": "string"
+        },
+        "campaignStrategy": {
+          "type": "string"
+        },
+        "campaignProgram": {
+          "type": "string"
+        },
+        "campaignProduct": {
+          "type": "string"
+        },
+        "campaignName": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "loyaltyProgramName": {
+          "type": "string"
+        },
+        "isVoiceOtp": {
+          "type": "boolean"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "objectVersion",
+        "modelVersion",
+        "sessionId",
+        "channel",
+        "startTime"
+      ]
+    },
+    "Language": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code"
+      ]
+    }
+  }
+}

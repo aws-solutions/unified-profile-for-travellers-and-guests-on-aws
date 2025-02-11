@@ -1,6 +1,4 @@
-!deployment/.typescript/cdk-solution-helper/index.js
 deployment/env.json
-package-lock.json
 !jest.config.js
 *.d.ts
 node_modules
@@ -11,11 +9,11 @@ node_modules
 .cdk.staging
 cdk.out
 
-!**/cdk-solution-helper/index.js
-
 deployment/global-s3-assets
 deployment/regional-s3-assets
 open-source/
+deployment/tools/output
+deployment/ecr/
 
 # Temporary folders
 tmp/
@@ -23,8 +21,49 @@ temp/
 
 ### VisualStudioCode ###
 .vscode/*
+!.vscode/cspell.json
+!.vscode/settings.json
+!.vscode/extensions.json
 
 ### macOS ###
 .DS_Store
 
-**/coverage
+### Pythono cached ###
+__pycache__
+.venv/
+*.egg-info/
+.tox/
+.mypy_cache/
+
+#test coverage files
+source/cdk.context.json
+source/z-coverage/ucp-infra/lcov-report/
+source/z-coverage/ucp-infra/custom_resource/lcov-report/
+source/z-coverage/ucp-portal/
+source/ucp-infra/coverage/lcov-report/
+source/ucp-infra/custom_resource/coverage/lcov-report/
+#source/tests/
+#source/ucp-backend/test_coverage/
+#source/ucp-change-processor/test_coverage/
+#source/ucp-common/test_coverage/
+#source/ucp-error/test_coverage/
+#source/ucp-industry-connector-transfer/test_coverage/
+#source/ucp-infra/coverage/
+#source/ucp-infra/custom_resource/coverage/
+#source/ucp-match/test_coverage/
+#source/ucp-real-time-transformer/test_coverage/
+#source/ucp-sync/test_coverage/
+
+#exclusions
+source/ucp-infra/custom_resource/dist/package.zip
+source/ucp-real-time-transformer/src/python/__pycache__/*
+source/ucp-real-time-transformer/src/python/tah_lib/__pycache__/*
+source/ucp-real-time-transformer/src/python/test/__pycache__/*
+
+# TODO: clean up gitignore folder
+source/tah_lib/build
+bootstrap
+main.zip
+
+# ignoring this specific file since it causes a lot of D-TAS vulnerabilities but is not used in the solution, used to create our json schemas for test data
+vendor/github.com/buger/jsonparser/Dockerfile

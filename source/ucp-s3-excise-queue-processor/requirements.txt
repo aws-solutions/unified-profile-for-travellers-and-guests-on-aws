@@ -1,0 +1,6 @@
+awswrangler==3.5.1
+pandas-stubs
+coverage
+testcontainers
+botocore
+boto3-stubs-lite[s3,glue,dynamodb]

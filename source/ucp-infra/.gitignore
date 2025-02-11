@@ -10,3 +10,8 @@ cdk.out
 
 # Parcel default cache directory
 .parcel-cache
+custom_resource/dist
+
+custom_resource/coverage
+!custom_resource/coverage/lcov.info
+coverage

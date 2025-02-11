@@ -1,1 +1,6 @@
 env.json
+env-demo.json
+ucp-config.json
+ucp-sync/main
+ucp-backend/main
+.DS_Store

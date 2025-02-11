@@ -1,0 +1,19 @@
+{
+    "nGuestProfiles": 200,
+    "nPaxProfiles": 200,
+    "nObjectFiles": 100,
+    "nLines": 2,
+    "saveTarget": "local",
+    "saveGuestProfiles": "y",
+    "savePaxProfiles": "y",
+    "saveHotelBooking": "y",
+    "saveAirBooking": "y",
+    "saveHotelClickstream": "y",
+    "saveAirClickstream": "y",
+    "saveHotelCsi": "y",
+    "saveAirCsi": "y",
+    "saveHotelStay": "y",
+    "domain": "dev",
+    "enableValidation": "n",
+    "batchSize": 50
+}

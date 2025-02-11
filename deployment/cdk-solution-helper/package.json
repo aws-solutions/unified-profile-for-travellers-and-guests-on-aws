@@ -1,10 +1,27 @@
 {
-  "name": "cdk-solution-helper",
-  "version": "0.1.0",
-  "devDependencies": {
-    "fs": "0.0.1-security"
-  },
-  "dependencies": {
-    "fs": "0.0.1-security"
-  }
+    "name": "@amzn/cdk-solution-helper",
+    "version": "1.0.0",
+    "description": "helper to update references in cdk generated cfn template and package lambda assets",
+    "main": "index.js",
+    "author": {
+        "name": "Amazon Web Services",
+        "url": "https://aws.amazon.com/solutions",
+        "organization": true
+    },
+    "scripts": {
+        "test": "jest --silent"
+    },
+    "license": "Apache-2.0",
+    "devDependencies": {
+        "@types/archiver": "^6.0.3",
+        "@types/jest": "^29.5.11",
+        "@types/node": "^18.19.24",
+        "jest": "^29.7.0",
+        "ts-jest": "^29.1.2",
+        "ts-node": "^10.9.2",
+        "typescript": "~5.4.2"
+    },
+    "dependencies": {
+        "archiver": "^7.0.1"
+    }
 }

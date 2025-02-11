@@ -1,4 +1,8 @@
 {
   "app": "npx ts-node bin/ucp-infra.ts",
-  "context": {}
+  "context": {
+    "solutionId": "SO0244",
+    "solutionName": "Unified Profiles for Travelers and Guests on AWS",
+    "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": true
+  }
 }

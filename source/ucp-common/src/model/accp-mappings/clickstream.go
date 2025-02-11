@@ -1,0 +1,552 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+package accpmappings
+
+import (
+	customerprofiles "tah/upt/source/storage"
+	constants "tah/upt/source/ucp-common/src/constant/admin"
+)
+
+func BuildClickstreamObjectMapping() customerprofiles.ObjectMapping {
+	return customerprofiles.ObjectMapping{
+		Name:    constants.ACCP_RECORD_CLICKSTREAM,
+		Version: "1.0",
+		Fields:  BuildClickstreamMapping(),
+	}
+}
+
+func BuildClickstreamMapping() customerprofiles.FieldMappings {
+	return []customerprofiles.FieldMapping{
+		// Profile Object Unique Key
+		{
+			Type:    "STRING",
+			Source:  "_source.accp_object_id",
+			Target:  "accp_object_id",
+			Indexes: []string{"UNIQUE"},
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.session_id",
+			Target:  "session_id",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.num_pax_children",
+			Target:  "num_pax_children",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.flight_type",
+			Target:  "flight_type",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.last_updated",
+			Target:  "last_updated",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.origin_date",
+			Target:  "origin_date",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.return_date_time",
+			Target:  "return_date_time",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.fare_type",
+			Target:  "fare_type",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.flight_market",
+			Target:  "flight_market",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.num_pax_adults",
+			Target:  "num_pax_adults",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.products",
+			Target:  "products",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.fare_class",
+			Target:  "fare_class",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.total_passengers",
+			Target:  "total_passengers",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.origin_date_time",
+			Target:  "origin_date_time",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.event_timestamp",
+			Target:  "event_timestamp",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.aws_account_id",
+			Target:  "aws_account_id",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.return_flight_route",
+			Target:  "return_flight_route",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.flight_segments_departure_date_time",
+			Target:  "flight_segments_departure_date_time",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.event_type",
+			Target:  "event_type",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.return_date",
+			Target:  "return_date",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.arrival_timestamp",
+			Target:  "arrival_timestamp",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.model_version",
+			Target:  "model_version",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.pax_type",
+			Target:  "pax_type",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.object_type",
+			Target:  "object_type",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.num_pax_inf",
+			Target:  "num_pax_inf",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.flight_numbers",
+			Target:  "flight_numbers",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.event_version",
+			Target:  "event_version",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.user_agent",
+			Target:  "user_agent",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.rate_plan",
+			Target:  "rate_plan",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.checkin_date",
+			Target:  "checkin_date",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.checkout_date",
+			Target:  "checkout_date",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.hotel_code_list",
+			Target:  "hotel_code_list",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.hotel_code",
+			Target:  "hotel_code",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.room_type",
+			Target:  "room_type",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.num_nights",
+			Target:  "num_nights",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.destination",
+			Target:  "destination",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.custom_event_name",
+			Target:  "custom_event_name",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.customer_type",
+			Target:  "customer_type",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.currency",
+			Target:  "currency",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.products_prices",
+			Target:  "products_prices",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.quantities",
+			Target:  "quantities",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.ecommerce_action",
+			Target:  "ecommerce_action",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.order_payment_type",
+			Target:  "order_payment_type",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.order_promo_code",
+			Target:  "order_promo_code",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.page_name",
+			Target:  "page_name",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.page_type_environment",
+			Target:  "page_type_environment",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.transaction_id",
+			Target:  "transaction_id",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.url",
+			Target:  "url",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.num_guests",
+			Target:  "num_guests",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.hotel_name",
+			Target:  "hotel_name",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.num_guest_adults",
+			Target:  "num_guest_adults",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.num_guest_children",
+			Target:  "num_guest_children",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.flight_segments_arrival_date_time",
+			Target:  "flight_segments_arrival_date_time",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.flight_segment_sku",
+			Target:  "flight_segment_sku",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.flight_segments",
+			Target:  "flight_segments",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.origin_flight_route",
+			Target:  "origin_flight_route",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.returning_date",
+			Target:  "returning_date",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.returning_date_time",
+			Target:  "returning_date_time",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.returning_flight_route",
+			Target:  "returning_flight_route",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.customer_id",
+			Target:  "customer_id",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.language_code",
+			Target:  "language_code",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.loyalty_id",
+			Target:  "loyalty_id",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.booking_id",
+			Target:  "booking_id",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.geofence_latitude",
+			Target:  "geofence_latitude",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.geofence_longitude",
+			Target:  "geofence_longitude",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.geofence_id",
+			Target:  "geofence_id",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.geofence_name",
+			Target:  "geofence_name",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.poi_id",
+			Target:  "poi_id",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.customer_event_name",
+			Target:  "customer_event_name",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.custom",
+			Target:  "custom",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.ip_address",
+			Target:  "ip_address",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.last_updated_partition",
+			Target:  "last_updated_partition",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.tx_id",
+			Target:  "tx_id",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.origin",
+			Target:  "origin",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.length_of_stay",
+			Target:  "length_of_stay",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.selected_seats",
+			Target:  "selected_seats",
+			KeyOnly: true,
+		},
+		{
+			Type:    "STRING",
+			Source:  "_source.error",
+			Target:  "error",
+			KeyOnly: true,
+		},
+		{
+			Type:   customerprofiles.MappingTypeString,
+			Source: "_source.extended_data",
+			Target: "extended_data",
+		},
+		// Profile Data
+		{
+			Type:        "STRING",
+			Source:      "_source.traveller_id",
+			Target:      "_profile.Attributes.profile_id",
+			Indexes:     []string{"PROFILE"},
+			Searcheable: true,
+		},
+		{
+			Type:        "STRING",
+			Source:      "_source.customer_birthdate",
+			Target:      "_profile.BirthDate",
+			Searcheable: true,
+		},
+		{
+			Type:        "STRING",
+			Source:      "_source.customer_country",
+			Target:      "_profile.Address.Country",
+			Searcheable: true,
+		},
+		{
+			Type:        "STRING",
+			Source:      "_source.customer_email",
+			Target:      "_profile.PersonalEmailAddress",
+			Searcheable: true,
+		},
+		{
+			Type:        "STRING",
+			Source:      "_source.customer_first_name",
+			Target:      "_profile.FirstName",
+			Searcheable: true,
+		},
+		{
+			Type:        "STRING",
+			Source:      "_source.customer_gender",
+			Target:      "_profile.Gender",
+			Searcheable: true,
+		},
+		{
+			Type:        "STRING",
+			Source:      "_source.customer_last_name",
+			Target:      "_profile.LastName",
+			Searcheable: true,
+		},
+		{
+			Type:        "STRING",
+			Source:      "_source.customer_nationality",
+			Target:      "_profile.Attributes.nationality_name",
+			Searcheable: true,
+		},
+		{
+			Type:        "STRING",
+			Source:      "_source.customer_phone",
+			Target:      "_profile.PhoneNumber",
+			Searcheable: true,
+		},
+		{
+			Type:   "STRING",
+			Source: "_source.customer_loyalty_id",
+			Target: "_profile.Attributes.loyalty_id",
+		},
+	}
+}

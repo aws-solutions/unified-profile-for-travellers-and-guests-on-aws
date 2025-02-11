@@ -10,13 +10,9 @@
 #
 # This script will perform the following tasks:
 #   1. Remove any old dist files from previous runs.
-#   2. Install dependencies for the cdk-solution-helper; responsible for
-#      converting standard 'cdk synth' output into solution assets.
-#   3. Build and synthesize your CDK project.
-#   4. Run the cdk-solution-helper on template outputs and organize
-#      those outputs into the /global-s3-assets folder.
-#   5. Organize source code artifacts into the /regional-s3-assets folder.
-#   6. Remove any temporary files used for staging.
+#   2. Build and synthesize your CDK project.
+#   3. Organize source code artifacts into the /regional-s3-assets folder.
+#   4. Remove any temporary files used for staging.
 #
 # Parameters:
 #  - source-bucket-base-name: Name for the S3 bucket location where the template will source the Lambda
@@ -27,16 +23,16 @@
 #  - version-code: version of the package
 #-----------------------
 # Formatting
+set -x
+
 bold=$(tput bold)
 normal=$(tput sgr0)
 #------------------------------------------------------------------------------
 # SETTINGS
 #------------------------------------------------------------------------------
-# Important: CDK global version number
-cdk_version=2.54.0
 # Note: should match package.json
 template_format="json"
-run_helper="true"
+run_helper="false"
 
 # run_helper is false for yaml - not supported
 [[ $template_format == "yaml" ]] && {
@@ -47,111 +43,50 @@ run_helper="true"
 #------------------------------------------------------------------------------
 # DISABLE OVERRIDE WARNINGS
 #------------------------------------------------------------------------------
-# Use with care: disables the warning for overridden properties on 
+# Use with care: disables the warning for overridden properties on
 # AWS Solutions Constructs
 export overrideWarningsEnabled=false
 
 #------------------------------------------------------------------------------
-# Build Functions 
+# Build Functions
 #------------------------------------------------------------------------------
 # Echo, execute, and check the return code for a command. Exit if rc > 0
 # ex. do_cmd npm run build
-usage() 
-{
+usage() {
     echo "Usage: $0 bucket solution-name version"
-    echo "Please provide the base source bucket name, trademarked solution name, and version." 
-    echo "For example: ./build-s3-dist.sh mybucket my-solution v1.0.0" 
-    exit 1 
+    echo "Please provide the base source bucket name, trademarked solution name, and version."
+    echo "For example: ./build-s3-dist.sh mybucket my-solution v1.0.0"
+    exit 1
 }
 
-do_cmd() 
-{
+do_cmd() {
     echo "------ EXEC $*"
     $*
     rc=$?
-    if [ $rc -gt 0 ]
-    then
-            echo "Aborted - rc=$rc"
-            exit $rc
+    if [ $rc -gt 0 ]; then
+        echo "Aborted - rc=$rc"
+        exit $rc
     fi
 }
 
-sedi()
-{
+sedi() {
     # cross-platform for sed -i
     sed -i $* 2>/dev/null || sed -i "" $*
 }
 
 # use sed to perform token replacement
 # ex. do_replace myfile.json %%VERSION%% v1.1.1
-do_replace() 
-{
+do_replace() {
     replace="s/$2/$3/g"
     file=$1
     do_cmd sedi $replace $file
 }
 
-create_template_json() 
-{
-    # Run 'cdk synth' to generate raw solution outputs
-    do_cmd cdk context --clear && cdk synth -q --output=$staging_dist_dir
-
-    # Remove unnecessary output files
-    do_cmd cd $staging_dist_dir
-    # ignore return code - can be non-zero if any of these does not exist
-    rm tree.json manifest.json cdk.out
-
-    # Move outputs from staging to template_dist_dir
-    echo "Move outputs from staging to template_dist_dir"
-    do_cmd mv $staging_dist_dir/*.template.json $template_dist_dir/
-
-    # Rename all *.template.json files to *.template
-    echo "Rename all *.template.json to *.template"
-    echo "copy templates and rename"
-    for f in $template_dist_dir/*.template.json; do
-        mv -- "$f" "${f%.template.json}.template"
-    done
-}
-
-create_template_yaml() 
-{
-    # Assumes current working directory is where the CDK is defined
-    # Output YAML - this is currently the only way to do this for multiple templates
-    maxrc=0
-    for template in `cdk list`; do
-        echo Create template $template
-        cdk synth $template > ${template_dist_dir}/${template}.template
-        if [[ $? > $maxrc ]]; then
-            maxrc=$?
-        fi
-    done
-}
-
-cleanup_temporary_generted_files()
-{
-    echo "------------------------------------------------------------------------------"
-    echo "${bold}[Cleanup] Remove temporary files${normal}"
-    echo "------------------------------------------------------------------------------"
-
-    # Delete generated files: CDK Consctruct typescript transcompiled generted files
-    do_cmd cd $source_dir/
-    do_cmd npm run cleanup:tsc
-
-    # Delete the temporary /staging folder
-    do_cmd rm -rf $staging_dist_dir
-}
-
-fn_exists()
-{
-    exists=`LC_ALL=C type $1`
-    return $?
-}
-
 #------------------------------------------------------------------------------
 # INITIALIZATION
 #------------------------------------------------------------------------------
-# solution_config must exist in the deployment folder (same folder as this 
-# file) . It is the definitive source for solution ID, name, and trademarked 
+# solution_config must exist in the deployment folder (same folder as this
+# file) . It is the definitive source for solution ID, name, and trademarked
 # name.
 #
 # Example:
@@ -184,7 +119,7 @@ fi
 if [[ -z $SOLUTION_TRADEMARKEDNAME ]]; then
     echo "SOLUTION_TRADEMARKEDNAME is missing from ../solution_config"
     exit 1
-else 
+else
     export SOLUTION_TRADEMARKEDNAME
 fi
 
@@ -196,7 +131,10 @@ fi
 # Validate command line parameters
 #------------------------------------------------------------------------------
 # Validate command line input - must provide bucket
-[[ -z $1 ]] && { usage; exit 1; } || { SOLUTION_BUCKET=$1; }
+[[ -z $1 ]] && {
+    usage
+    exit 1
+} || { SOLUTION_BUCKET=$1; }
 
 # Environmental variables for use in CDK
 export DIST_OUTPUT_BUCKET=$SOLUTION_BUCKET
@@ -216,7 +154,7 @@ elif [ ! -z "$2" ]; then
 elif [ ! -z $SOLUTION_VERSION ]; then
     version=$SOLUTION_VERSION
 elif [ -e ../source/version.txt ]; then
-    version=`cat ../source/version.txt`
+    version=$(cat ../source/version.txt)
 else
     echo "Version not found. Version must be passed as an argument or in version.txt in the format vn.n.n"
     exit 1
@@ -231,6 +169,20 @@ fi
 
 export SOLUTION_VERSION=$version
 
+PUBLIC_ECR_REGISTRY=$4
+if [ -z $PUBLIC_ECR_REGISTRY ]; then
+    echo "No ECR registry provided"
+    exit 1
+fi
+export PUBLIC_ECR_REGISTRY=$PUBLIC_ECR_REGISTRY
+
+PUBLIC_ECR_TAG=$5
+if [ -z $PUBLIC_ECR_TAG ]; then
+    echo "No ECR tag provided"
+    exit 1
+fi
+export PUBLIC_ECR_TAG=$PUBLIC_ECR_TAG
+
 #-----------------------------------------------------------------------------------
 # Get reference for all important folders
 #-----------------------------------------------------------------------------------
@@ -238,7 +190,7 @@ template_dir="$PWD"
 staging_dist_dir="$template_dir/staging"
 template_dist_dir="$template_dir/global-s3-assets"
 build_dist_dir="$template_dir/regional-s3-assets"
-source_dir="$template_dir/../deployment/ucp-code-pipelines"
+source_dir="$template_dir/../source"
 
 echo "------------------------------------------------------------------------------"
 echo "${bold}[Init] Remove any old dist files from previous runs${normal}"
@@ -250,66 +202,21 @@ do_cmd rm -rf $build_dist_dir
 do_cmd mkdir -p $build_dist_dir
 do_cmd rm -rf $staging_dist_dir
 do_cmd mkdir -p $staging_dist_dir
-
-echo "------------------------------------------------------------------------------"
-echo "${bold}[Init] Install dependencies for the cdk-solution-helper${normal}"
-echo "------------------------------------------------------------------------------"
-
-do_cmd cd $template_dir/cdk-solution-helper
-do_cmd npm install
-
-echo "------------------------------------------------------------------------------"
-echo "${bold}[Synth] CDK Project${normal}"
-echo "------------------------------------------------------------------------------"
-
-# Install the global aws-cdk package
-# Note: do not install using global (-g) option. This makes build-s3-dist.sh difficult
-# for customers and developers to use, as it globally changes their environment.
-do_cmd cd $source_dir
-do_cmd npm install
-do_cmd npm install aws-cdk@$cdk_version
-
-# Add local install to PATH
-export PATH=$(npm bin):$PATH
-# Check cdk version to verify installation
-current_cdkver=`cdk --version | grep -Eo '^[0-9]{1,2}\.[0-9]+\.[0-9]+'`
-echo CDK version $current_cdkver
-if [[ $current_cdkver != $cdk_version ]]; then 
-    echo Required CDK version is ${cdk_version}, found ${current_cdkver}
-    exit 255
-fi
-do_cmd npm run build       # build javascript from typescript to validate the code
-                           # cdk synth doesn't always detect issues in the typescript
-                           # and may succeed using old build files. This ensures we
-                           # have fresh javascript from a successful build
-
+rm -rf ./ecr
 
 echo "------------------------------------------------------------------------------"
 echo "${bold}[Create] Templates${normal}"
 echo "------------------------------------------------------------------------------"
 
-if fn_exists create_template_${template_format}; then
-    create_template_${template_format}
-else
-    echo "Invalid setting for \$template_format: $template_format"
-    exit 255
-fi
-
-echo "------------------------------------------------------------------------------"
-echo "${bold}[Packing] Template artifacts${normal}"
-echo "------------------------------------------------------------------------------"
-
-# Run the helper to clean-up the templates and remove unnecessary CDK elements
-echo "Run the helper to clean-up the templates and remove unnecessary CDK elements"
-[[ $run_helper == "true" ]] && {
-    echo "node $template_dir/cdk-solution-helper/index"
-    node $template_dir/cdk-solution-helper/index
-    if [ "$?" = "1" ]; then
-    	echo "(cdk-solution-helper) ERROR: there is likely output above." 1>&2
-    	exit 1
-    fi
-} || echo "${bold}Solution Helper skipped: ${normal}run_helper=false"
-
+envname=prod
+# Install the global aws-cdk package
+# Note: do not install using global (-g) option. This makes build-s3-dist.sh difficult
+# for customers and developers to use, as it globally changes their environment.
+do_cmd cd $source_dir/ucp-infra
+do_cmd npm ci
+do_cmd sh build.sh $envname $SOLUTION_BUCKET $SOLUTION_TRADEMARKEDNAME/$SOLUTION_VERSION 7 true public no-role --skip-tests
+do_cmd mv $template_dist_dir/ucp.template.json $template_dist_dir/ucp.template
+do_cmd mv $template_dist_dir/ucp-byo-vpc.template.json $template_dist_dir/ucp-byo-vpc.template
 # Find and replace bucket_name, solution_name, and version
 echo "Find and replace bucket_name, solution_name, and version"
 cd $template_dist_dir
@@ -317,107 +224,161 @@ do_replace "*.template" %%BUCKET_NAME%% ${SOLUTION_BUCKET}
 do_replace "*.template" %%SOLUTION_NAME%% ${SOLUTION_TRADEMARKEDNAME}
 do_replace "*.template" %%VERSION%% ${SOLUTION_VERSION}
 
+cd ..
+rm -rf ../../staging
+mkdir -p ../../staging/upt-id-res
+cp -r .. ../../staging/upt-id-res
+mkdir -p ../../staging/upt-fe
+cp -r ../source/Dockerfile.frontend ../../staging/upt-fe/Dockerfile
+cp -r ../source/appPermissions.json ../../staging/upt-fe
+cp -r ../source/ucp-portal ../../staging/upt-fe
+mkdir -p ./ecr
+mv ../../staging/upt-id-res ./ecr/
+mv ../../staging/upt-fe ./ecr/
+ls -al ./ecr/upt-id-res
+ls -al ./ecr/upt-fe
+
 echo "------------------------------------------------------------------------------"
 echo "${bold}[Packing] Source code artifacts${normal}"
 echo "------------------------------------------------------------------------------"
 #adding a dummy file in case there is no regional assets
-echo '{"reason": "this dummy file is added for the pipeline to run without regional assets"}' > $build_dist_dir/dummy.json
-
-# General cleanup of node_modules files
-echo "find $staging_dist_dir -iname "node_modules" -type d -exec rm -rf "{}" \; 2> /dev/null"
-find $staging_dist_dir -iname "node_modules" -type d -exec rm -rf "{}" \; 2> /dev/null
-echo "find $dist_dir -iname ".venv" -type d -exec rm -rf "{}" \; 2> /dev/null"
-find $dist_dir -iname ".venv" -type d -exec rm -rf "{}" \; 2> /dev/null
-echo "find $dist_dir -iname "pytest_cache" -type d -exec rm -rf "{}" \; 2> /dev/null"
-find $dist_dir -iname "pytest_cache" -type d -exec rm -rf "{}" \; 2> /dev/null
-echo "find $dist_dir -iname ".mypy_cache" -type d -exec rm -rf "{}" \; 2> /dev/null"
-find $dist_dir -iname ".mypy_cache" -type d -exec rm -rf "{}" \; 2> /dev/null
-echo "find $dist_dir -iname ".viperlightignore" -type d -exec rm -rf "{}" \; 2> /dev/null"
-find $dist_dir -iname ".viperlightignore" -type d -exec rm -rf "{}" \; 2> /dev/null
-
-# ... For each asset.* source code artifact in the temporary /staging folder...
-cd $staging_dist_dir
-ls -ltr
-# Move outputs of gql from staging to template_dist_dir
-if test -f $staging_dist_dir/*.gql; then
-    echo "Move outputs of gql from staging to build_dist_dir"
-    do_cmd mv $staging_dist_dir/*.gql $build_dist_dir/
+do_cmd cd $source_dir/ucp-etls
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
 fi
-
-for d in `find . -mindepth 1 -maxdepth 1 -type d`; do
-
-    # Rename the artifact, removing the period for handler compatibility
-    echo $d
-    pfname="$(basename -- $d)"
-    fname="$(echo $pfname | sed -e 's/\.//g')"
-    echo "zip -r $pfname.zip $pfname"
-    mv $d $fname
-    ls -ltr $fname
-
-    # Build the artifacts
-    if test -f $fname/requirements.txt; then
-        echo "===================================="
-        echo "This is Python runtime"
-        echo "===================================="
-        cd $fname
-        venv_folder="./venv-prod/"
-        rm -fr .venv-test
-        rm -fr .venv-prod
-        echo "Initiating virtual environment"
-        python3 -m venv $venv_folder
-        source $venv_folder/bin/activate
-        pip3 install -q -r requirements.txt --target .
-        deactivate
-        cd $staging_dist_dir/$fname/$venv_folder/lib/python3.*/site-packages
-        echo "zipping the artifact"
-        zip -qr9 $staging_dist_dir/$fname.zip .
-        cd $staging_dist_dir/$fname
-        zip -gq $staging_dist_dir/$fname.zip *.py util/*
-        cd $staging_dist_dir
-    elif test -f $fname/package.json; then
-        echo "===================================="
-        echo "This is Node runtime"
-        echo "===================================="
-        cd $fname
-        echo "Clean and rebuild artifacts"
-        npm run clean
-        npm ci
-        if [ "$?" = "1" ]; then
-	        echo "ERROR: Seems like package-lock.json does not exists or is out of sync with package.json. Trying npm install instead" 1>&2
-            npm install
-        fi
-        cd $staging_dist_dir
-        # Zip the artifact
-        echo "zip -r $fname.zip $fname"
-        zip -rq $fname.zip $fname
-    else
-        cd $staging_dist_dir
-        # Zip the artifact
-        echo "zip -r $fname.zip $fname"
-        zip -rq $fname.zip $fname
-    fi
-
-    if test -f $fname.zip; then
-        # Copy the zipped artifact from /staging to /regional-s3-assets
-        echo "cp $fname.zip $build_dist_dir"
-        cp $fname.zip $build_dist_dir
-
-        # Remove the old, unzipped artifact from /staging
-        echo "rm -rf $fname"
-        rm -rf $fname
-
-        # Remove the old, zipped artifact from /staging
-        echo "rm $fname.zip"
-        rm $fname.zip
-        # ... repeat until all source code artifacts are zipped and placed in the
-        # ... /regional-s3-assets folder
-    else
-        echo "ERROR: $fname.zip not found"
-        exit 1
-    fi
-done
-# cleanup temporary generated files that are not needed for later stages of the build pipeline
-cleanup_temporary_generted_files
-
+do_cmd cd $source_dir/tah_lib
+do_cmd python -m pip install tox
+do_cmd python -m tox
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-change-processor
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-error
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-industry-connector-transfer
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-match
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-merger
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-portal/ucp-react
+do_cmd npm ci
+# --skip-tests flag is removed since UI unit tests do not use real resources
+do_cmd sh build.sh $envname $SOLUTION_BUCKET
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-real-time-transformer
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-sync
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-backend
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-retry
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-async
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-s3-excise-queue-processor
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
+do_cmd cd $source_dir/ucp-batch
+do_cmd sh build.sh $envname $SOLUTION_BUCKET --skip-tests
+rc=$?
+if [ $rc -ne 0 ]; then
+    echo "Existing Build with status $rc" >&2
+    exit $rc
+fi
 # Return to original directory from when we started the build
 cd $template_dir
+
+header() {
+    declare text=$1
+    echo "------------------------------------------------------------------------------"
+    echo "$bold$text$normal"
+    echo "------------------------------------------------------------------------------"
+}
+
+header "[CDK-Helper] Copy the Lambda Assets"
+pushd $source_dir/ucp-infra
+assetsFile=./cdk.out/UCPInfraStack"$envName".assets.json
+dockerImages=$(jq -r '.dockerImages | keys | join(" ")' "$assetsFile")
+popd
+pushd "$template_dir"/cdk-solution-helper
+cdk_out_dir="$source_dir"/ucp-infra/cdk.out
+regional_dist_dir="$build_dist_dir"
+npm ci
+npx ts-node ./index "$cdk_out_dir" "$regional_dist_dir"
+for image in $dockerImages; do rm ../regional-s3-assets/"$image".zip; done
+pushd "$cdk_out_dir"
+for pythonAsset in $(ls asset.*.py); do
+    cp "$pythonAsset" ../../../deployment/regional-s3-assets/${pythonAsset#asset.}
+done
+popd
+popd
+
+pushd $template_dir/regional-s3-assets
+zip -r allArtifacts.zip *
+mv allArtifacts.zip $template_dir/global-s3-assets
+popd
