@@ -1,0 +1,43 @@
+{
+    "env": {
+        "node": true
+    },
+    "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "project": ["**/tsconfig.json"],
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "impliedStrict": true
+        }
+    },
+    "plugins": ["@typescript-eslint", "import"],
+    "rules": {
+        "@typescript-eslint/no-empty-function": [
+            "error",
+            {
+                "allow": ["private-constructors"]
+            }
+        ],
+        "@typescript-eslint/no-inferrable-types": [
+            "off",
+            {
+                "ignoreParameters": true,
+                "ignoreProperties": true
+            }
+        ],
+        "@typescript-eslint/no-useless-constructor": ["off"],
+        "arrow-body-style": ["warn", "as-needed"],
+        "prefer-arrow-callback": ["warn"],
+        "no-inferrable-types": ["off", "ignore-params"],
+        "no-unused-vars": [
+            "error",
+            {
+                "args": "none",
+                "argsIgnorePattern": "^_",
+                "varsIgnorePattern": "^[A-Z]"
+            }
+        ]
+    }
+}

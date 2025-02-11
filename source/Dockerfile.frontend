@@ -1,0 +1,31 @@
+FROM public.ecr.aws/docker/library/node:current-slim AS build
+
+COPY appPermissions.json .
+
+WORKDIR /ucp-portal/ucp-react
+
+# Build Website
+COPY ucp-portal/ucp-react/package-lock.json ucp-portal/ucp-react/package.json ./
+RUN npm ci
+COPY ucp-portal/ucp-react/public public
+COPY ucp-portal/ucp-react/index.html ucp-portal/ucp-react/tsconfig.json ucp-portal/ucp-react/tsconfig.node.json ./
+COPY ucp-portal/ucp-react/src src
+
+RUN ./node_modules/.bin/tsc && ./node_modules/.bin/vite build
+
+FROM public.ecr.aws/nginx/nginx:alpine-slim AS final
+
+RUN apk update
+
+COPY ucp-portal/ucp-react/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY ucp-portal/ucp-react/nginx/default-site.conf /etc/nginx/conf.d/default.conf
+COPY ucp-portal/ucp-react/entrypoint.sh /etc/entrypoint.sh
+RUN chmod +x /etc/entrypoint.sh
+
+WORKDIR /usr/share/nginx/html
+
+COPY --from=build /ucp-portal/ucp-react/dist .
+RUN chown -R nginx:nginx /usr/share/nginx/html/assets
+
+USER nginx
+ENTRYPOINT [ "sh", "-c", "/etc/entrypoint.sh" ]

@@ -1,3 +1,0 @@
-type BusinessObjectPipelineOutput = {
-    connectorJobName: string;
-}

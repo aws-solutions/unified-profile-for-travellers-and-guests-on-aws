@@ -1,47 +1,56 @@
-# pyright: reportMissingImports=false, reportUndefinedVariable=false
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+import os
 import sys
 import uuid
-from awsglue.transforms import *
-from awsglue.utils import getResolvedOptions
-from pyspark.context import SparkContext
+
+import boto3
 from awsglue.context import GlueContext
-from awsglue.job import Job
 from awsglue.dynamicframe import DynamicFrame
-from pyspark.sql.functions import explode
-from tah_lib.pax_profileTransform import buildObjectRecord
+from awsglue.job import Job
+from awsglue.transforms import Map
+from awsglue.utils import getResolvedOptions
+from botocore.config import Config
+from pyspark.context import SparkContext
+from tah_lib.common import build_solution_header
+from tah_lib.etl_utils import (ERROR_QUEUE_URL, argList, create_dynamic_frame,
+                               explode_and_write, update_job_predicates)
+from tah_lib.pax_profileTransform import build_object_record
+
+tx_id = str(uuid.uuid4())
+print("tx_id: ", tx_id)
 
 glueContext = GlueContext(SparkContext.getOrCreate())
-args = getResolvedOptions(
-    sys.argv, ['JOB_NAME', 'GLUE_DB', 'SOURCE_TABLE', 'DEST_BUCKET'])
+args = getResolvedOptions(sys.argv, argList)
+append_solution_identifier = build_solution_header(args["METRICS_SOLUTION_ID"], args["METRICS_SOLUTION_VERSION"])
+config = Config(**append_solution_identifier)
+dynamodb_client = boto3.client('dynamodb', config=config)
 
-businessObjectDYF = glueContext.create_dynamic_frame.from_catalog(
-    database=args["GLUE_DB"], table_name=args["SOURCE_TABLE"])
+businessObjects = create_dynamic_frame(glueContext, dynamodb_client, args)
+count = businessObjects.count()
+print("count: ", count)
+if count == 0:
+    print("Biz object count is zero. existing ")
+    update_job_predicates(dynamodb_client, args, count)
+    os._exit(0)
+businessObjects.printSchema()
 
-count = businessObjectDYF.count()
-businessObjectDYF.printSchema()
-
-accpRecords = Map.apply(frame=businessObjectDYF, f=buildObjectRecord)
+# applying Python transformation function
+accpRecords = Map.apply(
+    frame=businessObjects,
+    f=lambda rec: build_object_record(rec, args[ERROR_QUEUE_URL], tx_id))
 
 accpRecordsDF = accpRecords.toDF()
 accpRecordsDF.printSchema()
-# nestedSegmentsDF.show(10)
 
-profile = accpRecordsDF.select(
-    explode(accpRecordsDF.air_profile_recs)).select("col.*")
-email = accpRecordsDF.select(
-    explode(accpRecordsDF.common_email_recs)).select("col.*")
-phone = accpRecordsDF.select(
-    explode(accpRecordsDF.common_phone_recs)).select("col.*")
-loyalty = accpRecordsDF.select(
-    explode(accpRecordsDF.air_loyalty_recs)).select("col.*")
-
-subfolder = str(uuid.uuid1(node=None, clock_seq=None))
-
-profile.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/pax_profile/"+subfolder)
-email.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/email_history/"+subfolder)
-phone.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/phone_history/"+subfolder)
-loyalty.write.format("csv").option("header", "true").save(
-    "s3://"+args["DEST_BUCKET"]+"/air_loyalty/"+subfolder)
+# exploding data into individual Dynamic Frames
+explode_and_write(glueContext, accpRecordsDF, "air_profile_recs", "pax_profile",
+                args, dynamodb_client, count)
+explode_and_write(glueContext, accpRecordsDF, "common_email_recs", "email_history",
+                args, dynamodb_client, count)
+explode_and_write(glueContext, accpRecordsDF, "common_phone_recs", "phone_history",
+                args, dynamodb_client, count)
+explode_and_write(glueContext, accpRecordsDF, "air_loyalty_recs", "air_loyalty",
+                args, dynamodb_client, count)
+explode_and_write(glueContext, accpRecordsDF, "air_loyalty_tx_recs", "loyalty_transaction",
+                args, dynamodb_client, count)

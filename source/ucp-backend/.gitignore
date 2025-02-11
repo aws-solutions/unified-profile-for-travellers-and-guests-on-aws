@@ -6,5 +6,6 @@ src/golang.org/*
 src/gopkg.in/* 
 src/google.golang.org/*
 src/tah-core
-e2e/*.json
+#e2e/*.json
 cloudrack-lambda-core.zip
+bootstrap

@@ -1,1 +1,0 @@
-echo "no test to run"

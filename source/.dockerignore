@@ -1,0 +1,21 @@
+# Ignore everything except necessary files/folders for docker build
+*
+
+# Make exception for ucp-portal folder
+!/ucp-portal
+# Do ignore legacy ucp (Angular) app
+/ucp-portal/ucp
+!appPermissions.json
+
+# js/ts cache
+**/node_modules/*
+
+# cdk cache
+**/cdk.out
+
+# ucp-react instance specific config
+**/ucp-config.json
+
+# python cache
+**/__pycache__
+**/.venv/

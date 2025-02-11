@@ -1,0 +1,22 @@
+{
+    "SearchProfilePermission" :         0,
+    "DeleteProfilePermission" :         1,
+    "MergeProfilePermission" :          2,
+    "UnmergeProfilePermission" :        3,
+    "CreateDomainPermission" :          4,
+    "DeleteDomainPermission":           5,
+    "ConfigureGenAiPermission" :        6,
+    "SaveHyperlinkPermission" :         7,
+    "SaveRuleSetPermission" :           8,
+    "ActivateRuleSetPermission" :       9,
+    "RunGlueJobsPermission" :           10,
+    "ClearAllErrorsPermission" :        11,
+    "RebuildCachePermission" :          12,
+    "IndustryConnectorPermission":      13,
+    "ListPrivacySearchPermission":      14,
+    "GetPrivacySearchPermission":       15,
+    "CreatePrivacySearchPermission":    16,
+    "DeletePrivacySearchPermission":    17,
+    "PrivacyDataPurgePermission":       18,
+    "ListRuleSetPermission":            19
+}

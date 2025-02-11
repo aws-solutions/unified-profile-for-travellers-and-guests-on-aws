@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/ClickEvent",
+  "$defs": {
+    "AlternateProfileID": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "lastUpdatedOn": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "value",
+        "lastUpdatedOn"
+      ]
+    },
+    "ClickEvent": {
+      "properties": {
+        "modelVersion": {
+          "type": "string"
+        },
+        "event_type": {
+          "type": "string"
+        },
+        "event_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "arrival_timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "event_version": {
+          "type": "string"
+        },
+        "application": {
+          "$ref": "#/$defs/EventApplication"
+        },
+        "client": {
+          "$ref": "#/$defs/EventClient"
+        },
+        "device": {
+          "$ref": "#/$defs/EventDevice"
+        },
+        "session": {
+          "$ref": "#/$defs/EventSession"
+        },
+        "attributes": {
+          "items": {
+            "$ref": "#/$defs/EventAttribute"
+          },
+          "type": "array"
+        },
+        "endpoint": {
+          "$ref": "#/$defs/EventEndpoint"
+        },
+        "awsAccountId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "alternateProfileIds": {
+          "items": {
+            "$ref": "#/$defs/AlternateProfileID"
+          },
+          "type": "array"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "modelVersion",
+        "event_type",
+        "event_timestamp",
+        "arrival_timestamp",
+        "session",
+        "endpoint"
+      ]
+    },
+    "EventApplication": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id"
+      ]
+    },
+    "EventAttribute": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "stringValue": {
+          "type": "string"
+        },
+        "stringValues": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "numValue": {
+          "type": "number"
+        },
+        "numValues": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EventClient": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id"
+      ]
+    },
+    "EventDevice": {
+      "properties": {
+        "useragent": {
+          "type": "string"
+        },
+        "ipAddress": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "useragent"
+      ]
+    },
+    "EventEndpoint": {
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EventSession": {
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id"
+      ]
+    }
+  }
+}

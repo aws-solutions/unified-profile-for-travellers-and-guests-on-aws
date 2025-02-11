@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools >= 70.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+dynamic = ["version"]
+name = "tah_lib"
+
+[tool.tox]
+requires = ["tox>=4.19"]
+env_list = ["3.12", "3.11", "3.10", "type", "format", "lint"]
+work_dir = "/tmp/.tox"
+
+[tool.tox.env_run_base]
+description = "Run test under {base_python}"
+deps = ["-r requirements_dev.txt"]
+commands = [["pytest"]]
+
+[tool.tox.env.type]
+description = "run type check on code base"
+deps = ["-r requirements_dev.txt"]
+commands = [["mypy", "tah_lib"], ["mypy", "tests"]]
+
+[tool.mypy]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["awsglue.dynamicframe"]
+ignore_missing_imports = "True"
+
+[tool.tox.env.format]
+description = "run formatters"
+deps = ["-r requirements_dev.txt"]
+commands = [["isort", "--profile", "black", "--check", "tah_lib", "tests"], ["black", "--check", "tah_lib", "tests"]]
+
+[tool.tox.env.lint]
+description = "run linter"
+deps = ["-r requirements_dev.txt"]
+commands = [["flake8", "tah_lib", "tests"]]

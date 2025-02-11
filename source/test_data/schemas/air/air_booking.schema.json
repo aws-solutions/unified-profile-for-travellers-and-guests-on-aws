@@ -1,0 +1,1421 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/Booking",
+  "$defs": {
+    "Address": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "line1": {
+          "type": "string"
+        },
+        "line2": {
+          "type": "string"
+        },
+        "line3": {
+          "type": "string"
+        },
+        "line4": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/StateProvince"
+        },
+        "province": {
+          "$ref": "#/$defs/StateProvince"
+        },
+        "postalCode": {
+          "type": "string"
+        },
+        "country": {
+          "$ref": "#/$defs/Country"
+        },
+        "primary": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "primary"
+      ]
+    },
+    "AlternateProfileID": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "lastUpdatedOn": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "value",
+        "lastUpdatedOn"
+      ]
+    },
+    "AncillaryServiceBaggage": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "flightNumber": {
+          "type": "string"
+        },
+        "departureDate": {
+          "type": "string"
+        },
+        "paxIndex": {
+          "type": "integer"
+        },
+        "baggageType": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer"
+        },
+        "weight": {
+          "type": "number"
+        },
+        "dimensions": {
+          "$ref": "#/$defs/BagDimensions"
+        },
+        "priorityBagDrop": {
+          "type": "boolean"
+        },
+        "priorityBagReturn": {
+          "type": "boolean"
+        },
+        "lostBagInsurance": {
+          "type": "boolean"
+        },
+        "valuableBaggageInsurance": {
+          "type": "boolean"
+        },
+        "handsFreeBaggage": {
+          "type": "boolean"
+        },
+        "price": {
+          "$ref": "#/$defs/AncillaryServicePrice"
+        },
+        "maxAllowed": {
+          "type": "integer"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "flightNumber",
+        "departureDate",
+        "paxIndex",
+        "baggageType",
+        "quantity",
+        "weight",
+        "dimensions",
+        "priorityBagDrop",
+        "priorityBagReturn",
+        "lostBagInsurance",
+        "valuableBaggageInsurance",
+        "handsFreeBaggage",
+        "price",
+        "maxAllowed"
+      ]
+    },
+    "AncillaryServiceFlightChange": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "flightNumber": {
+          "type": "string"
+        },
+        "departureDate": {
+          "type": "string"
+        },
+        "transactionId": {
+          "type": "string"
+        },
+        "changeType": {
+          "type": "string"
+        },
+        "price": {
+          "$ref": "#/$defs/AncillaryServicePrice"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "flightNumber",
+        "departureDate",
+        "transactionId",
+        "changeType",
+        "price"
+      ]
+    },
+    "AncillaryServiceOther": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "flightNumber": {
+          "type": "string"
+        },
+        "departureDate": {
+          "type": "string"
+        },
+        "otherAncilliaryType": {
+          "type": "string"
+        },
+        "price": {
+          "$ref": "#/$defs/AncillaryServicePrice"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "flightNumber",
+        "departureDate",
+        "otherAncilliaryType",
+        "price"
+      ]
+    },
+    "AncillaryServicePrice": {
+      "properties": {
+        "serviceName": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "taxes": {
+          "items": {
+            "$ref": "#/$defs/Fee"
+          },
+          "type": "array"
+        },
+        "fees": {
+          "items": {
+            "$ref": "#/$defs/Fee"
+          },
+          "type": "array"
+        },
+        "total": {
+          "type": "number"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "serviceName",
+        "currency",
+        "total"
+      ]
+    },
+    "AncillaryServicePriority": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "flightNumber": {
+          "type": "string"
+        },
+        "departureDate": {
+          "type": "string"
+        },
+        "transactionId": {
+          "type": "string"
+        },
+        "priorityServiceType": {
+          "type": "string"
+        },
+        "loungeAccess": {
+          "type": "boolean"
+        },
+        "price": {
+          "$ref": "#/$defs/AncillaryServicePrice"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "flightNumber",
+        "departureDate",
+        "transactionId",
+        "priorityServiceType",
+        "loungeAccess",
+        "price"
+      ]
+    },
+    "AncillaryServiceSeat": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "flightNumber": {
+          "type": "string"
+        },
+        "departureDate": {
+          "type": "string"
+        },
+        "paxIndex": {
+          "type": "integer"
+        },
+        "seatNumber": {
+          "type": "string"
+        },
+        "seatZone": {
+          "type": "string"
+        },
+        "price": {
+          "$ref": "#/$defs/AncillaryServicePrice"
+        },
+        "neighborFreeSeat": {
+          "type": "boolean"
+        },
+        "upgradeAuction": {
+          "type": "boolean"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "flightNumber",
+        "departureDate",
+        "paxIndex",
+        "seatNumber",
+        "seatZone",
+        "price",
+        "neighborFreeSeat",
+        "upgradeAuction",
+        "available"
+      ]
+    },
+    "AncillaryServices": {
+      "properties": {
+        "ancillaryServiceBaggage": {
+          "items": {
+            "$ref": "#/$defs/AncillaryServiceBaggage"
+          },
+          "type": "array"
+        },
+        "ancillaryServiceSeat": {
+          "items": {
+            "$ref": "#/$defs/AncillaryServiceSeat"
+          },
+          "type": "array"
+        },
+        "ancillaryServiceFlightChange": {
+          "items": {
+            "$ref": "#/$defs/AncillaryServiceFlightChange"
+          },
+          "type": "array"
+        },
+        "ancillaryServiceOther": {
+          "items": {
+            "$ref": "#/$defs/AncillaryServiceOther"
+          },
+          "type": "array"
+        },
+        "ancillaryServicePriority": {
+          "items": {
+            "$ref": "#/$defs/AncillaryServicePriority"
+          },
+          "type": "array"
+        },
+        "price": {
+          "$ref": "#/$defs/AncillaryServicePrice"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "price"
+      ]
+    },
+    "BagDimensions": {
+      "properties": {
+        "length": {
+          "type": "integer"
+        },
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "length",
+        "width",
+        "height"
+      ]
+    },
+    "Booking": {
+      "properties": {
+        "objectVersion": {
+          "type": "integer"
+        },
+        "modelVersion": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "externalIds": {
+          "items": {
+            "$ref": "#/$defs/ExternalID"
+          },
+          "type": "array"
+        },
+        "lastUpdatedOn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdOn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "creationChannelId": {
+          "type": "string"
+        },
+        "lastUpdateChannelId": {
+          "type": "string"
+        },
+        "price": {
+          "$ref": "#/$defs/BookingPrice"
+        },
+        "itinerary": {
+          "$ref": "#/$defs/Itinerary"
+        },
+        "return": {
+          "$ref": "#/$defs/Itinerary"
+        },
+        "passengerInfo": {
+          "$ref": "#/$defs/PassengerInfo"
+        },
+        "paymentInformation": {
+          "$ref": "#/$defs/PaymentInformation"
+        },
+        "ancillaryServices": {
+          "$ref": "#/$defs/AncillaryServices"
+        },
+        "promocode": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "dayOfTravelEmail": {
+          "type": "string"
+        },
+        "dayOfTravelPhone": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "objectVersion",
+        "modelVersion",
+        "id",
+        "lastUpdatedOn",
+        "createdOn",
+        "lastUpdatedBy",
+        "createdBy",
+        "creationChannelId",
+        "lastUpdateChannelId",
+        "price",
+        "itinerary",
+        "return",
+        "passengerInfo",
+        "paymentInformation",
+        "ancillaryServices",
+        "email",
+        "phone",
+        "dayOfTravelEmail",
+        "dayOfTravelPhone",
+        "status"
+      ]
+    },
+    "BookingPrice": {
+      "properties": {
+        "priceItems": {
+          "items": {
+            "$ref": "#/$defs/PricePerPassengerPerSegments"
+          },
+          "type": "array"
+        },
+        "grandTotal": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "grandTotal"
+      ]
+    },
+    "CancellationReason": {
+      "properties": {
+        "reason": {
+          "type": "string"
+        },
+        "comment": {
+          "$ref": "#/$defs/Comment"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "reason"
+      ]
+    },
+    "Comment": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "language": {
+          "$ref": "#/$defs/Language"
+        },
+        "title": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "context": {
+          "items": {
+            "$ref": "#/$defs/ContextItem"
+          },
+          "type": "array"
+        },
+        "createdDateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "lastModifiedDateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastModifiedBy": {
+          "type": "string"
+        },
+        "isTravelerViewable": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "text",
+        "createdDateTime",
+        "createdBy"
+      ]
+    },
+    "ContextItem": {
+      "properties": {
+        "contextType": {
+          "type": "string"
+        },
+        "contextValue": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Country": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code"
+      ]
+    },
+    "CreditCardInformation": {
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "cardType": {
+          "type": "string"
+        },
+        "cardExp": {
+          "type": "string"
+        },
+        "cardCvv": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "address": {
+          "$ref": "#/$defs/Address"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "token",
+        "cardExp",
+        "cardCvv",
+        "name"
+      ]
+    },
+    "Currency": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "symbol": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code"
+      ]
+    },
+    "Email": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "primary": {
+          "type": "boolean"
+        },
+        "isVerified": {
+          "type": "boolean"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address"
+      ]
+    },
+    "ExternalID": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "IdName": {
+          "type": "string"
+        },
+        "originatingSystem": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id"
+      ]
+    },
+    "Fee": {
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "amount",
+        "type"
+      ]
+    },
+    "FlightSegment": {
+      "properties": {
+        "rank": {
+          "type": "integer"
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "departureDate": {
+          "type": "string"
+        },
+        "departureTime": {
+          "type": "string"
+        },
+        "arrivalDate": {
+          "type": "string"
+        },
+        "arrivalTime": {
+          "type": "string"
+        },
+        "flightNumber": {
+          "type": "string"
+        },
+        "inventory": {
+          "$ref": "#/$defs/Inventory"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "rank",
+        "from",
+        "to",
+        "departureDate",
+        "departureTime",
+        "arrivalDate",
+        "arrivalTime",
+        "flightNumber",
+        "inventory",
+        "status"
+      ]
+    },
+    "IdentityProof": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "typeId": {
+          "type": "string"
+        },
+        "data": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "typeId",
+        "data"
+      ]
+    },
+    "Inventory": {
+      "properties": {
+        "totalSeats": {
+          "type": "integer"
+        },
+        "inventoryByFareClass": {
+          "items": {
+            "$ref": "#/$defs/InventoryForFareClass"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "totalSeats"
+      ]
+    },
+    "InventoryForFareClass": {
+      "properties": {
+        "fareClass": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "fareClass",
+        "number"
+      ]
+    },
+    "Itinerary": {
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "departureDate": {
+          "type": "string"
+        },
+        "departureTime": {
+          "type": "string"
+        },
+        "arrivalDate": {
+          "type": "string"
+        },
+        "arrivalTime": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "string"
+        },
+        "segments": {
+          "items": {
+            "$ref": "#/$defs/FlightSegment"
+          },
+          "type": "array"
+        },
+        "inventory": {
+          "$ref": "#/$defs/Inventory"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "from",
+        "to",
+        "departureDate",
+        "departureTime",
+        "arrivalDate",
+        "arrivalTime",
+        "inventory",
+        "status"
+      ]
+    },
+    "Language": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code"
+      ]
+    },
+    "LoyaltyProgram": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "programName": {
+          "type": "string"
+        },
+        "miles": {
+          "type": "number"
+        },
+        "milesToNextLevel": {
+          "type": "number"
+        },
+        "level": {
+          "type": "string"
+        },
+        "joined": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "transactions": {
+          "items": {
+            "$ref": "#/$defs/LoyaltyTx"
+          },
+          "type": "array"
+        },
+        "enrollmentSource": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "accountStatus": {
+          "type": "string"
+        },
+        "reasonForClose": {
+          "type": "string"
+        },
+        "languagePreference": {
+          "type": "string"
+        },
+        "displayPreference": {
+          "type": "string"
+        },
+        "mealPreference": {
+          "type": "string"
+        },
+        "seatPreference": {
+          "type": "string"
+        },
+        "homeAirport": {
+          "type": "string"
+        },
+        "dateTimeFormatPreference": {
+          "type": "string"
+        },
+        "cabinPreference": {
+          "type": "string"
+        },
+        "fareTypePreference": {
+          "type": "string"
+        },
+        "expertMode": {
+          "type": "boolean"
+        },
+        "privacyIndicator": {
+          "type": "string"
+        },
+        "carPreferenceVendor": {
+          "type": "string"
+        },
+        "carPreferenceType": {
+          "type": "string"
+        },
+        "specialAccommodation1": {
+          "type": "string"
+        },
+        "specialAccommodation2": {
+          "type": "string"
+        },
+        "specialAccommodation3": {
+          "type": "string"
+        },
+        "specialAccommodation4": {
+          "type": "string"
+        },
+        "specialAccommodation5": {
+          "type": "string"
+        },
+        "marketingOptIns": {
+          "type": "string"
+        },
+        "renewDate": {
+          "type": "string"
+        },
+        "nextBillAmount": {
+          "type": "number"
+        },
+        "clearEnrollDate": {
+          "type": "string"
+        },
+        "clearRenewDate": {
+          "type": "string"
+        },
+        "clearTierLevel": {
+          "type": "string"
+        },
+        "clearNextBillAmount": {
+          "type": "number"
+        },
+        "clearIsActive": {
+          "type": "boolean"
+        },
+        "clearAutoRenew": {
+          "type": "boolean"
+        },
+        "clearHasBiometrics": {
+          "type": "boolean"
+        },
+        "clearHasPartnerPricing": {
+          "type": "boolean"
+        },
+        "tsaType": {
+          "type": "string"
+        },
+        "tsaSeqNum": {
+          "type": "string"
+        },
+        "tsaNumber": {
+          "type": "string"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "programName",
+        "miles",
+        "milesToNextLevel",
+        "level",
+        "joined",
+        "enrollmentSource",
+        "currency",
+        "amount",
+        "accountStatus",
+        "reasonForClose",
+        "languagePreference",
+        "displayPreference",
+        "mealPreference",
+        "seatPreference",
+        "homeAirport",
+        "dateTimeFormatPreference",
+        "cabinPreference",
+        "fareTypePreference",
+        "expertMode",
+        "privacyIndicator",
+        "carPreferenceVendor",
+        "carPreferenceType",
+        "specialAccommodation1",
+        "specialAccommodation2",
+        "specialAccommodation3",
+        "specialAccommodation4",
+        "specialAccommodation5",
+        "marketingOptIns",
+        "renewDate",
+        "nextBillAmount",
+        "clearEnrollDate",
+        "clearRenewDate",
+        "clearTierLevel",
+        "clearNextBillAmount",
+        "clearIsActive",
+        "clearAutoRenew",
+        "clearHasBiometrics",
+        "clearHasPartnerPricing",
+        "tsaType",
+        "tsaSeqNum",
+        "tsaNumber"
+      ]
+    },
+    "LoyaltyTx": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "timeStamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "category": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "pointsOffset": {
+          "type": "number"
+        },
+        "pointUnit": {
+          "type": "string"
+        },
+        "originPointsOffset": {
+          "type": "number"
+        },
+        "qualifyingPointOffset": {
+          "type": "number"
+        },
+        "source": {
+          "type": "string"
+        },
+        "agent": {
+          "type": "string"
+        },
+        "bookingDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "orderNumber": {
+          "type": "string"
+        },
+        "productId": {
+          "type": "string"
+        },
+        "expireInDays": {
+          "type": "integer"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "amountType": {
+          "type": "string"
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        },
+        "voucherQuantity": {
+          "type": "integer"
+        },
+        "cancReason": {
+          "$ref": "#/$defs/CancellationReason"
+        },
+        "parentTransactionId": {
+          "type": "string"
+        },
+        "corporateReferenceNumber": {
+          "type": "string"
+        },
+        "promotions": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "activityDay": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "toLoyaltyId": {
+          "type": "string"
+        },
+        "fromLoyaltyId": {
+          "type": "string"
+        },
+        "organizationCode": {
+          "type": "string"
+        },
+        "voucherIds": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "eventName": {
+          "type": "string"
+        },
+        "documentNumber": {
+          "type": "string"
+        },
+        "Comment": {
+          "$ref": "#/$defs/Comment"
+        },
+        "externalTransaction": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "paymentInformation": {
+          "$ref": "#/$defs/PaymentInformation"
+        },
+        "corporateId": {
+          "type": "string"
+        },
+        "programName": {
+          "type": "string"
+        },
+        "externalOrderIds": {
+          "items": {
+            "$ref": "#/$defs/ExternalID"
+          },
+          "type": "array"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "timeStamp",
+        "source"
+      ]
+    },
+    "PassengerInfo": {
+      "properties": {
+        "passengers": {
+          "items": {
+            "$ref": "#/$defs/PassengerProfile"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "passengers"
+      ]
+    },
+    "PassengerProfile": {
+      "properties": {
+        "modelVersion": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastUpdatedOn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdOn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "isBooker": {
+          "type": "boolean"
+        },
+        "emails": {
+          "items": {
+            "$ref": "#/$defs/Email"
+          },
+          "type": "array"
+        },
+        "phones": {
+          "items": {
+            "$ref": "#/$defs/Phone"
+          },
+          "type": "array"
+        },
+        "addresses": {
+          "items": {
+            "$ref": "#/$defs/Address"
+          },
+          "type": "array"
+        },
+        "honorific": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "middleName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "string"
+        },
+        "pronoun": {
+          "type": "string"
+        },
+        "dateOfBirth": {
+          "type": "string"
+        },
+        "language": {
+          "$ref": "#/$defs/Language"
+        },
+        "nationality": {
+          "$ref": "#/$defs/Country"
+        },
+        "jobTitle": {
+          "type": "string"
+        },
+        "parentCompany": {
+          "type": "string"
+        },
+        "loyaltyPrograms": {
+          "items": {
+            "$ref": "#/$defs/LoyaltyProgram"
+          },
+          "type": "array"
+        },
+        "identityProofs": {
+          "items": {
+            "$ref": "#/$defs/IdentityProof"
+          },
+          "type": "array"
+        },
+        "alternateProfileIds": {
+          "items": {
+            "$ref": "#/$defs/AlternateProfileID"
+          },
+          "type": "array"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "modelVersion",
+        "id",
+        "lastUpdatedOn",
+        "createdOn",
+        "lastUpdatedBy",
+        "createdBy",
+        "isBooker",
+        "firstName",
+        "lastName",
+        "language",
+        "nationality",
+        "jobTitle",
+        "parentCompany"
+      ]
+    },
+    "PaymentInformation": {
+      "properties": {
+        "paymentType": {
+          "type": "string"
+        },
+        "ccInfo": {
+          "$ref": "#/$defs/CreditCardInformation"
+        },
+        "routingNumber": {
+          "type": "string"
+        },
+        "accountNumber": {
+          "type": "string"
+        },
+        "voucherID": {
+          "type": "string"
+        },
+        "address": {
+          "$ref": "#/$defs/Address"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "paymentType"
+      ]
+    },
+    "Phone": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "number": {
+          "type": "string"
+        },
+        "primary": {
+          "type": "boolean"
+        },
+        "countryCode": {
+          "type": "integer"
+        },
+        "isVerified": {
+          "type": "boolean"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "number"
+      ]
+    },
+    "Price": {
+      "properties": {
+        "total": {
+          "type": "number"
+        },
+        "base": {
+          "type": "number"
+        },
+        "fees": {
+          "items": {
+            "$ref": "#/$defs/Fee"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "total",
+        "base"
+      ]
+    },
+    "PricePerPassengerPerSegments": {
+      "properties": {
+        "segmenRank": {
+          "type": "integer"
+        },
+        "passengerIndex": {
+          "type": "integer"
+        },
+        "fareClass": {
+          "type": "string"
+        },
+        "price": {
+          "$ref": "#/$defs/Price"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "segmenRank",
+        "passengerIndex",
+        "fareClass",
+        "price"
+      ]
+    },
+    "StateProvince": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code"
+      ]
+    }
+  }
+}

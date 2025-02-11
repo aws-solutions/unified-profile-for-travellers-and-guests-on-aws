@@ -20,7 +20,11 @@ export class S3Crawler extends glue.CfnCrawler {
             configuration: `{
             "Version": 1.0,
             "Grouping": {
-               "TableGroupingPolicy": "CombineCompatibleSchemas" }
+               "TableGroupingPolicy": "CombineCompatibleSchemas" 
+            },
+            "CrawlerOutput": {
+                "Partitions": { "AddOrUpdateBehavior": "InheritFromTable" }
+             }
          }`,
             databaseName: glueDb.databaseName
         })

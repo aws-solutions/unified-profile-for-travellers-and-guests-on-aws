@@ -1,19 +1,28 @@
 envName=$(jq -r .localEnvName ../../env.json)
 artifactBucket=$(jq -r .artifactBucket ../../env.json)
 
-echo "Getting tah dependencies"
-tahCoreVersion=$(jq -r '."tah-core"' ../../../tah.json)
+# Parse command-line options
+skip_update_deps=false
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+    --skip-update-deps)
+      skip_update_deps=true
+      ;;
+    *)
+      echo "Unrecognized option: $1"
+      exit 1
+      ;;
+  esac
+  shift
+done
 
-echo "Getting tah-core version $tahCoreVersion"
-rm -rf src/tah-core
-aws s3api get-object --bucket $artifactBucket --key $envName/$tahCoreVersion/tah-core.zip tah-core.zip
-rc=$?
-if [ $rc -ne 0 ]; then
-  echo "Could not find tah-core with version $tahCoreVersion rc" >&2
-  exit $rc
+# Update deps
+if [ "$skip_update_deps" = false ]; then
+    echo "Updating dependencies"
+    current_directory=$(pwd)
+    cd ../
+    sh update-private-packages.sh
+    cd "$current_directory" || exit
 fi
 
-unzip tah-core.zip -d src/tah-core/
-rm -rf tah-core.zip
-
-sh test.sh $envName $artifactBucket
+sh test.sh "$envName" "$artifactBucket"

@@ -1,0 +1,1209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/Booking",
+  "$defs": {
+    "AddOn": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code",
+        "name",
+        "description"
+      ]
+    },
+    "Address": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "line1": {
+          "type": "string"
+        },
+        "line2": {
+          "type": "string"
+        },
+        "line3": {
+          "type": "string"
+        },
+        "line4": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/StateProvince"
+        },
+        "province": {
+          "$ref": "#/$defs/StateProvince"
+        },
+        "postalCode": {
+          "type": "string"
+        },
+        "country": {
+          "$ref": "#/$defs/Country"
+        },
+        "primary": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "primary"
+      ]
+    },
+    "AlternateProfileID": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "lastUpdatedOn": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "value",
+        "lastUpdatedOn"
+      ]
+    },
+    "AmountPerNightItem": {
+      "properties": {
+        "date": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "amountPerProduct": {
+          "items": {
+            "$ref": "#/$defs/AmountPerProductItem"
+          },
+          "type": "array"
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "date",
+        "label",
+        "amountPerProduct",
+        "currency"
+      ]
+    },
+    "AmountPerProductItem": {
+      "properties": {
+        "productId": {
+          "type": "string"
+        },
+        "productDescription": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "label": {
+          "type": "string"
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "productId",
+        "productDescription",
+        "amount",
+        "label",
+        "currency"
+      ]
+    },
+    "Attribute": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code",
+        "name",
+        "description"
+      ]
+    },
+    "Booking": {
+      "properties": {
+        "objectVersion": {
+          "type": "integer"
+        },
+        "modelVersion": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "externalIds": {
+          "items": {
+            "$ref": "#/$defs/ExternalID"
+          },
+          "type": "array"
+        },
+        "lastUpdatedOn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdOn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "creationChannelId": {
+          "type": "string"
+        },
+        "lastUpdateChannelId": {
+          "type": "string"
+        },
+        "brandCode": {
+          "type": "string"
+        },
+        "hotelCode": {
+          "type": "string"
+        },
+        "nNights": {
+          "type": "integer"
+        },
+        "nGuests": {
+          "type": "integer"
+        },
+        "startDate": {
+          "type": "string"
+        },
+        "endDate": {
+          "type": "string"
+        },
+        "holder": {
+          "$ref": "#/$defs/GuestProfile"
+        },
+        "paymentInformation": {
+          "$ref": "#/$defs/PaymentInformation"
+        },
+        "contextId": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        },
+        "cancelReason": {
+          "$ref": "#/$defs/CancellationReason"
+        },
+        "segments": {
+          "items": {
+            "$ref": "#/$defs/BookingSegment"
+          },
+          "type": "array"
+        },
+        "comments": {
+          "items": {
+            "$ref": "#/$defs/Comment"
+          },
+          "type": "array"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "objectVersion",
+        "modelVersion",
+        "id",
+        "lastUpdatedOn",
+        "createdOn",
+        "lastUpdatedBy",
+        "createdBy",
+        "creationChannelId",
+        "lastUpdateChannelId",
+        "brandCode",
+        "hotelCode",
+        "nNights",
+        "nGuests",
+        "startDate",
+        "endDate",
+        "holder",
+        "status",
+        "currency",
+        "segments"
+      ]
+    },
+    "BookingPrice": {
+      "anyOf": [
+        {
+          "required": [
+            "totalBeforeTax"
+          ],
+          "title": "totalBeforeTax"
+        },
+        {
+          "required": [
+            "totalAfterTax"
+          ],
+          "title": "totalAfterTax"
+        }
+      ],
+      "properties": {
+        "pricePerNight": {
+          "items": {
+            "$ref": "#/$defs/AmountPerNightItem"
+          },
+          "type": "array"
+        },
+        "taxePerNight": {
+          "items": {
+            "$ref": "#/$defs/AmountPerNightItem"
+          },
+          "type": "array"
+        },
+        "pricePerStay": {
+          "items": {
+            "$ref": "#/$defs/AmountPerProductItem"
+          },
+          "type": "array"
+        },
+        "taxPerStay": {
+          "items": {
+            "$ref": "#/$defs/AmountPerProductItem"
+          },
+          "type": "array"
+        },
+        "businessRules": {
+          "items": {
+            "$ref": "#/$defs/BusinessRule"
+          },
+          "type": "array"
+        },
+        "totalPricePerNightBeforeTaxes": {
+          "items": {
+            "$ref": "#/$defs/TotalAmountPerNightItem"
+          },
+          "type": "array"
+        },
+        "totalPricePerNightAfterTaxes": {
+          "items": {
+            "$ref": "#/$defs/TotalAmountPerNightItem"
+          },
+          "type": "array"
+        },
+        "totalPricePerProductBeforeTaxes": {
+          "items": {
+            "$ref": "#/$defs/TotalAmountPerProductItem"
+          },
+          "type": "array"
+        },
+        "totalPricePerProductAfterTaxes": {
+          "items": {
+            "$ref": "#/$defs/TotalAmountPerProductItem"
+          },
+          "type": "array"
+        },
+        "totalBeforeTax": {
+          "type": "number"
+        },
+        "totalAfterTax": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "BookingSegment": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "hotelCode": {
+          "type": "string"
+        },
+        "brandCode": {
+          "type": "string"
+        },
+        "nNights": {
+          "type": "integer"
+        },
+        "nGuests": {
+          "type": "integer"
+        },
+        "startDate": {
+          "type": "string"
+        },
+        "products": {
+          "items": {
+            "$ref": "#/$defs/Product"
+          },
+          "type": "array"
+        },
+        "holder": {
+          "$ref": "#/$defs/GuestProfile"
+        },
+        "additionalGuests": {
+          "items": {
+            "$ref": "#/$defs/GuestProfile"
+          },
+          "type": "array"
+        },
+        "paymentInformation": {
+          "$ref": "#/$defs/PaymentInformation"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "price": {
+          "$ref": "#/$defs/BookingPrice"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "hotelCode",
+        "brandCode",
+        "nNights",
+        "nGuests",
+        "startDate",
+        "products",
+        "holder",
+        "status",
+        "price"
+      ]
+    },
+    "BusinessObjectSelector": {
+      "properties": {
+        "objectType": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "op": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "objectType",
+        "field",
+        "op",
+        "value"
+      ]
+    },
+    "BusinessRule": {
+      "properties": {
+        "pricePerNight": {
+          "type": "string"
+        },
+        "appliesTo": {
+          "$ref": "#/$defs/BusinessRuleScope"
+        },
+        "effect": {
+          "$ref": "#/$defs/BusinessRuleEffect"
+        },
+        "on": {
+          "items": {
+            "$ref": "#/$defs/DateRange"
+          },
+          "type": "array"
+        },
+        "notOn": {
+          "items": {
+            "$ref": "#/$defs/DateRange"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "pricePerNight",
+        "appliesTo",
+        "effect",
+        "on",
+        "notOn"
+      ]
+    },
+    "BusinessRuleEffect": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "priceImpact": {
+          "type": "number"
+        },
+        "priceUpdateUnit": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "type",
+        "available",
+        "priceImpact",
+        "priceUpdateUnit"
+      ]
+    },
+    "BusinessRuleScope": {
+      "properties": {
+        "selectors": {
+          "$ref": "#/$defs/BusinessObjectSelector"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "selectors"
+      ]
+    },
+    "CancellationReason": {
+      "properties": {
+        "reason": {
+          "type": "string"
+        },
+        "comment": {
+          "$ref": "#/$defs/Comment"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "reason"
+      ]
+    },
+    "Comment": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "language": {
+          "$ref": "#/$defs/Language"
+        },
+        "title": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "context": {
+          "items": {
+            "$ref": "#/$defs/ContextItem"
+          },
+          "type": "array"
+        },
+        "createdDateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "lastModifiedDateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastModifiedBy": {
+          "type": "string"
+        },
+        "isTravelerViewable": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "text",
+        "createdDateTime",
+        "createdBy"
+      ]
+    },
+    "ContextItem": {
+      "properties": {
+        "contextType": {
+          "type": "string"
+        },
+        "contextValue": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Country": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code"
+      ]
+    },
+    "CreditCardInformation": {
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "cardType": {
+          "type": "string"
+        },
+        "cardExp": {
+          "type": "string"
+        },
+        "cardCvv": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "address": {
+          "$ref": "#/$defs/Address"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "token",
+        "cardExp",
+        "cardCvv",
+        "name"
+      ]
+    },
+    "Currency": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "symbol": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code"
+      ]
+    },
+    "DateRange": {
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "dow": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "from",
+        "to",
+        "dow"
+      ]
+    },
+    "Email": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        },
+        "primary": {
+          "type": "boolean"
+        },
+        "isVerified": {
+          "type": "boolean"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address"
+      ]
+    },
+    "ExternalID": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "IdName": {
+          "type": "string"
+        },
+        "originatingSystem": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id"
+      ]
+    },
+    "GuestProfile": {
+      "properties": {
+        "modelVersion": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastUpdatedOn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdOn": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUpdatedBy": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "emails": {
+          "items": {
+            "$ref": "#/$defs/Email"
+          },
+          "type": "array"
+        },
+        "phones": {
+          "items": {
+            "$ref": "#/$defs/Phone"
+          },
+          "type": "array"
+        },
+        "addresses": {
+          "items": {
+            "$ref": "#/$defs/Address"
+          },
+          "type": "array"
+        },
+        "honorific": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "middleName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "gender": {
+          "type": "string"
+        },
+        "pronoun": {
+          "type": "string"
+        },
+        "dateOfBirth": {
+          "type": "string"
+        },
+        "language": {
+          "$ref": "#/$defs/Language"
+        },
+        "nationality": {
+          "$ref": "#/$defs/Country"
+        },
+        "jobTitle": {
+          "type": "string"
+        },
+        "parentCompany": {
+          "type": "string"
+        },
+        "loyaltyPrograms": {
+          "items": {
+            "$ref": "#/$defs/LoyaltyProgram"
+          },
+          "type": "array"
+        },
+        "extendedData": true,
+        "alternateProfileIds": {
+          "items": {
+            "$ref": "#/$defs/AlternateProfileID"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "modelVersion",
+        "id",
+        "lastUpdatedOn",
+        "createdOn",
+        "lastUpdatedBy",
+        "createdBy",
+        "firstName",
+        "lastName",
+        "jobTitle",
+        "parentCompany",
+        "loyaltyPrograms"
+      ]
+    },
+    "Language": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code"
+      ]
+    },
+    "LoyaltyProgram": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "programName": {
+          "type": "string"
+        },
+        "points": {
+          "type": "number"
+        },
+        "pointUnit": {
+          "type": "string"
+        },
+        "pointsToNextLevel": {
+          "type": "number"
+        },
+        "level": {
+          "type": "string"
+        },
+        "joined": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "transactions": {
+          "items": {
+            "$ref": "#/$defs/LoyaltyTx"
+          },
+          "type": "array"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "programName",
+        "points",
+        "pointUnit",
+        "pointsToNextLevel",
+        "level",
+        "joined",
+        "transactions"
+      ]
+    },
+    "LoyaltyTx": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "timeStamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "category": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "pointsOffset": {
+          "type": "number"
+        },
+        "pointUnit": {
+          "type": "string"
+        },
+        "originPointsOffset": {
+          "type": "number"
+        },
+        "qualifyingPointOffset": {
+          "type": "number"
+        },
+        "source": {
+          "type": "string"
+        },
+        "agent": {
+          "type": "string"
+        },
+        "bookingDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "orderNumber": {
+          "type": "string"
+        },
+        "productId": {
+          "type": "string"
+        },
+        "expireInDays": {
+          "type": "integer"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "amountType": {
+          "type": "string"
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        },
+        "voucherQuantity": {
+          "type": "integer"
+        },
+        "cancReason": {
+          "$ref": "#/$defs/CancellationReason"
+        },
+        "parentTransactionId": {
+          "type": "string"
+        },
+        "corporateReferenceNumber": {
+          "type": "string"
+        },
+        "promotions": {
+          "type": "string"
+        },
+        "location": {
+          "type": "string"
+        },
+        "activityDay": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "toLoyaltyId": {
+          "type": "string"
+        },
+        "fromLoyaltyId": {
+          "type": "string"
+        },
+        "organizationCode": {
+          "type": "string"
+        },
+        "voucherIds": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "eventName": {
+          "type": "string"
+        },
+        "documentNumber": {
+          "type": "string"
+        },
+        "Comment": {
+          "$ref": "#/$defs/Comment"
+        },
+        "externalTransaction": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "paymentInformation": {
+          "$ref": "#/$defs/PaymentInformation"
+        },
+        "corporateId": {
+          "type": "string"
+        },
+        "programName": {
+          "type": "string"
+        },
+        "externalOrderIds": {
+          "items": {
+            "$ref": "#/$defs/ExternalID"
+          },
+          "type": "array"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "timeStamp",
+        "source"
+      ]
+    },
+    "PaymentInformation": {
+      "properties": {
+        "paymentType": {
+          "type": "string"
+        },
+        "ccInfo": {
+          "$ref": "#/$defs/CreditCardInformation"
+        },
+        "routingNumber": {
+          "type": "string"
+        },
+        "accountNumber": {
+          "type": "string"
+        },
+        "voucherID": {
+          "type": "string"
+        },
+        "address": {
+          "$ref": "#/$defs/Address"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "paymentType"
+      ]
+    },
+    "Phone": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "number": {
+          "type": "string"
+        },
+        "primary": {
+          "type": "boolean"
+        },
+        "countryCode": {
+          "type": "integer"
+        },
+        "isVerified": {
+          "type": "boolean"
+        },
+        "extendedData": true
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "number"
+      ]
+    },
+    "Product": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "roomType": {
+          "$ref": "#/$defs/RoomType"
+        },
+        "ratePlan": {
+          "$ref": "#/$defs/RatePlan"
+        },
+        "attributes": {
+          "items": {
+            "$ref": "#/$defs/Attribute"
+          },
+          "type": "array"
+        },
+        "addOns": {
+          "items": {
+            "$ref": "#/$defs/AddOn"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "description",
+        "roomType",
+        "ratePlan",
+        "attributes",
+        "addOns"
+      ]
+    },
+    "RatePlan": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code",
+        "name",
+        "description"
+      ]
+    },
+    "RoomType": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code",
+        "name",
+        "description"
+      ]
+    },
+    "StateProvince": {
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "code"
+      ]
+    },
+    "TotalAmountPerNightItem": {
+      "properties": {
+        "date": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "date",
+        "label",
+        "amount",
+        "currency"
+      ]
+    },
+    "TotalAmountPerProductItem": {
+      "properties": {
+        "productId": {
+          "type": "string"
+        },
+        "productDescription": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "currency": {
+          "$ref": "#/$defs/Currency"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "productId",
+        "productDescription",
+        "label",
+        "amount",
+        "currency"
+      ]
+    }
+  }
+}

@@ -1,0 +1,6 @@
+[flake8]
+extend-ignore =
+    # line length, handled by black
+    E501,
+    # whitespace, handled by black
+    E203,
