@@ -342,6 +342,23 @@ func objectMapToProfileMap(obj map[string]string, mappings ObjectMapping) (map[s
 	return profileMap, nil
 }
 
+func objectMapToProfile(obj map[string]string, mappings ObjectMapping) (profile profilemodel.Profile) {
+	for key := range obj {
+		for _, field := range mappings.Fields {
+			fieldName := mappingToColumnName(field.Source)
+			if key == fieldName {
+				if strings.Contains(field.Target, PROFILE_OBJECT_TYPE_NAME+".") {
+					profileFieldName := mappingToColumnNameProfile(field.Target)
+					profile.Set(profileFieldName, obj[key])
+				}
+				continue
+			}
+		}
+	}
+
+	return profile
+}
+
 // Format query string to make it easier to read. Since we frequently use string literals
 // to build queries, we want to remove newlines, tabs, etc.
 //

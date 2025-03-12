@@ -12,7 +12,7 @@ const envName = app.node.tryGetContext('envName');
 const solutionId = app.node.tryGetContext('solutionId');
 const solutionName = app.node.tryGetContext('solutionName');
 
-const solutionVersion = '2.1.1';
+const solutionVersion = '2.1.2';
 
 const artifactBucketPath = app.node.tryGetContext('artifactBucketPath');
 const artifactReferenceBucket = app.node.tryGetContext('artifactBucket');

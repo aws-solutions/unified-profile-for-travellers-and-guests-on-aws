@@ -900,6 +900,7 @@ export class UCPInfraStack extends Stack {
         this.suppressDynamoDb(matchTable);
         this.suppressDynamoDb(portalConfigTable);
         this.suppressDynamoDb(profileStorageOutput.storageConfigTable);
+        this.suppressDynamoDb(cpIndexTable);
         this.suppressLog(dataSyncLogGroup);
         this.suppressLog(gdprPurgeLogGroup);
         this.suppressLog(deliveryStreamLogGroup);
@@ -1012,7 +1013,26 @@ export class UCPInfraStack extends Stack {
         this.addGuardSuppressRules(cluster, ['RDS_CLUSTER_MASTER_USER_PASSWORD_NO_PLAINTEXT_PASSWORD']);
         this.addGuardSuppressRules(storage.lambdaToProxyGroup, ['SECURITY_GROUP_EGRESS_ALL_PROTOCOLS_RULE']);
         this.addGuardSuppressRules(storage.lambdaToProxyGroup, ['EC2_SECURITY_GROUP_EGRESS_OPEN_TO_WORLD_RULE']);
+
+        (storage.lambdaToProxyGroup.node.defaultChild as ec2.CfnSecurityGroup).cfnOptions.metadata!.cfn_nag = {
+            rules_to_suppress: [
+                {
+                    id: 'W28',
+                    reason: 'Required'
+                }
+            ]
+        };
+
         this.addGuardSuppressRules(storage.dbConnectionGroup, ['SECURITY_GROUP_MISSING_EGRESS_RULE']);
+
+        (storage.dbConnectionGroup.node.defaultChild as ec2.CfnSecurityGroup).cfnOptions.metadata!.cfn_nag = {
+            rules_to_suppress: [
+                {
+                    id: 'W28',
+                    reason: 'Required'
+                }
+            ]
+        };
 
         uptVpc.publicSubnets.forEach(subnet => {
             this.addGuardSuppressRules(<ec2.PublicSubnet>subnet, ['SUBNET_AUTO_ASSIGN_PUBLIC_IP_DISABLED']);

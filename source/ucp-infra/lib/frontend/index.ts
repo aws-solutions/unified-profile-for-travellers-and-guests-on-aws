@@ -13,6 +13,7 @@ import path from 'path';
 import * as tahCore from '../../tah-cdk-common/core';
 import * as tahS3 from '../../tah-cdk-common/s3';
 import { CdkBase, CdkBaseProps, ConditionalResource } from '../cdk-base';
+import { SuppressLogGroup } from '../fargate-resource/fargate-resource';
 import { EcrProps } from '../ucp-infra-stack';
 
 export type FrontendProps = {
@@ -186,6 +187,7 @@ export class Frontend extends CdkBase {
             }
         });
         cdk.Aspects.of(taskDefinition).add(new ConditionalResource(this.props.deployFrontendToEcsCondition));
+        cdk.Aspects.of(taskDefinition).add(new SuppressLogGroup());
 
         let image: ContainerImage | undefined;
         if (this.props.ecrProps.publishEcrAssets) {
@@ -225,5 +227,26 @@ export class Frontend extends CdkBase {
             desiredCount: 1
         });
         cdk.Aspects.of(websiteService).add(new ConditionalResource(this.props.deployFrontendToEcsCondition));
+
+        websiteService.node.children.forEach(child => {
+            child.node.children.forEach(grandchild => {
+                if (grandchild instanceof ec2.CfnSecurityGroup) {
+                    grandchild.cfnOptions.metadata = {
+                        cfn_nag: {
+                            rules_to_suppress: [
+                                {
+                                    id: 'W5',
+                                    reason: 'Not applicable'
+                                },
+                                {
+                                    id: 'W40',
+                                    reason: 'Not applicable'
+                                }
+                            ]
+                        }
+                    };
+                }
+            });
+        });
     }
 }

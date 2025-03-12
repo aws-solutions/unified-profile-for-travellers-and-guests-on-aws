@@ -98,6 +98,18 @@ export class CPIndexer extends CdkBase {
             encryptionKey: this.props.dynamoDbKey,
             removalPolicy: cdk.RemovalPolicy.DESTROY
         });
+
+        (stream.node.defaultChild as kinesis.CfnStream).cfnOptions.metadata = {
+            cfn_nag: {
+                rules_to_suppress: [
+                    {
+                        id: 'W28',
+                        reason: 'Required'
+                    }
+                ]
+            }
+        };
+
         return stream;
     }
 

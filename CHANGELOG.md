@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.2] - 2025-03-12
+
+### Fixed
+
+- Reduce merge latency of rule-based stitching during ingestion by optimistically pre-merging profiles
+  - In order to take advantage of these performance enhancements, users must create a new domain
+
+### Security
+
+- Upgrade esbuild to mitigate GHSA-67mh-4wv8-2f99
+- Upgrade vite to mitigate CVE-2025-24010
+- Upgrade aws-cdk-lib to mitigate CVE-2025-23206
+- Upgrade axios to mitigate CVE-2025-27152
+
 ## [2.1.1] - 2025-02-10
 
 ### Changed

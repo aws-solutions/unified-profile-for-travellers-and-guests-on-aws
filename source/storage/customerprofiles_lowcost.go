@@ -46,14 +46,16 @@ const PROFILE_BATCH_SIZE = 100
 // Custom Metrics names
 
 // PutProfileObject
-const METRIC_PUT_OBJECT_RQ_COUNT = "PutProfileObjectRqCount"           // PutProfileObject: count of incoming request
-const METRIC_PUT_OBJECT_SUCCESS_COUNT = "PutProfileObjectSuccessCount" // PutProfileObject: count of success
-const METRIC_NAME_PREP_PROFILE_OBJECT = "PrepProfileLatency"           // PutProfileObject: Latency measurement for control plane access and profile preparation before insert
-const METRIC_NAME_UPSERT_PROFILE_OBJECT = "InsertProfileLatency"       // PutProfileObject: Latency measurement for Insertion of profile in Amazon Aurora
-const METRIC_NAME_UPDATE_DOWNSTREAM_CACHE = "UpdateDownstreamCache"    // PutProfileObject: Latency measurement for insertion of profile in downstream cache (dynamo/CP)
-const METRIC_NAME_PUT_PROFILE_LATENCY = "PutProfileObjectLatency"      // PutProfileObject: Insertion of profile in downstream cache (dynamo/CP)
-const METRIC_NAME_DYNAMO_UPDATE_LATENCY = "DynamoUpdateLatency"        // PutProfileObject: Latency measurement for DynamoDB Cache update
-const METRIC_NAME_CP_UPDATE_LATENCY = "CPUpdateLatency"                // PutProfileObject: Latency measurement for CP Cache Update
+const METRIC_PUT_OBJECT_RQ_COUNT = "PutProfileObjectRqCount"                     // PutProfileObject: count of incoming request
+const METRIC_PUT_OBJECT_SUCCESS_COUNT = "PutProfileObjectSuccessCount"           // PutProfileObject: count of success
+const METRIC_NAME_PREP_PROFILE_OBJECT = "PrepProfileLatency"                     // PutProfileObject: Latency measurement for control plane access and profile preparation before insert
+const METRIC_NAME_UPSERT_PROFILE_OBJECT = "InsertProfileLatency"                 // PutProfileObject: Latency measurement for Insertion of profile in Amazon Aurora
+const METRIC_NAME_UPDATE_DOWNSTREAM_CACHE = "UpdateDownstreamCache"              // PutProfileObject: Latency measurement for insertion of profile in downstream cache (dynamo/CP)
+const METRIC_NAME_PUT_PROFILE_LATENCY = "PutProfileObjectLatency"                // PutProfileObject: Insertion of profile in downstream cache (dynamo/CP)
+const METRIC_NAME_DYNAMO_UPDATE_LATENCY = "DynamoUpdateLatency"                  // PutProfileObject: Latency measurement for DynamoDB Cache update
+const METRIC_NAME_CP_UPDATE_LATENCY = "CPUpdateLatency"                          // PutProfileObject: Latency measurement for CP Cache Update
+const METRIC_NAME_PUT_OBJECT_MATCH_COUNT = "PutProfileObjectMatchCount"          // PutProfileObject: count of records pre-merged from an existing match
+const METRIC_NAME_GET_PROFILE_SEARCH_RECORD = "PutProfileGetProfileSearchRecord" //	PutProfileObject: Latency measurement for finding most up to date connectID from Master Table
 
 // Merge and Unmerge
 const METRIC_NAME_MERGE_PROFILES = "MergeProfileLatency"                         // MergeProfile: Latency measurement for overall profile merge
@@ -68,6 +70,8 @@ const METRIC_NAME_DYNAMO_FETCH_PROFILE = "DynamoFetchProfileLatency"
 const METRIC_NAME_DYNAMO_FIND_STARTING_WITH_LATENCY = "DynamoFindStartingWithLatency"
 const METRIC_NAME_DYNAMO_FIND_STARTING_WITH_NUM_REC = "DynamoFindStartingWithRecords"
 const METRIC_NAME_AURORA_UPDATE_MASTER_TABLE = "AuroraUpdateMasterTableLatency"
+const METRIC_NAME_AURORA_UPSERT_MASTER_TABLE = "AuroraUpsertMasterTableLatency"
+const METRIC_NAME_AURORA_PREMERGE_INSERT_PROFILE_HISTORY = "AuroraPreMergeInsertProfileHistoryLatency"
 const METRIC_NAME_AURORA_UPDATE_SEARCH_TABLE = "AuroraUpdateSearchTableLatency"
 const METRIC_NAME_AURORA_INSERT_PROFILE = "AuroraInsertProfileLatency"
 const METRIC_NAME_AURORA_INSERT_OBJECT = "AuroraInsertProfileObjectLatency"
@@ -81,6 +85,7 @@ const METRIC_NAME_SEND_CHANGE_EVENT = "SendChangeEventLatency"
 const METRIC_NAME_PUT_OBJECT_RULE_BASED = "PutProfileRuleBasedLatency" // Latency measurement for rule based matching execution
 const METRIC_NAME_ADD_PROFILE_TO_INDEX_TABLE = "IndexProfileLatency"   // Latency measurement for update of the match table
 const METRIC_NAME_RULE_EXECUTION_COUNT = "RuleExecutionCount"          // Count of rule execution by rule id and version
+const METRIC_NAME_FIND_MATCHES = "FindMatchesLatency"
 
 // Error Counts
 const METRIC_AURORA_INSERT_ROLLBACK = "AuroraInsertRollbackCount" // Count of error inserting object into aurora
@@ -1601,16 +1606,18 @@ func (c *CustomerProfileConfigLowCost) UnmergeProfiles(
 	return "SUCCESS", nil
 }
 
-func (c *CustomerProfileConfigLowCost) PutProfileObject(object, objectTypeName string) error {
-	tx := core.NewTransaction(c.Tx.TransactionID, "", c.Tx.LogLevel)
-	c.MetricLogger.LogMetric(map[string]string{"domain": c.DomainName}, METRIC_PUT_OBJECT_RQ_COUNT, cloudwatch.Count, float64(1))
-	startPutProfile := time.Now()
+func (c *CustomerProfileConfigLowCost) PutProfileObject(object, objectTypeName string) (err error) {
 	if objectTypeName == "" {
-		return fmt.Errorf("object type name is required")
+		return fmt.Errorf("[PutProfileObject] object type name is required")
 	}
 	if object == "" {
-		return fmt.Errorf("object data is required")
+		return fmt.Errorf("[PutProfileObject] object data is required")
 	}
+	c.MetricLogger.LogMetric(map[string]string{"domain": c.DomainName}, METRIC_PUT_OBJECT_RQ_COUNT, cloudwatch.Count, float64(1))
+	tx := core.NewTransaction(c.Tx.TransactionID, "", c.Tx.LogLevel)
+
+	//#region Prep Profile
+	startPutProfile := time.Now()
 	tx.Info("[PutProfileObject] Putting profile object %v", objectTypeName)
 	tx.Debug("[PutProfileObject] Getting field mapping for %v", objectTypeName)
 	tx.Debug("[PutProfileObject] Getting domain config")
@@ -1663,6 +1670,7 @@ func (c *CustomerProfileConfigLowCost) PutProfileObject(object, objectTypeName s
 	//the profile ID column is sed for internal indexing
 	objMap = c.addProfileIdField(objMap, mappings)
 	c.LogLatencyMs(METRIC_NAME_PREP_PROFILE_OBJECT, float64(time.Since(startPutProfile).Milliseconds()))
+	//#endregion PrepProfile
 
 	uniqueKey := getIndexKey(mappings, INDEX_UNIQUE)
 	if uniqueKey == "" {
@@ -1674,24 +1682,29 @@ func (c *CustomerProfileConfigLowCost) PutProfileObject(object, objectTypeName s
 		return fmt.Errorf("unique key for %s must have valid value", objectTypeName)
 	}
 
+	//#region InsertProfileObject
 	startInsertProfileObject := time.Now()
 	tx.Debug("[PutProfileObject] inserting into aurora")
-	connectID, eventType, err := c.Data.InsertProfileObject(c.DomainName, objectTypeName, uniqueKey, objMap, profMap, object)
+	connectID, eventType, matches, activeRuleSet, err := c.InsertProfileObjectWithPreMatch(domainConfig, objectTypeName, uniqueKey, objMap, profMap, mappings, object)
 	if err != nil {
 		tx.Error("Error while inserting profile object: %v. retrying once (in case of connection drop)", err)
 		c.Data.AurSvc.PrintPoolStats()
-		connectID, eventType, err = c.Data.InsertProfileObject(c.DomainName, objectTypeName, uniqueKey, objMap, profMap, object)
+		connectID, eventType, matches, activeRuleSet, err = c.InsertProfileObjectWithPreMatch(domainConfig, objectTypeName, uniqueKey, objMap, profMap, mappings, object)
 		if err != nil {
 			tx.Error("Error while inserting profile object (after retry): %v. giving up", err)
 			return err
 		}
 	}
 	c.LogLatencyMs(METRIC_NAME_UPSERT_PROFILE_OBJECT, float64(time.Since(startInsertProfileObject).Milliseconds()))
+	//#endregion InsertProfileObject
 
-	//we retreive the profile level data to avoid having to recompute the  profile from all object types
+	//we retrieve the profile level data to avoid having to recompute the  profile from all object types
 	//this can save large amount of queries to aurora.
 	tx.Debug("[PutProfileObject] retrieving profile search record")
+	startGetProfileSearchRecord := time.Now()
 	_, rowLevelData, err := c.Data.GetProfileSearchRecord(c.DomainName, connectID)
+	duration := time.Since(startGetProfileSearchRecord).Milliseconds()
+	c.LogLatencyMs(METRIC_NAME_GET_PROFILE_SEARCH_RECORD, float64(duration))
 	if err != nil {
 		tx.Error("[PutProfileObject] Error while getting profile search record: %v", err)
 		return err
@@ -1718,22 +1731,21 @@ func (c *CustomerProfileConfigLowCost) PutProfileObject(object, objectTypeName s
 		tx.Warn("Error while building profile: %v", err)
 		return err
 	}
-	// Release connection
-	var matchFound bool
-	tx.Debug("[PutProfileObject] checking if rule based matching needs to run")
-	tx.Debug("[PutProfileObject] Retrieving active rule set")
-	tx.Debug("Retrieving active rule set")
-	activeRuleSet, err := c.Config.getRuleSet(c.DomainName, RULE_SET_TYPE_ACTIVE, RULE_SK_PREFIX)
+	//	index fully hydrated profile in rule_index table to ensure cascade profile level rule merges can be caught
+	err = c.IR.IndexInIRTable(conn, domainConfig.Name, objectTypeName, objMap, profile, activeRuleSet)
 	if err != nil {
-		tx.Warn("Error while retrieving active rule set: %v", err)
-		return err
+		tx.Warn("[PutProfileObject] Error while indexing profile for rule based identity resolution")
 	}
-	if len(activeRuleSet.Rules) > 0 {
-		tx.Debug("[PutProfileObject] active rule set found: running IR")
-		matchFound, err = c.RunRuleBasedIdentityResolution(object, objectTypeName, connectID, activeRuleSet)
+
+	//	Send matches to Merge Queue, if any remain
+	var matchFound bool
+	// matches, _ = c.IR.FindMatches(conn, domainConfig.Name, objectTypeName, objMap, profile, activeRuleSet)
+	if len(activeRuleSet.Rules) > 0 && len(matches) > 0 {
+		tx.Debug("[PutProfileObject] found %d rule based matches. sending to merger", len(matches))
+		matchFound = true
+		err = c.sendRuleBasedMatches(matches, activeRuleSet)
 		if err != nil {
-			tx.Error("Error while performing rule based id resolution")
-			return err
+			c.Tx.Warn("[PutProfileObject]  Error while sending rule based matches to merger: %v", err)
 		}
 	} else {
 		tx.Info("[PutProfileObject] No active rule set, skipping rule based id resolution")
@@ -1783,16 +1795,286 @@ func (c *CustomerProfileConfigLowCost) PutProfileObject(object, objectTypeName s
 	}
 	c.LogLatencyMs(METRIC_NAME_SEND_CHANGE_EVENT, float64(time.Since(startSendEvent).Milliseconds()))
 	c.LogLatencyMs(METRIC_NAME_PUT_PROFILE_LATENCY, float64(time.Since(startPutProfile).Milliseconds()))
-	if err != nil {
+	if err == nil {
 		c.MetricLogger.LogMetric(map[string]string{"domain": c.DomainName}, METRIC_PUT_OBJECT_SUCCESS_COUNT, cloudwatch.Count, float64(1))
 	}
-	tx.Info(
-		"[PutProfileObject] successfully inserted object %s of type %d into profile %s",
-		SENSITIVE_LOG_MASK,
-		objectTypeName,
-		profile.ProfileId,
-	)
+	tx.Info("[PutProfileObject] successfully inserted object %s of type %s into profile %s", SENSITIVE_LOG_MASK, objectTypeName, profile.ProfileId)
 	return err
+}
+
+func (c *CustomerProfileConfigLowCost) InsertProfileObjectWithPreMatch(
+	domainConfig LcDomainConfig,
+	objectTypeName, uniqueObjectKey string,
+	objMap map[string]string,
+	profMap map[string]string,
+	mappings ObjectMapping,
+	object string,
+) (string, string, []RuleBasedMatch, RuleSet, error) {
+	tx := core.NewTransaction(c.Tx.TransactionID, "", c.Tx.LogLevel)
+	tx.Debug("[InsertProfileObjectWithPreMatch] Inserting object '%s' of type '%s' in domain %s", objMap["profile_id"], objectTypeName, domainConfig.Name)
+	profileID := objMap["profile_id"]
+
+	err := c.Data.validatePutProfileObjectInputs(profileID, objectTypeName, uniqueObjectKey, objMap, profMap, object)
+	if err != nil {
+		tx.Error("[InsertProfileObjectWithPreMatch] Input validation failed: %v", err)
+		return "", "", []RuleBasedMatch{}, RuleSet{}, err
+	}
+	startTime := time.Now()
+	var duration time.Duration
+
+	//#region Configure Aurora Connections
+	conn, err := c.Data.AurSvc.AcquireConnection(tx)
+	if err != nil {
+		tx.Warn("[InsertProfileObjectWithPreMatch] Error while acquiring connection: %v", err)
+		return "", "", []RuleBasedMatch{}, RuleSet{}, err
+	}
+	defer conn.Release()
+	// Attempting to configure readonly db instance
+	var readonlyConn aurora.DBConnection
+	if c.Data.AurReaderSvc != nil {
+		tx.Debug("[InsertProfileObjectWithPreMatch] Using readonly endpoint")
+		readonlyConn, err = c.Data.AurReaderSvc.AcquireConnection(tx)
+		if err != nil {
+			tx.Warn("[InsertProfileObjectWithPreMatch] Error while acquiring readonly connection: %v", err)
+			return "", "", []RuleBasedMatch{}, RuleSet{}, err
+		}
+		defer readonlyConn.Release()
+	} else {
+		tx.Warn("[InsertProfileObjectWithPreMatch] Falling back to writer endpoint instead of reader endpoint")
+		readonlyConn = conn
+	}
+	//#endregion Configure Aurora Connections
+
+	//#region FindMatches
+	var matches []RuleBasedMatch
+	var activeRuleSet RuleSet
+	var connectID string = core.UUID()
+	var upsertType string = "insert"
+	var inserted bool = false
+	if domainConfig.Options.RuleBaseIdResolutionOn {
+		activeRuleSet, err = c.Config.getRuleSet(domainConfig.Name, RULE_SET_TYPE_ACTIVE, RULE_SK_PREFIX)
+		if err != nil {
+			tx.Warn("Error while retrieving active rule set: %v", err)
+		}
+		if len(activeRuleSet.Rules) > 0 {
+			profile := objectMapToProfile(objMap, mappings)
+			profile.ProfileId = connectID
+			startFindMatches := time.Now()
+			matches, err = c.IR.FindMatches(readonlyConn, domainConfig.Name, objectTypeName, objMap, profile, activeRuleSet)
+			if err != nil {
+				tx.Warn("[InsertProfileObjectWithPreMatch] error finding matches: %v\nContinuing with no matches", err)
+			}
+			c.LogLatencyMs(METRIC_NAME_FIND_MATCHES, float64(time.Since(startFindMatches).Milliseconds()))
+
+			if len(matches) > 0 {
+				//	update master table
+				startUpdateMasterTable := time.Now()
+				var existingConnectID string
+				existingConnectID, upsertType, err = c.Data.InsertPreMergedProfileInMasterTable(conn, tx, domainConfig.Name, matches[0].MatchIDs[0], connectID, profileID)
+				inserted = true
+				if err != nil {
+					tx.Error("[InsertProfileObjectWithPreMatch] could not update profile in master table: %v")
+					return "", "", []RuleBasedMatch{}, RuleSet{}, err
+				}
+
+				//	2 cases: existingConnectID == matches[0].MatchIDs[0], existingConnectID != matches[0].MatchIDs[0]
+				if existingConnectID == matches[0].MatchIDs[0] {
+					//	Pre-Merge occurred; log in profile history table
+					c.MetricLogger.LogMetric(map[string]string{"domain": domainConfig.Name}, METRIC_NAME_PUT_OBJECT_MATCH_COUNT, cloudwatch.Count, float64(1))
+					mergeID := core.GenerateUniqueId()
+					tx.Debug("[InsertProfileObjectWithPreMatch][%s] Saving merge history during pre-merge", mergeID)
+					query, args := insertProfileHistorySql(domainConfig.Name, matches[0].MatchIDs[0], connectID, ProfileMergeContext{
+						Timestamp:              time.Now(),
+						MergeType:              MergeTypeRule,
+						ConfidenceUpdateFactor: 1,
+						RuleID:                 matches[0].RuleIndex,
+						RuleSetVersion:         fmt.Sprint(activeRuleSet.LatestVersion),
+					})
+					startSaveProfileHistory := time.Now()
+					_, err = conn.Query(query, args...)
+					duration = time.Since(startSaveProfileHistory)
+					c.LogLatencyMs(METRIC_NAME_AURORA_PREMERGE_INSERT_PROFILE_HISTORY, float64(duration.Milliseconds()))
+					if err != nil {
+						tx.Error("[InsertProfileObjectWithPreMatch][%s] Error while saving merge history during pre-merge: %v", mergeID, err)
+						return "", "", []RuleBasedMatch{}, RuleSet{}, err
+					}
+
+					//	Carry returned connectID (to allow different interactions with the same profileID) throughout
+					//	the remainder of the ingestion process
+
+					//	set connectID to first match
+					connectID = matches[0].MatchIDs[0]
+
+					//	First match is already pre-merged; ensure that what is sent to match queue is the un-used matches
+					matches = matches[1:]
+				} else {
+					//	Carry returned `existingConnectID` throughout the remainder of the ingestion process
+					//	Because the matches[0].MatchIDs[0] value is not used, all those matches must go through the merge queue
+					connectID = existingConnectID
+
+					//	Remove entries in `matches` where sourceID == connectID/existingConnectID
+					for i, match := range matches {
+						if match.SourceID == connectID {
+							matches = append(matches[:i], matches[i+1:]...)
+						}
+					}
+				}
+				c.LogLatencyMs(METRIC_NAME_AURORA_UPSERT_MASTER_TABLE, float64(time.Since(startUpdateMasterTable).Milliseconds()))
+			} else {
+				//	insert profile into master table
+				startProfileInsertInMasterTable := time.Now()
+
+				//	pass generated connectID as both originalConnectID and connectID parameters
+				//	overwrite connectID with returned value to handle ON CONFLICT (profileID) case
+				//		1. No Conflict - returned connectID will match passed in connectID parameters
+				//		2. Conflict on profileID - returned connectID will be updated to the existing connectID record in master table
+				connectID, upsertType, err = c.Data.InsertPreMergedProfileInMasterTable(conn, tx, domainConfig.Name, connectID, connectID, profileID)
+				duration := time.Since(startProfileInsertInMasterTable)
+				inserted = true
+				if err != nil {
+					tx.Error("Error inserting profile in master table: %v", err)
+					return "", "", []RuleBasedMatch{}, RuleSet{}, err
+				}
+				c.Data.MetricLogger.LogMetric(map[string]string{"domain": domainConfig.Name}, METRIC_NAME_AURORA_UPSERT_MASTER_TABLE, cloudwatch.Milliseconds, float64(duration.Milliseconds()))
+			}
+		}
+	}
+
+	if !inserted {
+		connectID, upsertType, err = c.Data.InsertProfileInMasterTable(tx, domainConfig.Name, profileID)
+		duration := time.Since(startTime)
+		c.Data.MetricLogger.LogMetric(
+			map[string]string{"domain": domainConfig.Name},
+			METRIC_NAME_AURORA_UPSERT_MASTER_TABLE,
+			cloudwatch.Milliseconds,
+			float64(duration.Milliseconds()),
+		)
+		if err != nil {
+			tx.Error("Error inserting profile in master table: %v", err)
+			return "", "", []RuleBasedMatch{}, RuleSet{}, err
+		}
+		tx.Info("Successfully inserted profile ID %s into master table in %s ", profileID, duration)
+	}
+	//#endregion FindMatches
+
+	//#region Insert into Search Table with potentially updated connectID
+	//Insert profile level data + profile count update + object and history
+	tx.Debug("[InsertProfileObjectWithPreMatch] starting transaction")
+	err = conn.StartTransaction()
+	if err != nil {
+		tx.Error("Error starting aurora transaction: %v", err)
+		return "", "", []RuleBasedMatch{}, RuleSet{}, fmt.Errorf("error starting aurora transaction: %s", err.Error())
+	}
+	tx.Debug(
+		"[InsertProfileObjectWithPreMatch] operation: '%s' objectType: '%s' objectId: '%s' profileID: '%s' connectID: '%s' domain: '%s'",
+		upsertType,
+		objectTypeName,
+		SENSITIVE_LOG_MASK,
+		SENSITIVE_LOG_MASK,
+		connectID,
+		domainConfig.Name,
+	)
+
+	tx.Debug("[InsertProfileObjectWithPreMatch] upserting profile into search table")
+	searchTableUpdateStartTime := time.Now()
+	err = c.Data.UpsertProfileInSearchTable(conn, domainConfig.Name, connectID, objMap, profMap, objectTypeName)
+	duration = time.Since(searchTableUpdateStartTime)
+	conn.Tx.Debug("[InsertProfileObjectWithPreMatch] update search table duration:  %v", duration)
+	c.Data.MetricLogger.LogMetric(
+		map[string]string{"domain": domainConfig.Name},
+		METRIC_NAME_AURORA_UPDATE_SEARCH_TABLE,
+		cloudwatch.Milliseconds,
+		float64(duration.Milliseconds()),
+	)
+	duration = time.Since(startTime)
+	tx.Debug("[InsertProfileObjectWithPreMatch] updateProfile (master + search table) duration:  %v", duration)
+	c.Data.MetricLogger.LogMetric(
+		map[string]string{"domain": domainConfig.Name},
+		METRIC_NAME_AURORA_INSERT_PROFILE,
+		cloudwatch.Milliseconds,
+		float64(duration.Milliseconds()),
+	)
+	if err != nil {
+		err = NewRetryable(fmt.Errorf("database level error occurred while inserting into profile search table %w", err))
+		return "", "", []RuleBasedMatch{}, RuleSet{}, c.Data.rollbackInsert(conn, upsertType, connectID, fmt.Sprintf("The following database-level error occurred while inserting into profile search table: %v", err), domainConfig.Name, err)
+	}
+
+	var eventType string
+	if upsertType == "insert" {
+		eventType = EventTypeCreated
+		startTime := time.Now()
+		tx.Info("[InsertProfileObjectWithPreMatch] New Profile created, incrementing profile count in domain %s", domainConfig.Name)
+		err = c.Data.UpdateCount(conn, domainConfig.Name, countTableProfileObject, 1)
+		if err != nil {
+			return "", "", []RuleBasedMatch{}, RuleSet{}, c.Data.rollbackInsert(conn, upsertType, connectID, fmt.Sprintf("Error updating profile count: %v", err), domainConfig.Name, errors.New("Error updating profile count"))
+		}
+		duration := time.Since(startTime)
+		tx.Debug("[InsertProfileObjectWithPreMatch] updateProfileCount duration:  %v", duration)
+		c.Data.MetricLogger.LogMetric(
+			map[string]string{"domain": domainConfig.Name},
+			METRIC_NAME_UPDATE_PROFILE_COUNT_INSERT,
+			cloudwatch.Milliseconds,
+			float64(duration.Milliseconds()),
+		)
+
+	} else {
+		eventType = EventTypeUpdated
+	}
+
+	tx.Info("[InsertProfileObjectWithPreMatch] Inserting object '%s' in interaction table", profileID)
+	startTime = time.Now()
+	query, args := insertObjectSql(domainConfig.Name, connectID, objectTypeName, uniqueObjectKey, objMap)
+	objRes, err := conn.Query(query, args...)
+	if err != nil {
+		return "", "", []RuleBasedMatch{}, RuleSet{}, c.Data.rollbackInsert(conn, upsertType, connectID, fmt.Sprintf("[InsertProfileObjectWithPreMatch] The following database-level error occurred while inserting into object table %v: %v ", objectTypeName, err), domainConfig.Name, errors.New("a database-level error occurred while inserting object-level data"))
+	}
+	duration = time.Since(startTime)
+	tx.Debug("[InsertProfileObjectWithPreMatch] %s duration:  %v", METRIC_NAME_AURORA_INSERT_OBJECT, duration)
+	c.Data.MetricLogger.LogMetric(
+		map[string]string{"domain": domainConfig.Name},
+		METRIC_NAME_AURORA_INSERT_OBJECT,
+		cloudwatch.Milliseconds,
+		float64(duration.Milliseconds()),
+	)
+
+	if len(objRes) == 0 {
+		// this case should only happen if the db connection was lost, which we should retry
+		err = NewRetryable(errors.New("[InsertProfileObjectWithPreMatch] upsert statement return was empty"))
+		return "", "", []RuleBasedMatch{}, RuleSet{}, c.Data.rollbackInsert(conn, upsertType, connectID, "[InsertProfileObjectWithPreMatch] object upsert statement return was empty", domainConfig.Name, err)
+	}
+	if len(objRes) > 1 {
+		return "", "", []RuleBasedMatch{}, RuleSet{}, c.Data.rollbackInsert(conn, upsertType, connectID, "[InsertProfileObjectWithPreMatch] object upsert statement returned more than one record", domainConfig.Name, errors.New("object upsert statement returned more than one record"))
+	}
+	upsertType, ok := objRes[0]["upsert_type"].(string)
+	if !ok || upsertType != "insert" && upsertType != "update" {
+		return "", "", []RuleBasedMatch{}, RuleSet{}, c.Data.rollbackInsert(conn, upsertType, connectID, "[InsertProfileObjectWithPreMatch] object upsert statement returned invalid upsert_type", domainConfig.Name, errors.New("object upsert statement returned invalid upsert_type"))
+	}
+	if upsertType == "insert" {
+		startTime := time.Now()
+		tx.Info("[InsertProfileObjectWithPreMatch] New Object created, incrementing object counts in domain %s", domainConfig.Name)
+		err = c.Data.UpdateCount(conn, domainConfig.Name, objectTypeName, 1)
+		if err != nil {
+			return "", "", []RuleBasedMatch{}, RuleSet{}, c.Data.rollbackInsert(conn, upsertType, connectID, fmt.Sprintf("Error updating object count: %v", err), domainConfig.Name, errors.New("error updating object count"))
+		}
+		duration := time.Since(startTime)
+		tx.Debug("updateObjectCount duration:  %v", duration)
+		c.Data.MetricLogger.LogMetric(
+			map[string]string{"domain": domainConfig.Name},
+			METRIC_NAME_UPDATE_OBJECT_COUNT_INSERT,
+			cloudwatch.Milliseconds,
+			float64(duration.Milliseconds()),
+		)
+
+	}
+	tx.Debug("[InsertProfileObjectWithPreMatch] Committing DB transaction")
+	err = conn.CommitTransaction()
+	if err != nil {
+		return "", "", []RuleBasedMatch{}, RuleSet{}, c.Data.rollbackInsert(conn, upsertType, connectID, fmt.Sprintf("InsertProfileObjectWithPreMatch] error committing aurora transaction: %v ", err), domainConfig.Name, errors.New("error committing aurora transaction"))
+	}
+	tx.Info("[InsertProfileObjectWithPreMatch] operation successful: '%s' objectType: '%s' objectId: '%s' profileID: '%s' connectID: '%s' domain: '%s' pid: %d", upsertType, objectTypeName, SENSITIVE_LOG_MASK, SENSITIVE_LOG_MASK, connectID, domainConfig.Name)
+	//#endregion
+
+	return connectID, eventType, matches, activeRuleSet, err
 }
 
 /* 	Params:

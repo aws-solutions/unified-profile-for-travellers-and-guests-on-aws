@@ -9,7 +9,7 @@ import (
 	"tah/upt/source/tah-core/aurora"
 )
 
-const countTablePartitions int = 5000
+const countTablePartitions int = 10000
 const countTableProfileObject string = "profile"
 
 func (h DataHandler) CreateRecordCountTable(domain string) error {

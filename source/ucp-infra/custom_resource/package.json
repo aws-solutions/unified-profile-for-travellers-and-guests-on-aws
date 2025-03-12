@@ -20,7 +20,7 @@
         "test:mock": "jest --coverage test/*.test.ts"
     },
     "dependencies": {
-        "axios": "^1.7.4",
+        "axios": "^1.8.2",
         "unzipper": "^0.12.1"
     },
     "overrides": {

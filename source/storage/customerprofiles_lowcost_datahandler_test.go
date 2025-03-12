@@ -2682,3 +2682,10 @@ func TestDeleteObjectHistoryNoProfile(t *testing.T) {
 		t.Fatalf("[%v] function should fail gracefully with no profiles found: %v", t.Name(), err)
 	}
 }
+
+func TestGetAllMergeTypesExceptUnmerge(t *testing.T) {
+	allTypes := GetAllMergeTypesExceptUnmerge()
+	if len(allTypes) != 4 {
+		t.Fatalf("[%v] expected 4 merge types, got %v", t.Name(), len(allTypes))
+	}
+}
