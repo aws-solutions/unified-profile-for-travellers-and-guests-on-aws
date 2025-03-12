@@ -57,6 +57,29 @@ func (a Address) Get(fieldName string) string {
 	return ""
 }
 
+func (a *Address) Set(fieldName string, value string) {
+	switch fieldName {
+	case "Address1":
+		a.Address1 = value
+	case "Address2":
+		a.Address2 = value
+	case "Address3":
+		a.Address3 = value
+	case "Address4":
+		a.Address4 = value
+	case "City":
+		a.City = value
+	case "State":
+		a.State = value
+	case "Province":
+		a.Province = value
+	case "PostalCode":
+		a.PostalCode = value
+	case "Country":
+		a.Country = value
+	}
+}
+
 /********************************************************
 * Profile
 *********************************************************/
@@ -136,6 +159,58 @@ func (p Profile) Get(fieldName string) string {
 		return p.BillingAddress.Get(addrField)
 	}
 	return ""
+}
+
+func (p *Profile) Set(fieldName string, value string) {
+	switch fieldName {
+	case "FirstName":
+		p.FirstName = value
+	case "LastName":
+		p.LastName = value
+	case "MiddleName":
+		p.MiddleName = value
+	case "BirthDate":
+		p.BirthDate = value
+	case "Gender":
+		p.Gender = value
+	case "PhoneNumber":
+		p.PhoneNumber = value
+	case "MobilePhoneNumber":
+		p.MobilePhoneNumber = value
+	case "HomePhoneNumber":
+		p.HomePhoneNumber = value
+	case "BusinessPhoneNumber":
+		p.BusinessPhoneNumber = value
+	case "EmailAddress":
+		p.EmailAddress = value
+	case "BusinessEmailAddress":
+		p.BusinessEmailAddress = value
+	case "PersonalEmailAddress":
+		p.PersonalEmailAddress = value
+	}
+	if strings.HasPrefix(fieldName, "Attributes.") {
+		fieldName := strings.ReplaceAll(fieldName, "Attributes.", "")
+		if p.Attributes == nil {
+			p.Attributes = make(map[string]string)
+		}
+		p.Attributes[fieldName] = value
+	}
+	if strings.HasPrefix(fieldName, "Address") {
+		addrField := strings.ReplaceAll(fieldName, "Address.", "")
+		p.Address.Set(addrField, value)
+	}
+	if strings.HasPrefix(fieldName, "ShippingAddress") {
+		addrField := strings.ReplaceAll(fieldName, "ShippingAddress.", "")
+		p.ShippingAddress.Set(addrField, value)
+	}
+	if strings.HasPrefix(fieldName, "MailingAddress") {
+		addrField := strings.ReplaceAll(fieldName, "MailingAddress.", "")
+		p.MailingAddress.Set(addrField, value)
+	}
+	if strings.HasPrefix(fieldName, "BillingAddress") {
+		addrField := strings.ReplaceAll(fieldName, "BillingAddress.", "")
+		p.BillingAddress.Set(addrField, value)
+	}
 }
 
 type Match struct {

@@ -147,7 +147,7 @@ func TestCpTravelerIdMappingMigration(t *testing.T) {
 		t.Fatalf("expected version to be %v, got %v", expectedOriginalVersion, version)
 	}
 
-	accp := customerprofiles.InitWithDomain(domainName, "us-west-2", "", "")
+	accp := customerprofiles.InitWithDomain(domainName, envCfg.Region, "", "")
 	mappings, err := accp.GetMappings()
 	if err != nil {
 		t.Fatalf("error getting mappings: %v", err)

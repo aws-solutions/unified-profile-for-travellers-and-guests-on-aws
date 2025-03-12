@@ -26,11 +26,11 @@
         "@types/jest": "^29.5.12",
         "@types/node": "^20.17.10",
         "@typescript-eslint/eslint-plugin": "^7.2.0",
-        "aws-cdk-lib": "^2.138.0",
-        "cdk-assets": "^2.137.0",
+        "aws-cdk-lib": "^2.180.0",
+        "cdk-assets": "^2.155.121",
         "cdk-nag": "^2.27.69",
         "constructs": "^10.3.0",
-        "esbuild": "^0.20.2",
+        "esbuild": "^0.25.0",
         "eslint": "^8.45.0",
         "eslint-config-prettier": "^8.5.0",
         "eslint-plugin-import": "^2.26.0",
@@ -42,7 +42,7 @@
         "typescript": "^5.1.6"
     },
     "dependencies": {
-        "aws-cdk": "^2.118.0",
+        "aws-cdk": "^2.1000.3",
         "ts-node": "^10.9.2"
     }
 }

@@ -182,7 +182,13 @@ export class ProfileStorage extends CdkBase {
             writer: writer,
             //withing a transaction we want a short timeout (30s) to avoid deadlock
             //target latency for profile insert is <1s p99 so 30s has a good buffer
-            parameters: { idle_in_transaction_session_timeout: '30000' },
+            parameters: {
+                idle_in_transaction_session_timeout: '30000',
+                'pg_stat_statements.save': '0',
+                'pg_stat_statements.track': 'NONE',
+                'pg_stat_statements.track_planning': '0',
+                'pg_stat_statements.track_utility': '0'
+            },
             readers: [
                 // will be put in promotion tier 1 and will scale with the writer
                 reader1,
@@ -190,6 +196,59 @@ export class ProfileStorage extends CdkBase {
                 reader2
             ]
         });
+
+        cluster.node.children.forEach(child => {
+            child.node.children.forEach(grandchild => {
+                if (grandchild instanceof rds.CfnDBInstance) {
+                    grandchild.cfnOptions.metadata = {
+                        cfn_nag: {
+                            rules_to_suppress: [
+                                {
+                                    id: 'F23',
+                                    reason: 'Credentials stored in Secrets Manager'
+                                },
+                                {
+                                    id: 'F24',
+                                    reason: 'Credentials stored in Secrets Manager'
+                                },
+                                {
+                                    id: 'F26',
+                                    reason: 'False positive'
+                                },
+                                {
+                                    id: 'F27',
+                                    reason: 'False positive'
+                                },
+                                {
+                                    id: 'F80',
+                                    reason: 'Enabled at cluster level'
+                                },
+                                {
+                                    id: 'W75',
+                                    reason: 'Configured by customer'
+                                }
+                            ]
+                        }
+                    };
+                } else if (grandchild instanceof rds.CfnDBClusterParameterGroup) {
+                    grandchild.cfnOptions.metadata = {
+                        cfn_nag: {
+                            rules_to_suppress: [
+                                {
+                                    id: 'F26',
+                                    reason: 'False positive'
+                                },
+                                {
+                                    id: 'F27',
+                                    reason: 'False positive'
+                                }
+                            ]
+                        }
+                    };
+                }
+            });
+        });
+
         return { cluster, writer, reader1, reader2 };
     }
 

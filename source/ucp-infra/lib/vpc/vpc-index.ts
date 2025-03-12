@@ -110,6 +110,29 @@ export class UptVpc extends CdkBase {
         this.uptVpc.addInterfaceEndpoint('SecretsManagerEndpoint', {
             service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER
         });
+
+        this.uptVpc.node.children.forEach(child => {
+            if (child.node.defaultChild instanceof ec2.CfnVPCEndpoint) {
+                child.node.children.forEach(grandchild => {
+                    if (grandchild.node.defaultChild instanceof ec2.CfnSecurityGroup) {
+                        (grandchild.node.defaultChild as ec2.CfnSecurityGroup).cfnOptions.metadata = {
+                            cfn_nag: {
+                                rules_to_suppress: [
+                                    {
+                                        id: 'W5',
+                                        reason: 'Not applicable'
+                                    },
+                                    {
+                                        id: 'W40',
+                                        reason: 'Not applicable'
+                                    }
+                                ]
+                            }
+                        };
+                    }
+                });
+            }
+        });
     }
 
     /**

@@ -683,7 +683,7 @@ func (h DataHandler) InsertProfileObject(
 		float64(duration.Milliseconds()),
 	)
 	if err != nil {
-		tx.Error("Error inserting profile in master table: %v", err)
+		tx.Error("[InsertProfileObject] Error inserting profile in master table: %v", err)
 		return "", "", err
 	}
 	tx.Info("Successfully inserted profile ID %s into master table in %s ", profileID, duration)
@@ -829,6 +829,37 @@ func (h DataHandler) InsertProfileObject(
 	return connectID, eventType, err
 }
 
+func (h DataHandler) InsertPreMergedProfileInMasterTable(conn aurora.DBConnection, tx core.Transaction, domain string, connectID string, originalConnectID string, profileID string) (cID string, upsertType string, err error) {
+	tx.Debug("[InsertPreMergedProfileInMasterTable] Inserting object '%s' in master table", profileID)
+	query, args := h.insertPreMergedProfileSql(domain, connectID, originalConnectID, profileID)
+	res, err := conn.Query(query, args...)
+	if err != nil {
+		tx.Error("[InsertPreMergedProfileInMasterTable] Error inserting profile in master table: %v", err)
+		return "", "", fmt.Errorf("error executing query: %v", err.Error())
+	}
+	if len(res) == 0 {
+		tx.Error("[InsertPreMergedProfileInMasterTable] profile insert statement did not return connect_id")
+		retryableErr := NewRetryable(errors.New("profile insert statement did not return connect_id"))
+		return "", "", retryableErr
+	}
+
+	connectID, ok := res[0]["connect_id"].(string)
+	if !ok || connectID == "" {
+		tx.Error("[InsertPreMergedProfileInMasterTable]  profile upsert statement did not return connect_id")
+		return "", "", fmt.Errorf("profile upsert statement did not return connect_id")
+	}
+
+	upsertType, ok = res[0]["upsert_type"].(string)
+	if !ok || upsertType != "insert" && upsertType != "update" {
+		// this case should only happen if the db connection was lost, which we should retry
+		err = NewRetryable(errors.New("InsertProfileInMasterTable upsert statement return was invalid"))
+		tx.Error("[InsertPreMergedProfileInMasterTable] profile upsert statement returned invalid upsert_type")
+		return "", "", err
+	}
+
+	return connectID, upsertType, nil
+}
+
 func (h DataHandler) InsertProfileInMasterTable(tx core.Transaction, domain, profileID string) (string, string, error) {
 	conn, err := h.AurSvc.AcquireConnection(tx)
 	if err != nil {
@@ -841,11 +872,11 @@ func (h DataHandler) InsertProfileInMasterTable(tx core.Transaction, domain, pro
 	//we use a newly created connection for this query which is done outside of the main transaction
 	res, err := conn.Query(query, args...)
 	if err != nil {
-		tx.Error("Error inserting profile in master table: %v", err)
+		tx.Error("[InsertProfileInMasterTable] Error inserting profile in master table: %v", err)
 		return "", "", fmt.Errorf("error executing query: %v", err.Error())
 	}
 	if len(res) == 0 {
-		tx.Error("profile insert statement did not return connect_id")
+		tx.Error("[InsertProfileInMasterTable] profile insert statement did not return connect_id")
 		retryableErr := NewRetryable(errors.New("profile insert statement did not return connect_id"))
 		return "", "", retryableErr
 	}
@@ -1282,6 +1313,24 @@ func mergeProfileSql(
 						WHERE connect_id=?
 						RETURNING profile_id, connect_id`,
 		tableName)
+}
+
+func (h DataHandler) insertPreMergedProfileSql(domain string, connectID string, originalConnectID string, profileID string) (query string, args []interface{}) {
+	tableName := domain
+
+	query = fmt.Sprintf(`
+		INSERT INTO "%s" (connect_id, original_connect_id, profile_id)
+		VALUES(?, ?, ?)
+		ON CONFLICT ("profile_id") DO UPDATE
+		SET profile_id = excluded.profile_id
+		RETURNING "connect_id", CASE WHEN NOT xmax = 0 THEN 'update' ELSE 'insert' END as upsert_type;
+	`, tableName)
+
+	args = append(args, connectID)
+	args = append(args, originalConnectID)
+	args = append(args, profileID)
+
+	return query, args
 }
 
 // Upsert a profile in a single query using Postgres' ON CONFLICT clause to handle inserts versus updates.
@@ -2110,15 +2159,13 @@ func createInteractionTableSql(domain string, name string, mappings []FieldMappi
 
 }
 func createInteractionTableConnectIdIndexSql(domain string, name string) string {
-	return fmt.Sprintf(
-		`CREATE INDEX IF NOT EXISTS ` + createInteractionTableName(
-			domain,
-			name,
-		) + `_connect_id_idx ON ` + createInteractionTableName(
-			domain,
-			name,
-		) + ` ("connect_id");`,
-	)
+	return `CREATE INDEX IF NOT EXISTS ` + createInteractionTableName(
+		domain,
+		name,
+	) + `_connect_id_idx ON ` + createInteractionTableName(
+		domain,
+		name,
+	) + ` ("connect_id");`
 }
 
 func (h DataHandler) ShowInteractionTable(domain string, objectTypeName string, limit int) ([]map[string]interface{}, error) {
@@ -2518,7 +2565,17 @@ func (h DataHandler) retrieveObjectHistorySql(domain string, objectTypeName stri
 
 func (h DataHandler) CreateProfileHistoryTable(domain string) error {
 	_, err := h.AurSvc.Query(createProfileHistorySql(domain))
-	return err
+	if err != nil {
+		h.Tx.Error(("Error creating Profile History Table"))
+		return err
+	}
+	h.Tx.Info("Creating History table index for to_merge and merge_into values")
+	_, err = h.AurSvc.Query(createProfileHistoryIndexSql(domain))
+	if err != nil {
+		h.Tx.Error("Error creating IR Table rule index 1: %v", err)
+		return err
+	}
+	return nil
 }
 
 func createProfileHistorySql(domain string) string {
@@ -2536,6 +2593,13 @@ func createProfileHistorySql(domain string) string {
 			operator_id VARCHAR(255)
 		);
 	`, tableName)
+}
+
+func createProfileHistoryIndexSql(domain string) string {
+	tableName := createProfileHistoryTableName(domain)
+	return fmt.Sprintf(`
+		CREATE INDEX IF NOT EXISTS %s_idx_merge_type_to_merge_merged_into ON %s (merge_type, to_merge, merged_into)
+	`, tableName, tableName)
 }
 
 func createProfileHistoryTableName(domain string) string {
@@ -2820,9 +2884,11 @@ func (h DataHandler) HaveBeenMergedAndNotUnmerged(domain, connectIdMerged, conne
 
 func haveBeenMergedSql(domain string) string {
 	tableName := createProfileHistoryTableName(domain)
+	notUnmergeTypes := GetAllMergeTypesExceptUnmerge()
 	return fmt.Sprintf(
-		`SELECT to_merge, merged_into FROM %s WHERE (merge_type!=? AND to_merge=? AND merged_into=?)`,
+		`SELECT to_merge, merged_into FROM %s WHERE (merge_type in ("%s") AND to_merge=? AND merged_into=?)`,
 		tableName,
+		strings.Join(notUnmergeTypes, "\", \""),
 	)
 }
 func haveBeenUnmergedSql(domain string) string {

@@ -126,14 +126,28 @@ func TestDynamicPartitioning(t *testing.T) {
 	if err != nil {
 		t.Fatalf("[%s] error waiting for data: %v", t.Name(), err)
 	}
-	res, err := s3c.Search("", 100)
-	t.Logf("S3 bucket constains %v items: %+v", len(res), res)
-	if err != nil {
-		t.Fatalf("Could not list results in S3")
+
+	res := []string{}
+	// Wait for all data to arrive
+	for range 5 {
+		t.Logf("3-Listing S3 bucket %v", name)
+		res, err = s3c.Search("", 100)
+		t.Logf("S3 bucket contains %v items: %+v", len(res), res)
+		if err != nil {
+			t.Fatalf("Could not list results in S3")
+		}
+
+		if len(res) != 5 {
+			t.Logf("Bucket Should have 5 item not %v", len(res))
+		} else {
+			t.Logf("Found all 5 items in S3")
+			break
+		}
+
+		t.Log("All 5 records not found, waiting 5 seconds")
+		time.Sleep(time.Second * 5)
 	}
-	if len(res) != 5 {
-		t.Errorf("Bucket Should have 5 item not %v", len(res))
-	}
+
 	found := map[string]bool{}
 	for _, r := range res {
 		found[r[:28]] = true
@@ -377,18 +391,25 @@ func TestDataFormatConversion(t *testing.T) {
 		t.Fatalf("[%s] error waiting for data: %v", t.Name(), err)
 	}
 
-	t.Log("Waiting 10 seconds to allow remaining records to arrive")
-	time.Sleep(10 * time.Second)
+	res := []string{}
+	// Wait for all data to arrive
+	for range 5 {
+		t.Logf("3-Listing S3 bucket %v", name)
+		res, err = s3c.Search("", 100)
+		t.Logf("S3 bucket contains %v items: %+v", len(res), res)
+		if err != nil {
+			t.Fatalf("Could not list results in S3")
+		}
 
-	t.Logf("3-Listing S3 bucket %v", name)
-	res, err := s3c.Search("", 100)
-	t.Logf("S3 bucket constains %v items: %+v", len(res), res)
-	if err != nil {
-		t.Fatalf("Could not list results in S3")
-	}
+		if len(res) != 5 {
+			t.Logf("Bucket Should have 5 item not %v", len(res))
+		} else {
+			t.Logf("Found all 5 items in S3")
+			break
+		}
 
-	if len(res) != 5 {
-		t.Errorf("Bucket Should have 5 item not %v", len(res))
+		t.Log("All 5 records not found, waiting 5 seconds")
+		time.Sleep(time.Second * 5)
 	}
 
 	found := map[string]bool{}

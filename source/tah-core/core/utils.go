@@ -80,6 +80,14 @@ func UUID() string {
 	return uuid.New().String()
 }
 
+func UUIDv7() string {
+	uuid, err := uuid.NewV7()
+	if err != nil {
+		return UUID()
+	}
+	return uuid.String()
+}
+
 func EmptyUUID() string {
 	return uuid.Nil.String()
 }

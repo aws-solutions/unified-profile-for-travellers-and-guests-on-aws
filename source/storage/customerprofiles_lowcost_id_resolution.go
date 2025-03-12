@@ -63,9 +63,14 @@ func (i IdentityResolutionHandler) CreateIRTable(domain string) error {
 		return err
 	}
 	i.Tx.Info("Creating IR table index for rule index values")
-	_, err = i.AurSvc.Query(createIRTableRuleIndexSql(domain))
+	_, err = i.AurSvc.Query(createIRTableRuleIndex1Sql(domain))
 	if err != nil {
-		i.Tx.Error("Error creating IR Table rule index: %v", err)
+		i.Tx.Error("Error creating IR Table rule index 1: %v", err)
+		return err
+	}
+	_, err = i.AurSvc.Query(createIRTableRuleIndex2Sql(domain))
+	if err != nil {
+		i.Tx.Error("Error creating IR Table rule index 2: %v", err)
 		return err
 	}
 	return nil
@@ -683,10 +688,17 @@ func createIRTableSQL(domain string) string {
 	return fmt.Sprintf(`CREATE TABLE IF NOT EXISTS `+irTableName(domain)+` (%s);`, strings.Join(fields, ","))
 }
 
-func createIRTableRuleIndexSql(domain string) string {
+func createIRTableRuleIndex1Sql(domain string) string {
 	return fmt.Sprintf(`
-		CREATE INDEX IF NOT EXISTS %s_idx_rule_index_values_connect_id 
-		ON %s (rule, index_value_1, index_value_2, connect_id)
+		CREATE INDEX IF NOT EXISTS %s_idx_rule_index_value1_connect_id 
+		ON %s (rule, index_value_1, connect_id)
+	`, domain, irTableName(domain))
+}
+
+func createIRTableRuleIndex2Sql(domain string) string {
+	return fmt.Sprintf(`
+		CREATE INDEX IF NOT EXISTS %s_idx_rule_index_value2_connect_id
+		ON %s (rule, index_value_2, connect_id)
 	`, domain, irTableName(domain))
 }
 

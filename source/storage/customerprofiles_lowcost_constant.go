@@ -185,19 +185,8 @@ const (
 	OperationTypeDelete string = "delete"
 )
 
-func CreateMappingCustomerProfileToEntityResolution() map[string]string {
-	return map[string]string{
-		RESERVED_FIELD_CONNECT:       "UNIQUE_ID",
-		RESERVED_FIELD_FIRST_NAME:    "NAME_FIRST",
-		RESERVED_FIELD_MIDDLE_NAME:   "NAME_MIDDLE",
-		RESERVED_FIELD_LAST_NAME:     "NAME_LAST",
-		RESERVED_FIELD_PHONE_NUMBER:  "PHONE",
-		"MobilePhoneNumber":          "PHONE_NUMBER",
-		"HomePhoneNumber":            "PHONE",
-		"BusinessPhoneNumber":        "PHONE_NUMBER",
-		"BirthDate":                  "DATE",
-		RESERVED_FIELD_EMAIL_ADDRESS: "EMAIL_ADDRESS",
-	}
+func GetAllMergeTypesExceptUnmerge() []string {
+	return []string{MergeTypeRule, MergeTypeAI, MergeTypeManual, OperationTypeDelete}
 }
 
 /*****************

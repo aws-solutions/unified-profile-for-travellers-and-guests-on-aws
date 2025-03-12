@@ -73,4 +73,10 @@ if [ $rc -ne 0 ]; then
   echo "GO Unit Testing failed." >&2
   exit $rc
 fi
+go test -v -failfast -coverprofile ../z-coverage/ucp-common/migrations.out ./src/migrate/...
+rc=$?
+if [ $rc -ne 0 ]; then
+  echo "GO Unit Testing failed." >&2
+  exit $rc
+fi
 fi

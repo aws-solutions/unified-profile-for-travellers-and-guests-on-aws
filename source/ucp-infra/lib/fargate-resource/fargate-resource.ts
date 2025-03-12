@@ -1,13 +1,13 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Aws } from 'aws-cdk-lib';
+import { Aspects, Aws, IAspect } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Cluster, ContainerImage, CpuArchitecture, FargateTaskDefinition, LogDrivers, OperatingSystemFamily } from 'aws-cdk-lib/aws-ecs';
 import { Effect, IRole, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Stream } from 'aws-cdk-lib/aws-kinesis';
-import { RetentionDays } from 'aws-cdk-lib/aws-logs';
-import { Construct } from 'constructs';
+import { CfnLogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs';
+import { Construct, IConstruct } from 'constructs';
 import path from 'path';
 import { ProfileStorageOutput } from '../profile-storage';
 import { EcrProps } from '../ucp-infra-stack';
@@ -33,6 +33,18 @@ interface FargateResourceOutput {
 enum FargateRequestType {
     ID_RES = 'id-res',
     REBUILD_CACHE = 'rebuild-cache'
+}
+
+export class SuppressLogGroup implements IAspect {
+    visit(node: IConstruct): void {
+        if (node instanceof CfnLogGroup) {
+            node.cfnOptions.metadata = {
+                cfn_nag: {
+                    rules_to_suppress: [{ id: 'W84', reason: 'Not applicable' }]
+                }
+            };
+        }
+    }
 }
 
 export class FargateResource {
@@ -105,6 +117,9 @@ export class FargateResource {
                 LOG_LEVEL: props.logLevel
             }
         });
+
+        Aspects.of(this.irResources.taskDefinition).add(new SuppressLogGroup());
+        Aspects.of(this.rebuildCacheResources.taskDefinition).add(new SuppressLogGroup());
 
         // Low-cost storage permissions
         // Tables are created/deleted via API and cannot be scoped down
