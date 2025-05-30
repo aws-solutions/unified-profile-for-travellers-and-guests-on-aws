@@ -1,3 +1,5 @@
+**This AWS Solution is no longer available. We encourage customers to explore using  [Amazon Connect Customer Profiles](https://aws.amazon.com/connect/customer-profiles/)) to deduplicate, unify, segment, and activate their traveler and guest profiles. You can find other AWS Solutions in the [AWS Solutions Library](https://aws.amazon.com/solutions/).**
+
 # Unified Profiles For Travelers and Guests on AWS
 
 Unified Profiles for Travelers and Guests on AWS (UPT) is a solution designed to bring together customer data from various internal systems into a single, comprehensive profile. By automatically sourcing, merging, de-duplicating, and centralizing guest information, UPT enables organizations to gain a 360-degree view of their customers. This unified profile serves as a valuable resource for marketing, sales, operations, and customer experience teams, facilitating personalized engagements, improved customer retention, and increased loyalty.
@@ -6,17 +8,13 @@ The solution provides a scalable means of transforming disparate booking, conver
 
 The solution provides downstream integration for marketing and customer service usecases. Dynamo and Amazon Connect Customer Profile integrations are provided out of the box. Profile data is in a format that can be sent to other platforms (eg. Salesforce) seamlessly. 
 
-## Important Links
+## Project Overview
 
 - [UPT in Solutions Library](https://aws.amazon.com/solutions/implementations/unified-profiles-for-travelers-and-guests-on-aws/)
 - [Implementation Guide](https://docs.aws.amazon.com/solutions/latest/unified-profiles-for-travelers-and-guests-on-aws/solution-overview.html)
 - [Introducing UPT](https://aws.amazon.com/blogs/industries/introducing-unified-profiles-for-travelers-and-guests-on-aws/)
 
-## Project Overview
-
-![solution architecture diagram](https://xwiki-attachment-prod.s3.us-west-2.amazonaws.com/xwiki/AWS/Solutions/SolutionsTeam/Teams/T%26H/Solutions/SO0244/WebHome/1700855495103-143.png)
-
- The solution diagram can also be found in the UPT in Solutions Library link above. 
+ The solution diagram can be found in the UPT in Solutions Library link above. 
 
 ### CI/CD
 
