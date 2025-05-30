@@ -14,8 +14,6 @@ The solution provides downstream integration for marketing and customer service 
 - [Implementation Guide](https://docs.aws.amazon.com/solutions/latest/unified-profiles-for-travelers-and-guests-on-aws/solution-overview.html)
 - [Introducing UPT](https://aws.amazon.com/blogs/industries/introducing-unified-profiles-for-travelers-and-guests-on-aws/)
 
- The solution diagram can be found in the UPT in Solutions Library link above. 
-
 ### CI/CD
 
 - `deployment/developer-pipeline` scripts to run the developer pipeline
