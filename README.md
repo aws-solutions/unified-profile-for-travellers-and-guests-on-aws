@@ -1,4 +1,4 @@
-**This AWS Solution is no longer available. We encourage customers to explore using  [Amazon Connect Customer Profiles](https://aws.amazon.com/connect/customer-profiles/)) to deduplicate, unify, segment, and activate their traveler and guest profiles. You can find other AWS Solutions in the [AWS Solutions Library](https://aws.amazon.com/solutions/).**
+**This AWS Solution is no longer available. We encourage customers to explore using  [Amazon Connect Customer Profiles](https://aws.amazon.com/connect/customer-profiles/) to deduplicate, unify, segment, and activate their traveler and guest profiles. You can find other AWS Solutions in the [AWS Solutions Library](https://aws.amazon.com/solutions/).**
 
 # Unified Profiles For Travelers and Guests on AWS
 
